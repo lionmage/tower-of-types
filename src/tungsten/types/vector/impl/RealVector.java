@@ -177,8 +177,13 @@ public class RealVector implements Vector<RealType> {
         return result;
     }
     
+    /**
+     * Compute the angle between this vector and the given vector.
+     * @param other the other vector
+     * @return the angle between this and the {@code other} vector
+     */
     public RealType computeAngle(Vector<RealType> other) {
-        RealType cosine = (RealType) dotProduct(other).divide(this.magnitude().multiply(other.magnitude()));
+        RealType cosine = (RealType) this.dotProduct(other).divide(this.magnitude().multiply(other.magnitude()));
         BigDecimal angle = BigDecimalMath.acos(cosine.asBigDecimal(), mctx);
         return new RealImpl(angle);
     }
@@ -186,6 +191,15 @@ public class RealVector implements Vector<RealType> {
     @Override
     public void append(RealType element) {
         elements.add(element);
+    }
+
+    @Override
+    public Vector<RealType> scale(RealType factor) {
+        RealVector result = new RealVector(this.length());
+        for (RealType element : elements) {
+            result.append((RealType) element.multiply(factor));
+        }
+        return result;
     }
     
 }

@@ -29,14 +29,56 @@ package tungsten.types;
  * @param <T> the numeric type of this vector
  */
 public interface Vector<T extends Numeric> {
+    /**
+     * Calculates the number of elements in this vector.
+     * This is the dimensionality of this vector.
+     * @return the number of elements, or dimension
+     */
     public long length();
+    /**
+     * Returns the element contained in this vector at {@code position}.
+     * @param position the 0-based position within the vector
+     * @return the specified element
+     */
     public T elementAt(long position);
+    /**
+     * Set or replace the element at {@code position}.
+     * @param element the new element
+     * @param position the 0-based position within the vector
+     */
     public void setElementAt(T element, long position);
+    /**
+     * Append the given element to this vector.  This has
+     * the side effect of increasing the {@link #length() }.
+     * @param element the element to append
+     */
     public void append(T element);
     public Vector<T> add(Vector<T> addend);
     public Vector<T> subtract(Vector<T> subtrahend);
     public Vector<T> negate();
+    public Vector<T> scale(T factor);
+    /**
+     * Compute the magnitude of this vector.  This is
+     * equivalent to geometric length of this vector.
+     * @return the magnitude
+     */
     public T magnitude();
+    /**
+     * Compute the dot product of this vector and the given vector.
+     * Dividing this result by the product of {@code this.magnitude()}
+     * and {@code other.magnitude()} gives the cosine of the angle
+     * between the two vectors.
+     * @param other the vector with which to compute the dot product
+     * @return the dot product
+     */
     public T dotProduct(Vector<T> other);
+    /**
+     * Compute the cross product of this vector and the given vector.
+     * The resulting vector is orthogonal to this and {@code other},
+     * with a magnitude equal to ||this||&sdot;||other||&sdot;sin(&theta;) and
+     * &theta; being the angle between these two vectors;
+     * @param other the vector with which to compute the cross product
+     * @return the cross product
+     */
     public Vector<T> crossProduct(Vector<T> other);
 }
