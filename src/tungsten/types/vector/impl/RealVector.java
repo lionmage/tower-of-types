@@ -178,9 +178,9 @@ public class RealVector implements Vector<RealType> {
     }
     
     /**
-     * Compute the angle between this vector and the given vector.
+     * Compute the angle &theta; between this vector and the given vector.
      * @param other the other vector
-     * @return the angle between this and the {@code other} vector
+     * @return the angle &theta; between this and {@code other}
      */
     public RealType computeAngle(Vector<RealType> other) {
         RealType cosine = (RealType) this.dotProduct(other).divide(this.magnitude().multiply(other.magnitude()));
