@@ -81,4 +81,10 @@ public interface Vector<T extends Numeric> {
      * @return the cross product
      */
     public Vector<T> crossProduct(Vector<T> other);
+    /**
+     * Return a normalized vector that has the same direction as this
+     * vector, but with a magnitude of 1 (i.e., a unit vector).
+     * @return 
+     */
+    public Vector<T> normalize();
 }

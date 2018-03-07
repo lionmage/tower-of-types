@@ -71,12 +71,12 @@ public class ZeroVector implements Vector<RealType> {
 
     @Override
     public void setElementAt(RealType element, long position) {
-        throw new UnsupportedOperationException("Zero vector is immutable."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Zero vector is immutable.");
     }
 
     @Override
     public void append(RealType element) {
-        throw new UnsupportedOperationException("Zero vector is immutable."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Zero vector is immutable.");
     }
 
     @Override
@@ -112,6 +112,11 @@ public class ZeroVector implements Vector<RealType> {
     @Override
     public Vector<RealType> crossProduct(Vector<RealType> other) {
         return this;
+    }
+
+    @Override
+    public Vector<RealType> normalize() {
+        throw new UnsupportedOperationException("Zero vector cannot be normalized.");
     }
     
 }
