@@ -1,0 +1,231 @@
+/* 
+ * The MIT License
+ *
+ * Copyright © 2018 Robert Poole <Tarquin.AZ@gmail.com>.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+package tungsten.types.numerics.impl;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import tungsten.types.Numeric;
+import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.NumericHierarchy;
+import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.Sign;
+
+/**
+ * This class provides a representation of the mathematical constant pi (&pi;).
+ * The class is not publicly instantiable; it provides a factory method
+ * that will give you back an instance of itself for a given {@link MathContext},
+ * and keeps a cache of instances that have been generated so that the value
+ * of pi only needs to be calculated once for a given precision and
+ * {@link RoundingMode}.
+ * 
+ * Internally, this class uses the BBP formula for deriving Pi to an
+ * arbitrary precision.
+ *
+ * @author tarquin
+ * @see <a href="https://en.wikipedia.org/wiki/Bailey%E2%80%93Borwein%E2%80%93Plouffe_formula">the Wikipedia article on BBP</a>
+ */
+public class Pi implements RealType, Comparable<RealType> {
+    private BigDecimal value;
+    private MathContext mctx;
+    
+    private Pi(MathContext mctx) {
+        this.mctx = mctx;
+        calculate();
+    }
+    
+    private static final Lock instanceLock = new ReentrantLock();
+    private static final Map<MathContext, Pi> instanceMap = new HashMap<>();
+    
+    /**
+     * Factory method for obtaining an instance of &pi; at a given precision.
+     * @param mctx provides the desired precision and {@link RoundingMode} used for internal calculations
+     * @return an instance of &pi; to the specified precision
+     */
+    public static Pi getInstance(MathContext mctx) {
+        instanceLock.lock();
+        try {
+            Pi instance = instanceMap.get(mctx);
+            if (instance == null) {
+                instance = new Pi(mctx);
+            }
+            return instance;
+        } finally {
+            instanceLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean isIrrational() {
+        return true;
+    }
+
+    @Override
+    public RealType magnitude() {
+        final RealImpl proxy = new RealImpl(value, false);
+        proxy.setIrrational(true);
+        return proxy;
+    }
+
+    @Override
+    public RealType negate() {
+        final RealImpl negvalue = new RealImpl(value.negate(), false);
+        negvalue.setIrrational(true);
+        return negvalue;
+    }
+
+    @Override
+    public BigDecimal asBigDecimal() {
+        return value;
+    }
+
+    @Override
+    public Sign sign() {
+        return Sign.POSITIVE;
+    }
+
+    @Override
+    public boolean isExact() {
+        return false;
+    }
+
+    @Override
+    public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
+        NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
+        // can be coerced to real or complex
+        return htype.compareTo(NumericHierarchy.REAL) >= 0;
+    }
+
+    @Override
+    public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
+        switch (htype) {
+            case REAL:
+                return this;  // it's already a real
+            case COMPLEX:
+                return new ComplexRectImpl(this, new RealImpl(BigDecimal.ZERO));
+            default:
+                throw new CoercionException("Pi can only be coerced to real or complex",
+                        this.getClass(), numtype);
+        }
+    }
+
+    @Override
+    public Numeric add(Numeric addend) {
+        return addend.add(this);
+    }
+
+    @Override
+    public Numeric subtract(Numeric subtrahend) {
+        return subtrahend.negate().add(this);
+    }
+
+    @Override
+    public Numeric multiply(Numeric multiplier) {
+        return multiplier.multiply(this);
+    }
+
+    @Override
+    public Numeric divide(Numeric divisor) {
+        return divisor.inverse().multiply(this);
+    }
+
+    @Override
+    public Numeric inverse() {
+        return this.magnitude().inverse();
+    }
+
+    @Override
+    public Numeric sqrt() {
+        return this.magnitude().sqrt();
+    }
+    
+    public long numberOfDigits() {
+        return (long) mctx.getPrecision();
+    }
+    
+    /*
+    Computes the value of pi using the BBP formula.
+    */
+    private void calculate() {
+        BigDecimal value = BigDecimal.ZERO;
+        // compute a few extra digits so we can round off later
+        MathContext compctx = new MathContext(mctx.getPrecision() + 4, mctx.getRoundingMode());
+        for (int k = 0; k < mctx.getPrecision() - 1; k++) {
+            value = value.add(computeKthTerm(k, compctx), compctx);
+        }
+        this.value = value.round(mctx);
+    }
+    
+    private static final BigDecimal TWO  = BigDecimal.valueOf(2L);
+    private static final BigDecimal FOUR = BigDecimal.valueOf(4L);
+    private static final BigDecimal FIVE = BigDecimal.valueOf(5L);
+    private static final BigDecimal SIX  = BigDecimal.valueOf(6L);
+    private static final BigDecimal EIGHT = BigDecimal.valueOf(8L);
+    private static final BigDecimal SIXTEEN = BigDecimal.valueOf(16L);
+    
+    private BigDecimal computeKthTerm(int k, MathContext ctx) {
+        BigDecimal kval = BigDecimal.valueOf((long) k);
+        BigDecimal scale = BigDecimal.ONE.divide(SIXTEEN.pow(k, ctx), ctx);
+        BigDecimal interm1 = FOUR.divide(EIGHT.multiply(kval, ctx).add(BigDecimal.ONE, ctx), ctx);
+        BigDecimal interm2 = TWO.divide(EIGHT.multiply(kval, ctx).add(FOUR, ctx), ctx);
+        BigDecimal interm3 = BigDecimal.ONE.divide(EIGHT.multiply(kval, ctx).add(FIVE, ctx), ctx);
+        BigDecimal interm4 = BigDecimal.ONE.divide(EIGHT.multiply(kval, ctx).add(SIX, ctx), ctx);
+        return interm1.subtract(interm2, ctx).subtract(interm3, ctx).subtract(interm4, ctx).multiply(scale, ctx);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Pi) {
+            Pi that = (Pi) o;
+            if (this.mctx.getRoundingMode() != that.mctx.getRoundingMode()) return false;
+            return this.numberOfDigits() == that.numberOfDigits();
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 73 * hash + Objects.hashCode(this.value);
+        hash = 73 * hash + Objects.hashCode(this.mctx);
+        return hash;
+    }
+
+    @Override
+    public int compareTo(RealType o) {
+        return value.compareTo(o.asBigDecimal());
+    }
+    
+    @Override
+    public String toString() {
+        // returns the mathematical small italic pi symbol with precision in digits
+        return "\uD835\uDF0B[" + numberOfDigits() + "]";
+    }
+}
