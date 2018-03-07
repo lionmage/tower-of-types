@@ -165,7 +165,16 @@ public class RealVector implements Vector<RealType> {
 
     @Override
     public Vector<RealType> crossProduct(Vector<RealType> other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.length() != other.length() || this.length() != 3L) {
+            throw new ArithmeticException("Cannot compute cross product for vectors of dimension other than 3");
+        }
+        //  A×B = (a2*b3 - a3*b2, a3*b1 - a1*b3, a1*b2 - a2*b1)
+        RealVector result = new RealVector(3L);
+        result.setElementAt((RealType) this.elementAt(1L).multiply(other.elementAt(2L).subtract(this.elementAt(2L).multiply(other.elementAt(1L)))), 0L);
+        result.setElementAt((RealType) this.elementAt(2L).multiply(other.elementAt(0L)).subtract(this.elementAt(0L).multiply(other.elementAt(2L))), 1L);
+        result.setElementAt((RealType) this.elementAt(0L).multiply(other.elementAt(1L)).subtract(this.elementAt(1L).multiply(other.elementAt(0L))), 2L);
+        
+        return result;
     }
     
     public RealType computeAngle(Vector<RealType> other) {
