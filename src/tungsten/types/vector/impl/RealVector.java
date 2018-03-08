@@ -162,6 +162,22 @@ public class RealVector implements Vector<RealType> {
         }
         return new RealImpl(accum);
     }
+    
+    private static TableElement telt(int idx, int coeff) {
+        return new TableElement(idx, coeff);
+    }
+    
+    // anything with an index of -1 will be skipped over
+    private static final TableElement[][] cpTable =
+    {
+        {telt(-1, 0), telt(2, 1), telt(1, -1), telt(4, 1), telt(3, -1), telt(6, -1), telt(5, 1)},
+        {telt(2, -1), telt(-1, 0), telt(0, 1), telt(5, 1), telt(6, 1), telt(3, -1), telt(4, -1)},
+        {telt(1, 1), telt(0, -1), telt(-1, 0), telt(6, 1), telt(5, -1), telt(4, 1), telt(3, -1)},
+        {telt(4, -1), telt(5, -1), telt(6, -1), telt(-1, 0), telt(0, 1), telt(1, 1), telt(2, 1)},
+        {telt(3, 1), telt(6, -1), telt(5, 1), telt(0, -1), telt(-1, 0), telt(2, -1), telt(1, 1)},
+        {telt(6, 1), telt(3, 1), telt(4, -1), telt(1, -1), telt(2, 1), telt(-1, 0), telt(0, -1)},
+        {telt(5, -1), telt(4, 1), telt(3, 1), telt(2, -1), telt(1, -1), telt(0, 1), telt(-1, 0)}
+    };
 
     @Override
     public Vector<RealType> crossProduct(Vector<RealType> other) {
@@ -177,8 +193,16 @@ public class RealVector implements Vector<RealType> {
             result.setElementAt((RealType) this.elementAt(0L).multiply(other.elementAt(1L)).subtract(this.elementAt(1L).multiply(other.elementAt(0L))), 2L);
         } else if (this.length() == 7L) {
             result = new RealVector(7L);
-            // TODO add support for 7-dimensional cross product
             // see: https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
+            for (int y = 0; y < 7; y++) {
+                for (int x = 0; x < 7; x++) {
+                    long index = cpTable[y][x].getIndex();
+                    if (index < 0L) continue;
+                    RealType coeff = cpTable[y][x].getCoeff();
+                    RealType accum = result.elementAt(index) == null ? new RealImpl(BigDecimal.ZERO) : result.elementAt(index);
+                    result.setElementAt((RealType) accum.add(this.elementAt((long) y).multiply(other.elementAt((long) x)).multiply(coeff)), index);
+                }
+            }
         } else {
             throw new ArithmeticException("Cross product undefined for " + this.length() + " dimensions.");
         }
