@@ -73,6 +73,7 @@ public class RealImpl implements RealType, Comparable<RealType> {
      */
     public RealImpl(RationalType init) {
         this(init.asBigDecimal(), init.isExact());
+        this.setMathContext(init.getMathContext());
         irrational = false;
     }
     
@@ -88,14 +89,14 @@ public class RealImpl implements RealType, Comparable<RealType> {
     
     public void setIrrational(boolean irrational) {
         if (irrational && this.exact) {
-            throw new IllegalStateException("There cannot be an exact representation of an irrational number");
+            throw new IllegalStateException("There cannot be an exact representation of an irrational number.");
         }
         this.irrational = irrational;
     }
     
     public void setMathContext(MathContext mctx) {
         if (mctx == null) {
-            throw new IllegalArgumentException("MathContext must not be null");
+            throw new IllegalArgumentException("MathContext must not be null.");
         }
         this.mctx = mctx;
     }
@@ -312,5 +313,10 @@ public class RealImpl implements RealType, Comparable<RealType> {
     @Override
     public int compareTo(RealType o) {
         return val.compareTo(o.asBigDecimal());
+    }
+
+    @Override
+    public MathContext getMathContext() {
+        return mctx;
     }
 }

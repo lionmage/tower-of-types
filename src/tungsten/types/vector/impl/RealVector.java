@@ -30,10 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.util.OptionalOperations;
 
 /**
  *
@@ -75,9 +77,12 @@ public class RealVector implements Vector<RealType> {
     
     public void setMathContext(MathContext mctx) {
         if (mctx == null) {
-            throw new IllegalArgumentException("MathContext must not be null");
+            throw new IllegalArgumentException("MathContext must not be null.");
         }
         this.mctx = mctx;
+        for (RealType element : elements) {
+            OptionalOperations.setMathContext(element, mctx);
+        }
     }
 
     @Override
@@ -142,7 +147,8 @@ public class RealVector implements Vector<RealType> {
         for (RealType element : elements) {
             accum = accum.add(element.asBigDecimal().multiply(element.asBigDecimal(), mctx), mctx);
         }
-        RealType sumOfSquares = new RealImpl(accum);
+        RealImpl sumOfSquares = new RealImpl(accum);
+        sumOfSquares.setMathContext(mctx);
         try {
             return (RealType) sumOfSquares.sqrt().coerceTo(RealType.class);
         } catch (CoercionException ex) {
@@ -229,6 +235,7 @@ public class RealVector implements Vector<RealType> {
     public Vector<RealType> scale(RealType factor) {
         RealVector result = new RealVector(this.length());
         for (RealType element : elements) {
+            OptionalOperations.setMathContext(element, mctx);
             result.append((RealType) element.multiply(factor));
         }
         return result;
@@ -236,7 +243,28 @@ public class RealVector implements Vector<RealType> {
 
     @Override
     public Vector<RealType> normalize() {
-        return this.scale((RealType) this.magnitude().inverse());
+        try {
+            final Numeric invmagnitude = this.magnitude().inverse();
+            OptionalOperations.setMathContext(invmagnitude, mctx);
+            final RealType scalefactor = (RealType) invmagnitude.coerceTo(RealType.class);
+            OptionalOperations.setMathContext(scalefactor, mctx);
+            return this.scale(scalefactor);
+        } catch (CoercionException ex) {
+            Logger.getLogger(RealVector.class.getName()).log(Level.SEVERE, "Coercion failed", ex);
+            throw new IllegalStateException("Could not coerce scale argument to real", ex);
+        }
     }
     
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Vector) {
+            Vector that = (Vector) o;
+            if (this.length() != that.length()) return false;
+            for (long idx = 0L; idx < this.length(); idx++) {
+                if (!this.elementAt(idx).equals(that.elementAt(idx))) return false;
+            }
+            return true;
+        }
+        return false;
+    }
 }

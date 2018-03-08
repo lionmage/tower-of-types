@@ -34,7 +34,6 @@ import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RationalType;
-import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 
 /**
@@ -174,10 +173,15 @@ public class RationalImpl implements RationalType, Comparable<RationalType> {
             case RATIONAL:
                 return this;
             case REAL:
-                return new RealImpl(this);
+                final RealImpl realval = new RealImpl(this);
+                realval.setMathContext(mctx);
+                return realval;
             case COMPLEX:
-                final RealType zero = new RealImpl(BigDecimal.ZERO);
-                return new ComplexRectImpl(new RealImpl(this), zero, exact);
+                final RealImpl zero = new RealImpl(BigDecimal.ZERO);
+                zero.setMathContext(mctx);
+                final RealImpl creal = new RealImpl(this);
+                creal.setMathContext(mctx);
+                return new ComplexRectImpl(creal, zero, exact);
             default:
                 throw new CoercionException("Cannot convert rational to unknown type", this.getClass(), numtype);
         }
@@ -311,5 +315,10 @@ public class RationalImpl implements RationalType, Comparable<RationalType> {
     public Sign sign() {
         // the denominator is always positive; numerator contains sign information
         return Sign.fromValue(numerator);
+    }
+
+    @Override
+    public MathContext getMathContext() {
+        return mctx;
     }
 }

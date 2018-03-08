@@ -312,4 +312,9 @@ public class ComplexPolarImpl implements ComplexType {
         // returns this complex number in angle notation
         return modulus.toString() + " \u2220" + argument.toString();
     }
+
+    @Override
+    public MathContext getMathContext() {
+        return mctx;
+    }
 }

@@ -23,6 +23,7 @@
  */
 package tungsten.types;
 
+import java.math.MathContext;
 import tungsten.types.exceptions.CoercionException;
 
 /**
@@ -33,7 +34,6 @@ import tungsten.types.exceptions.CoercionException;
 public interface Numeric {
     public boolean isExact();
     public boolean isCoercibleTo(Class<? extends Numeric> numtype);
-    // TODO investigate if there's a better way to implement this
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException;
     public Numeric magnitude();
     public Numeric negate();
@@ -44,4 +44,6 @@ public interface Numeric {
     public Numeric divide(Numeric divisor);
     public Numeric inverse();
     public Numeric sqrt();
+    
+    public MathContext getMathContext();
 }

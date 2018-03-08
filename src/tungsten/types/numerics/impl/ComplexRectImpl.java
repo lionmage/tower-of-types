@@ -106,7 +106,7 @@ public class ComplexRectImpl implements ComplexType {
                     // this is an indeterminate case, so we pick 0
                     return ComplexRectImpl.ZERO;
                 default:
-                    throw new IllegalStateException("Invalid sign value for imaginary component");
+                    throw new IllegalStateException("Invalid sign value for imaginary component.");
             }
         }
         // for the general case, we need to compute the arctangent
@@ -145,7 +145,7 @@ public class ComplexRectImpl implements ComplexType {
                 if (imag.asBigDecimal().compareTo(BigDecimal.ZERO) == 0) {
                     return real;
                 } else {
-                    throw new CoercionException("Imaginary part must be 0",
+                    throw new CoercionException("Imaginary part must be 0.",
                             this.getClass(), numtype);
                 }
             default:
@@ -281,5 +281,10 @@ public class ComplexRectImpl implements ComplexType {
         }
         buf.append('i');
         return buf.toString();
+    }
+
+    @Override
+    public MathContext getMathContext() {
+        return mctx;
     }
 }

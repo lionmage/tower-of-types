@@ -90,6 +90,7 @@ public class Pi implements RealType, Comparable<RealType> {
     public RealType magnitude() {
         final RealImpl proxy = new RealImpl(value, false);
         proxy.setIrrational(true);
+        proxy.setMathContext(mctx);
         return proxy;
     }
 
@@ -97,6 +98,7 @@ public class Pi implements RealType, Comparable<RealType> {
     public RealType negate() {
         final RealImpl negvalue = new RealImpl(value.negate(), false);
         negvalue.setIrrational(true);
+        negvalue.setMathContext(mctx);
         return negvalue;
     }
 
@@ -227,5 +229,10 @@ public class Pi implements RealType, Comparable<RealType> {
     public String toString() {
         // returns the mathematical small italic pi symbol with precision in digits
         return "\uD835\uDF0B[" + numberOfDigits() + "]";
+    }
+
+    @Override
+    public MathContext getMathContext() {
+        return mctx;
     }
 }

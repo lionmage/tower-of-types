@@ -25,6 +25,7 @@ package tungsten.types.numerics.impl;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -118,7 +119,14 @@ public class IntegerImpl implements IntegerType, Comparable<IntegerType> {
             temp = sumDigits(temp);
         } while (temp.asBigInteger().compareTo(NINE) > 0);
         int digroot = temp.asBigInteger().intValueExact();
-        return digroot == 0 || digroot == 1 || digroot == 4 || digroot == 7;
+        if (digroot == 0 || digroot == 1 || digroot == 4 || digroot == 7) {
+            // this is a candidate for a perfect square, but the only way
+            // to be sure is to take the square root and then square the result,
+            // comparing with this value to see if it matches
+            IntegerType root = this.sqrt();
+            return root.multiply(root).equals(this);
+        }
+        return false;
     }
 
     protected IntegerType sumDigits(IntegerType temp) {
@@ -349,8 +357,8 @@ public class IntegerImpl implements IntegerType, Comparable<IntegerType> {
         while (true) {
             BigInteger y = div.add(val.divide(div)).shiftRight(1);
             if (y.equals(div) || y.equals(div2)) {
-                boolean exactness = isPerfectSquare();
                 BigInteger lowest = div.min(div2);
+                boolean exactness = exact && lowest.multiply(lowest).equals(this.asBigInteger());
                 // original algorithm returned y
                 return new IntegerImpl(lowest, exactness);
             }
@@ -387,5 +395,15 @@ public class IntegerImpl implements IntegerType, Comparable<IntegerType> {
     @Override
     public Sign sign() {
         return Sign.fromValue(val);
+    }
+
+    @Override
+    public MathContext getMathContext() {
+        return MathContext.UNLIMITED;
+    }
+    
+    @Override
+    public String toString() {
+        return val.toString();
     }
 }
