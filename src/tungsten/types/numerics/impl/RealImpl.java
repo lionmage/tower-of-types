@@ -281,7 +281,9 @@ public class RealImpl implements RealType, Comparable<RealType> {
             // division will result in an infinitely repeating sequence.
             // If so, set exactness = false.
         }
-        return new RealImpl(BigDecimal.ONE.divide(val, mctx), exactness);
+        final RealImpl inv = new RealImpl(BigDecimal.ONE.divide(val, mctx), exactness);
+        inv.setMathContext(mctx);
+        return inv;
     }
 
     @Override
@@ -334,7 +336,6 @@ public class RealImpl implements RealType, Comparable<RealType> {
         if (o instanceof RealType) {
             RealType that = (RealType) o;
             if (this.isExact() != that.isExact()) return false;
-//            return val.equals(that.asBigDecimal());
             return val.compareTo(that.asBigDecimal()) == 0;
         }
         return false;

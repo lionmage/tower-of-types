@@ -249,10 +249,7 @@ public class RealVector implements Vector<RealType> {
     @Override
     public Vector<RealType> normalize() {
         try {
-            final Numeric invmagnitude = this.magnitude().inverse();
-            OptionalOperations.setMathContext(invmagnitude, mctx);
-            final RealType scalefactor = (RealType) invmagnitude.coerceTo(RealType.class);
-            OptionalOperations.setMathContext(scalefactor, mctx);
+            final RealType scalefactor = (RealType) this.magnitude().inverse().coerceTo(RealType.class);
             return this.scale(scalefactor);
         } catch (CoercionException ex) {
             Logger.getLogger(RealVector.class.getName()).log(Level.SEVERE, "Coercion failed", ex);

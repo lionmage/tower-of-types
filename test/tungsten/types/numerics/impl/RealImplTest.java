@@ -117,20 +117,6 @@ public class RealImplTest {
     }
 
     /**
-     * Test of negate method, of class RealImpl.
-     */
-    @Test
-    public void testNegate() {
-        System.out.println("negate");
-        RealImpl instance = null;
-        RealType expResult = null;
-        RealType result = instance.negate();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
      * Test of asBigDecimal method, of class RealImpl.
      */
     @Test
@@ -146,16 +132,23 @@ public class RealImplTest {
 
     /**
      * Test of sign method, of class RealImpl.
+     * This also implicitly tests negate().
      */
     @Test
     public void testSign() {
         System.out.println("sign");
-        RealImpl instance = null;
-        Sign expResult = null;
+        RealImpl instance = new RealImpl("-67.55");
+        Sign expResult = Sign.NEGATIVE;
         Sign result = instance.sign();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        RealType derived = instance.negate();
+        expResult = Sign.POSITIVE;
+        result = derived.sign();
+        assertEquals(expResult, result);
+        
+        result = ((RealType) instance.add(derived)).sign();
+        assertEquals(Sign.ZERO, result);
     }
 
     /**
@@ -311,12 +304,15 @@ public class RealImplTest {
     @Test
     public void testIsIntegralValue() {
         System.out.println("isIntegralValue");
-        RealImpl instance = null;
+        RealImpl instance = new RealImpl("15.766");
         boolean expResult = false;
         boolean result = instance.isIntegralValue();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        instance = new RealImpl("86");
+        expResult = true;
+        result = instance.isIntegralValue();
+        assertEquals(expResult, result);
     }
     
 }
