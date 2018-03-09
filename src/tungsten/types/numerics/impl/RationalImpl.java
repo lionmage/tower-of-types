@@ -139,7 +139,9 @@ public class RationalImpl implements RationalType, Comparable<RationalType> {
             // this fraction cannot be reduced any further
             return this;
         }
-        return new RationalImpl(numerator.divide(gcd), denominator.divide(gcd));
+        RationalImpl reduced = new RationalImpl(numerator.divide(gcd), denominator.divide(gcd), exact);
+        reduced.setMathContext(mctx);
+        return reduced;
     }
 
     @Override

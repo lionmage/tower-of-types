@@ -234,6 +234,7 @@ public class RealVector implements Vector<RealType> {
     @Override
     public Vector<RealType> scale(RealType factor) {
         RealVector result = new RealVector(this.length());
+        result.setMathContext(mctx);
         for (RealType element : elements) {
             OptionalOperations.setMathContext(element, mctx);
             result.append((RealType) element.multiply(factor));

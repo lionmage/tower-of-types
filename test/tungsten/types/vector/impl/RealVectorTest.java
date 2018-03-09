@@ -264,9 +264,12 @@ public class RealVectorTest {
         RealVector instance = vect1;
         MathContext context = new MathContext(10, RoundingMode.HALF_UP);
         instance.setMathContext(context);
+        System.out.println("Done initializing MathContext on vector");
         Vector<RealType> result = instance.normalize();
         assertEquals(5L, result.length());
-        assertEquals(new RealImpl(BigDecimal.ONE), result.magnitude());
+        RealImpl expValue = new RealImpl(BigDecimal.ONE);
+        expValue.setMathContext(context);
+        assertEquals(expValue, result.magnitude());
     }
     
 }

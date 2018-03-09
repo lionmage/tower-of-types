@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RationalType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
@@ -133,12 +134,55 @@ public class RealImpl implements RealType, Comparable<RealType> {
 
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
+        switch (htype) {
+            case COMPLEX:
+            case REAL:
+                return true;
+            case INTEGER:
+                return this.isIntegralValue();
+            case RATIONAL:
+                return !this.isIrrational();
+            default:
+                return false;
+        }
     }
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
+        switch (htype) {
+            case REAL:
+                return this;
+            case COMPLEX:
+                RealType zero = new RealImpl(BigDecimal.ZERO);
+                ComplexRectImpl cplx = new ComplexRectImpl(this, zero, exact);
+                cplx.setMathContext(mctx);
+                return cplx;
+            case RATIONAL:
+                if (!irrational) {
+                    return rationalize();
+                }
+                break;
+            case INTEGER:
+                if (this.isIntegralValue()) {
+                    return new IntegerImpl(val.toBigIntegerExact(), exact);
+                }
+                break;
+        }
+        throw new CoercionException("Failed to coerce real value.", this.getClass(), numtype);
+    }
+    
+    protected RationalType rationalize() {
+        if (isIntegralValue()) {
+            return new RationalImpl(val.toBigIntegerExact(), BigInteger.ONE, exact);
+        }
+        final BigDecimal stripped = val.stripTrailingZeros();
+        IntegerImpl num = new IntegerImpl(stripped.unscaledValue(), exact);
+        IntegerImpl denom = new IntegerImpl(BigInteger.TEN.pow(stripped.scale()));
+        RationalImpl ratl = new RationalImpl(num, denom);
+        ratl.setMathContext(mctx);
+        return ratl.reduce();
     }
 
     @Override
@@ -237,7 +281,8 @@ public class RealImpl implements RealType, Comparable<RealType> {
             // division will result in an infinitely repeating sequence.
             // If so, set exactness = false.
         }
-        return new RealImpl(BigDecimal.ONE.divide(val), exactness);
+        System.out.println("RealImpl MC precision = " + mctx.getPrecision());
+        return new RealImpl(BigDecimal.ONE.divide(val, mctx), exactness);
     }
 
     @Override
@@ -260,7 +305,7 @@ public class RealImpl implements RealType, Comparable<RealType> {
         while (!x0.equals(x1)) {
             x0 = x1;
             x1 = val.divide(x0, mctx);
-            x1 = x1.add(x0);
+            x1 = x1.add(x0, mctx);
             x1 = x1.divide(TWO, mctx);
         }
         
