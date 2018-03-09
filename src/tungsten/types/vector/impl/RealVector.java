@@ -166,7 +166,9 @@ public class RealVector implements Vector<RealType> {
         for (long idx = 0L; idx < this.length(); idx++) {
             accum = accum.add(((RealType) this.elementAt(idx).multiply(other.elementAt(idx))).asBigDecimal(), mctx);
         }
-        return new RealImpl(accum);
+        final RealImpl result = new RealImpl(accum);
+        result.setMathContext(mctx);
+        return result;
     }
     
     private static TableElement telt(int idx, int coeff) {
@@ -223,7 +225,9 @@ public class RealVector implements Vector<RealType> {
     public RealType computeAngle(Vector<RealType> other) {
         RealType cosine = (RealType) this.dotProduct(other).divide(this.magnitude().multiply(other.magnitude()));
         BigDecimal angle = BigDecimalMath.acos(cosine.asBigDecimal(), mctx);
-        return new RealImpl(angle);
+        final RealImpl radangle = new RealImpl(angle);
+        radangle.setMathContext(mctx);
+        return radangle;
     }
 
     @Override

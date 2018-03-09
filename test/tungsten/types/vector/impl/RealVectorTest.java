@@ -37,7 +37,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import tungsten.types.Vector;
 import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.impl.Pi;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.util.OptionalOperations;
 
 /**
  *
@@ -218,13 +220,17 @@ public class RealVectorTest {
     @Test
     public void testComputeAngle() {
         System.out.println("computeAngle");
-        Vector<RealType> other = null;
-        RealVector instance = null;
-        RealType expResult = null;
+        MathContext ctx = new MathContext(10, RoundingMode.HALF_UP);
+        String[] values1 = {"1.2", "0.0"};
+        String[] values2 = {"1.6", "1.6"};
+        Vector<RealType> other = new RealVector(Arrays.stream(values2).map(x -> new RealImpl(x)).collect(Collectors.toList()));
+        OptionalOperations.setMathContext(other, ctx);
+        RealVector instance = new RealVector(Arrays.stream(values1).map(x -> new RealImpl(x)).collect(Collectors.toList()));
+        instance.setMathContext(ctx);
+        // Should be a 45 degree angle between these two vectors.
+        RealType expResult = (RealType) Pi.getInstance(ctx).divide(new RealImpl("4.0"));
         RealType result = instance.computeAngle(other);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
