@@ -281,7 +281,6 @@ public class RealImpl implements RealType, Comparable<RealType> {
             // division will result in an infinitely repeating sequence.
             // If so, set exactness = false.
         }
-        System.out.println("RealImpl MC precision = " + mctx.getPrecision());
         return new RealImpl(BigDecimal.ONE.divide(val, mctx), exactness);
     }
 

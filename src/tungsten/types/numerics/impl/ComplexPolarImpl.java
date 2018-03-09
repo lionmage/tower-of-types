@@ -35,6 +35,7 @@ import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.util.OptionalOperations;
 
 /**
  *
@@ -63,10 +64,8 @@ public class ComplexPolarImpl implements ComplexType {
 
     public void setMathContext(MathContext mctx) {
         this.mctx = mctx;
-        if (modulus instanceof RealImpl && argument instanceof RealImpl) {
-            ((RealImpl) modulus).setMathContext(mctx);
-            ((RealImpl) argument).setMathContext(mctx);
-        } // other implementations of RealType will require their own MathContext setting
+        OptionalOperations.setMathContext(modulus, mctx);
+        OptionalOperations.setMathContext(argument, mctx);
     }
     
     @Override

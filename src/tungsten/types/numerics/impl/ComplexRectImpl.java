@@ -34,6 +34,7 @@ import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.util.OptionalOperations;
 
 /**
  *
@@ -60,10 +61,8 @@ public class ComplexRectImpl implements ComplexType {
     
     public void setMathContext(MathContext context) {
         this.mctx = context;
-        if (real instanceof RealImpl && imag instanceof RealImpl) {
-            ((RealImpl) real).setMathContext(mctx);
-            ((RealImpl) imag).setMathContext(mctx);
-        } // if we're using some other implementation of RealType, it should take care of itself
+        OptionalOperations.setMathContext(real, mctx);
+        OptionalOperations.setMathContext(imag, mctx);
     }
 
     @Override
