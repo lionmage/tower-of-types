@@ -167,10 +167,10 @@ public class ComplexRectImpl implements ComplexType {
                 return new ComplexRectImpl((RealType) this.real().add(realval), this.imaginary(), exact && realval.isExact());
             } catch (CoercionException ex) {
                 // we should never get here
-                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce addend to RealType", ex);
+                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce addend to RealType.", ex);
             }
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Unsupported addend type.");
     }
 
     @Override
@@ -186,10 +186,10 @@ public class ComplexRectImpl implements ComplexType {
                 return new ComplexRectImpl((RealType) this.real().subtract(realval), this.imaginary(), exact && realval.isExact());
             } catch (CoercionException ex) {
                 // we should never get here
-                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce subtrahend to RealType", ex);
+                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce subtrahend to RealType.", ex);
             }
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Unsupported subtrahend type.");
     }
 
     @Override
@@ -204,10 +204,10 @@ public class ComplexRectImpl implements ComplexType {
                 RealType scalar = (RealType) multiplier.coerceTo(RealType.class);
                 return new ComplexRectImpl((RealType) real.multiply(scalar), (RealType) imag.multiply(scalar), exact && scalar.isExact());
             } catch (CoercionException ex) {
-                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce multiplier to RealType", ex);
+                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce multiplier to RealType.", ex);
             }
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Unsupported multiplier type.");
     }
 
     @Override
@@ -220,17 +220,17 @@ public class ComplexRectImpl implements ComplexType {
                 RealType denom = (RealType) cdiv.multiply(conj).coerceTo(RealType.class);
                 return new ComplexRectImpl((RealType) num.real().divide(denom), (RealType) num.imaginary().divide(denom), exact && denom.isExact());
             } catch (CoercionException ex) {
-                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Complex multiplied by conjugate should be of RealType", ex);
+                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Complex multiplied by conjugate should be of RealType.", ex);
             }
         } else if (divisor.isCoercibleTo(RealType.class)) {
             try {
                 RealType scalar = (RealType) divisor.coerceTo(RealType.class);
                 return new ComplexRectImpl((RealType) real.divide(scalar), (RealType) imag.divide(scalar), exact && scalar.isExact());
             } catch (CoercionException ex) {
-                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce divisor to RealType", ex);
+                Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce divisor to RealType.", ex);
             }
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Unsupported divisor type."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -250,8 +250,8 @@ public class ComplexRectImpl implements ComplexType {
             root.setMathContext(mctx);
             return root;
         } catch (CoercionException ex) {
-            Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce sqrt() result to RealType", ex);
-            throw new IllegalStateException("Unexpected failure to coerce integer sqrt() result", ex);
+            Logger.getLogger(ComplexRectImpl.class.getName()).log(Level.SEVERE, "Failed to coerce sqrt() result to RealType.", ex);
+            throw new IllegalStateException("Unexpected failure to coerce integer sqrt() result.", ex);
         }
     }
     

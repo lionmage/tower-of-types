@@ -93,6 +93,9 @@ public class ComplexVector implements Vector<ComplexType> {
             throw new IllegalArgumentException("MathContext must not be null");
         }
         this.mctx = mctx;
+        for (ComplexType element : elements) {
+            OptionalOperations.setMathContext(element, mctx);
+        }
     }
 
     @Override
@@ -152,6 +155,18 @@ public class ComplexVector implements Vector<ComplexType> {
     @Override
     public Vector<ComplexType> negate() {
         List<ComplexType> list = elements.stream().sequential().map(x -> x.negate()).collect(Collectors.toList());
+        final ComplexVector result = new ComplexVector(list);
+        result.setMathContext(mctx);
+        return result;
+    }
+
+    /**
+     * Similar to {@link #negate() }, but converts each element into its
+     * complex conjugate instead of its negative.
+     * @return a new vector of complex conjugates of this vector's elements
+     */
+    public Vector<ComplexType> conjugate() {
+        List<ComplexType> list = elements.stream().sequential().map(x -> x.conjugate()).collect(Collectors.toList());
         final ComplexVector result = new ComplexVector(list);
         result.setMathContext(mctx);
         return result;

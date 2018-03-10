@@ -122,8 +122,9 @@ public class ComplexPolarImpl implements ComplexType {
                 return true;
             case REAL:
                 Pi pi = Pi.getInstance(mctx);
-                return normalizeArgument().asBigDecimal().compareTo(BigDecimal.ZERO) == 0 ||
-                        normalizeArgument().asBigDecimal().compareTo(pi.asBigDecimal()) == 0;
+                final BigDecimal argNormalized = normalizeArgument().asBigDecimal();
+                return argNormalized.compareTo(BigDecimal.ZERO) == 0 ||
+                        argNormalized.compareTo(pi.asBigDecimal()) == 0;
             default:
                 return false;
         }
@@ -136,6 +137,7 @@ public class ComplexPolarImpl implements ComplexType {
         }
         Pi pi = Pi.getInstance(mctx);
         RealImpl negpi = (RealImpl) pi.negate();
+        RealImpl twopi = (RealImpl) pi.multiply(TWO);
         RealImpl reimpl = (RealImpl) argument;
         
         if (reimpl.compareTo(pi) <= 0 && reimpl.compareTo(negpi) > 0) {
@@ -144,11 +146,11 @@ public class ComplexPolarImpl implements ComplexType {
         } else {
             // reduce values > pi
             while (reimpl.compareTo(pi) > 0) {
-                reimpl = (RealImpl) reimpl.subtract(pi);
+                reimpl = (RealImpl) reimpl.subtract(twopi);
             }
             // increase values < -pi
             while (reimpl.compareTo(negpi) < 0) {
-                reimpl = (RealImpl) reimpl.add(pi);
+                reimpl = (RealImpl) reimpl.add(twopi);
             }
             return reimpl;
         }
@@ -234,10 +236,10 @@ public class ComplexPolarImpl implements ComplexType {
                 }
             } catch (CoercionException ex) {
                 // we should never get here
-                Logger.getLogger(ComplexPolarImpl.class.getName()).log(Level.SEVERE, "Failed to coerce multiplier to RealType", ex);
+                Logger.getLogger(ComplexPolarImpl.class.getName()).log(Level.SEVERE, "Failed to coerce multiplier to RealType.", ex);
             }
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Unsupported type of multiplier.");
     }
 
     @Override
@@ -252,23 +254,22 @@ public class ComplexPolarImpl implements ComplexType {
         } else if (divisor.isCoercibleTo(RealType.class)) {
             try {
                 RealType scalar = (RealType) divisor.coerceTo(RealType.class);
-                if (scalar.asBigDecimal().compareTo(BigDecimal.ZERO) == 0) {
-                    throw new IllegalArgumentException("Division by zero not allowed");
-                }
-                Pi pi = Pi.getInstance(mctx);
                 switch (scalar.sign()) {
+                    case ZERO:
+                        throw new IllegalArgumentException("Division by zero not allowed.");
                     case NEGATIVE:
+                        Pi pi = Pi.getInstance(mctx);
                         RealType absval = scalar.magnitude();
-                        return new ComplexPolarImpl((RealType) modulus.divide(absval), (RealType) argument.add(pi), false);
+                        return new ComplexPolarImpl((RealType) modulus.divide(absval), (RealType) argument.subtract(pi), false);
                     default:
                         return new ComplexPolarImpl((RealType) modulus.divide(scalar), (RealType) argument);
                 }
             } catch (CoercionException ex) {
                 // we should never get here
-                Logger.getLogger(ComplexPolarImpl.class.getName()).log(Level.SEVERE, "Failed to coerce divisor to RealType", ex);
+                Logger.getLogger(ComplexPolarImpl.class.getName()).log(Level.SEVERE, "Failed to coerce divisor to RealType.", ex);
             }
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Unsupported type of divisor.");
     }
 
     @Override
