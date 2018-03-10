@@ -27,12 +27,15 @@ import ch.obermuhlner.math.big.BigDecimalMath;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tungsten.types.Numeric;
+import java.util.stream.Collectors;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.util.OptionalOperations;
@@ -72,7 +75,13 @@ public class RealVector implements Vector<RealType> {
      * @param source the vector from which to copy
      */
     public RealVector(RealVector source) {
+        this.mctx = source.getMathContext();
         this.elements = new ArrayList<>(source.elements);
+    }
+
+    public RealVector(RealType[] realArray, MathContext mctx) {
+        this.mctx = mctx;
+        this.elements = Arrays.stream(realArray).sequential().peek(x -> OptionalOperations.setMathContext(x, mctx)).collect(Collectors.toList());
     }
     
     public void setMathContext(MathContext mctx) {
@@ -116,6 +125,7 @@ public class RealVector implements Vector<RealType> {
             RealType sum = (RealType) this.elementAt(idx).add(addend.elementAt(idx));
             result.setElementAt(sum, idx);
         }
+        OptionalOperations.setMathContext(result, mctx);
         return result;
     }
 
@@ -129,6 +139,7 @@ public class RealVector implements Vector<RealType> {
             RealType difference = (RealType) this.elementAt(idx).subtract(subtrahend.elementAt(idx));
             result.setElementAt(difference, idx);
         }
+        OptionalOperations.setMathContext(result, mctx);
         return result;
     }
 
@@ -268,5 +279,18 @@ public class RealVector implements Vector<RealType> {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + Objects.hashCode(this.elements);
+        hash = 37 * hash + Objects.hashCode(this.mctx);
+        return hash;
+    }
+
+    @Override
+    public MathContext getMathContext() {
+        return mctx;
     }
 }

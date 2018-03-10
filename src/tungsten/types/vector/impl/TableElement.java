@@ -24,6 +24,7 @@
 package tungsten.types.vector.impl;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
 
@@ -68,5 +69,13 @@ class TableElement {
             return this.index == that.index;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 29 * hash + this.index;
+        hash = 29 * hash + Objects.hashCode(this.coeff);
+        return hash;
     }
 }

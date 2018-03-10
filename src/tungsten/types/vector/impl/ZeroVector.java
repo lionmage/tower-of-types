@@ -24,6 +24,7 @@
 package tungsten.types.vector.impl;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import tungsten.types.Vector;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
@@ -118,5 +119,9 @@ public class ZeroVector implements Vector<RealType> {
     public Vector<RealType> normalize() {
         throw new UnsupportedOperationException("Zero vector cannot be normalized.");
     }
-    
+
+    @Override
+    public MathContext getMathContext() {
+        return MathContext.UNLIMITED;
+    }
 }

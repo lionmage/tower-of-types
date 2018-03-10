@@ -23,6 +23,8 @@
  */
 package tungsten.types;
 
+import java.math.MathContext;
+
 /**
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
@@ -87,4 +89,6 @@ public interface Vector<T extends Numeric> {
      * @return 
      */
     public Vector<T> normalize();
+    
+    public MathContext getMathContext();
 }
