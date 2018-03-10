@@ -37,6 +37,7 @@ import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.Sign;
 import tungsten.types.numerics.impl.ComplexRectImpl;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.util.OptionalOperations;
@@ -70,6 +71,23 @@ public class ComplexVector implements Vector<ComplexType> {
         this.elements = Arrays.stream(cplxArray).sequential().peek(x -> OptionalOperations.setMathContext(x, mctx)).collect(Collectors.toList());
     }
     
+    /**
+     * A copy constructor that takes a vector of reals and generates
+     * a vector of complex values.
+     * @param source a vector of {@link RealType} elements
+     */
+    public ComplexVector(Vector<RealType> source) {
+        this.elements = new ArrayList((int) source.length());
+        for (long idx = 0L; idx < source.length(); idx++) {
+            try {
+                this.setElementAt((ComplexType) source.elementAt(idx).coerceTo(ComplexType.class), idx);
+            } catch (CoercionException ex) {
+                Logger.getLogger(ComplexVector.class.getName()).log(Level.SEVERE, "Error converting real to complex vector at index " + idx, ex);
+                throw new IllegalStateException("Cannot create complex vector from real vector; failed coercion at element " + idx);
+            }
+        }
+    }
+    
     public void setMathContext(MathContext mctx) {
         if (mctx == null) {
             throw new IllegalArgumentException("MathContext must not be null");
@@ -84,12 +102,18 @@ public class ComplexVector implements Vector<ComplexType> {
 
     @Override
     public ComplexType elementAt(long position) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (position > (long) Integer.MAX_VALUE) {
+            throw new IndexOutOfBoundsException("Index exceeds what this vector implementation supports");
+        }
+        return elements.get((int) position);
     }
 
     @Override
     public void setElementAt(ComplexType element, long position) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (position > (long) Integer.MAX_VALUE) {
+            throw new IndexOutOfBoundsException("Index exceeds what this vector implementation supports");
+        }
+        elements.set((int) position, element);
     }
 
     @Override
@@ -148,10 +172,12 @@ public class ComplexVector implements Vector<ComplexType> {
         OptionalOperations.setMathContext(result, mctx);
         if (result instanceof ComplexType) {
             ComplexType cplx = (ComplexType) result;
-            assert(cplx.imaginary().asBigDecimal().compareTo(BigDecimal.ZERO) == 0);
+            assert(cplx.real().asBigDecimal().compareTo(BigDecimal.ZERO) >= 0);
+            assert(cplx.imaginary().sign() == Sign.ZERO);
             return cplx;
         } else if (result instanceof RealType) {
             RealType real = (RealType) result;
+            assert(real.sign() == Sign.POSITIVE || real.sign() == Sign.ZERO);
             RealType zero = new RealImpl(BigDecimal.ZERO, true);
             return new ComplexRectImpl(real, zero);
         } else {
@@ -188,6 +214,7 @@ public class ComplexVector implements Vector<ComplexType> {
      * @param other the other vector
      * @return the angle &theta; between this and {@code other}
      */
+    @Override
     public RealType computeAngle(Vector<ComplexType> other) {
         try {
             RealType cosine = (RealType) this.dotProduct(other).real()
@@ -199,13 +226,31 @@ public class ComplexVector implements Vector<ComplexType> {
             return radangle;
         } catch (CoercionException ex) {
             Logger.getLogger(ComplexVector.class.getName()).log(Level.SEVERE, "Could not coerce vector magnitude to real.", ex);
-            throw new ArithmeticException("Unable to compute angle between two complex vectors");
         }
+        throw new ArithmeticException("Unable to compute angle between two complex vectors");
     }
 
     @Override
     public Vector<ComplexType> normalize() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            final ComplexType scalefactor = (ComplexType) this.magnitude().inverse().coerceTo(ComplexType.class);
+            OptionalOperations.setMathContext(scalefactor, mctx);
+            return this.scale(scalefactor);
+        } catch (CoercionException ex) {
+            Logger.getLogger(RealVector.class.getName()).log(Level.SEVERE, "Coercion failed for computed scale", ex);
+        }
+//        final RealType zero = new RealImpl(BigDecimal.ZERO);
+//        OptionalOperations.setMathContext(zero, mctx);
+//        RealType sumofsquares = elements.parallelStream().map(x -> (RealType) x.magnitude().multiply(x.magnitude()))
+//                .reduce(zero, (a, b) -> (RealType) a.add(b));
+//        try {
+//            ComplexType result = (ComplexType) sumofsquares.sqrt().inverse().coerceTo(ComplexType.class);
+//            OptionalOperations.setMathContext(result, mctx);
+//            return this.scale(result);
+//        } catch (CoercionException ex) {
+//            Logger.getLogger(ComplexVector.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+        throw new ArithmeticException("Could not compute the normal of this vector.");
     }
 
     @Override

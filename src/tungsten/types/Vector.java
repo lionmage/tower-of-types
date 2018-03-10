@@ -24,6 +24,7 @@
 package tungsten.types;
 
 import java.math.MathContext;
+import tungsten.types.numerics.RealType;
 
 /**
  *
@@ -89,6 +90,12 @@ public interface Vector<T extends Numeric> {
      * @return 
      */
     public Vector<T> normalize();
+    /**
+     * Compute the angle in radians between this vector and the given vector.
+     * @param other the other vector
+     * @return the value of the angle between these vectors in radians
+     */
+    public RealType computeAngle(Vector<T> other);
     
     public MathContext getMathContext();
 }

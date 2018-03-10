@@ -68,7 +68,9 @@ public class ComplexRectImpl implements ComplexType {
     @Override
     public RealType magnitude() {
         RealType resq = (RealType) real.multiply(real);
+        OptionalOperations.setMathContext(resq, mctx);
         RealType imsq = (RealType) imag.multiply(imag);
+        OptionalOperations.setMathContext(imsq, mctx);
         return (RealType) resq.add(imsq).sqrt();
     }
 

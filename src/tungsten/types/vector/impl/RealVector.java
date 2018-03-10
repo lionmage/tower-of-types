@@ -233,6 +233,7 @@ public class RealVector implements Vector<RealType> {
      * @param other the other vector
      * @return the angle &theta; between this and {@code other}
      */
+    @Override
     public RealType computeAngle(Vector<RealType> other) {
         RealType cosine = (RealType) this.dotProduct(other).divide(this.magnitude().multiply(other.magnitude()));
         BigDecimal angle = BigDecimalMath.acos(cosine.asBigDecimal(), mctx);
@@ -261,6 +262,7 @@ public class RealVector implements Vector<RealType> {
     public Vector<RealType> normalize() {
         try {
             final RealType scalefactor = (RealType) this.magnitude().inverse().coerceTo(RealType.class);
+            OptionalOperations.setMathContext(scalefactor, mctx);  // this may not be needed here
             return this.scale(scalefactor);
         } catch (CoercionException ex) {
             Logger.getLogger(RealVector.class.getName()).log(Level.SEVERE, "Coercion failed", ex);

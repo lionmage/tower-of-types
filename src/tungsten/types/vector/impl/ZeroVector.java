@@ -124,4 +124,9 @@ public class ZeroVector implements Vector<RealType> {
     public MathContext getMathContext() {
         return MathContext.UNLIMITED;
     }
+
+    @Override
+    public RealType computeAngle(Vector<RealType> other) {
+        throw new UnsupportedOperationException("Zero vector cannot form an angle with any vector."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
