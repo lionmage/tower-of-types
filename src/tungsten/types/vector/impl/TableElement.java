@@ -25,7 +25,9 @@ package tungsten.types.vector.impl;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.impl.ComplexRectImpl;
 import tungsten.types.numerics.impl.RealImpl;
 
 /**
@@ -36,8 +38,9 @@ import tungsten.types.numerics.impl.RealImpl;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 class TableElement {
-    int index;
-    RealType coeff;
+    private int index;
+    private RealType coeff;
+    private static final RealType ZERO = new RealImpl(BigDecimal.ZERO);
 
     public TableElement(int index, int coefficient) {
         this.index = index;
@@ -57,6 +60,7 @@ class TableElement {
     }
     
     public RealType getCoeff() { return coeff; }
+    public ComplexType getCplxCoeff() { return new ComplexRectImpl(coeff, ZERO); }
     public long getIndex() { return (long) index; }
 
     @Override

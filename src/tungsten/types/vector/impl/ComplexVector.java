@@ -219,9 +219,48 @@ public class ComplexVector implements Vector<ComplexType> {
         return accum;
     }
 
+    private static TableElement telt(int idx, int coeff) {
+        return new TableElement(idx, coeff);
+    }
+    
+    // anything with an index of -1 will be skipped over
+    private static final TableElement[][] cpTable =
+    {
+        {telt(-1, 0), telt(2, 1), telt(1, -1), telt(4, 1), telt(3, -1), telt(6, -1), telt(5, 1)},
+        {telt(2, -1), telt(-1, 0), telt(0, 1), telt(5, 1), telt(6, 1), telt(3, -1), telt(4, -1)},
+        {telt(1, 1), telt(0, -1), telt(-1, 0), telt(6, 1), telt(5, -1), telt(4, 1), telt(3, -1)},
+        {telt(4, -1), telt(5, -1), telt(6, -1), telt(-1, 0), telt(0, 1), telt(1, 1), telt(2, 1)},
+        {telt(3, 1), telt(6, -1), telt(5, 1), telt(0, -1), telt(-1, 0), telt(2, -1), telt(1, 1)},
+        {telt(6, 1), telt(3, 1), telt(4, -1), telt(1, -1), telt(2, 1), telt(-1, 0), telt(0, -1)},
+        {telt(5, -1), telt(4, 1), telt(3, 1), telt(2, -1), telt(1, -1), telt(0, 1), telt(-1, 0)}
+    };
+    
+    private static final RealType[] ZEROES = { new RealImpl(BigDecimal.ZERO), new RealImpl(BigDecimal.ZERO) };
+    private static final ComplexType ZERO = new ComplexRectImpl(ZEROES);
+
     @Override
     public Vector<ComplexType> crossProduct(Vector<ComplexType> other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.length() != other.length()) {
+            throw new ArithmeticException("Cannot compute cross product for vectors of different dimension.");
+        }
+        ComplexVector result = null;
+        if (this.length() == 3L || this.length() == 7L) {
+            result = new ComplexVector(this.length());
+            int maxidx = (int) this.length();
+            // see: https://en.wikipedia.org/wiki/Seven-dimensional_cross_product
+            for (int y = 0; y < maxidx; y++) {
+                for (int x = 0; x < maxidx; x++) {
+                    long index = cpTable[y][x].getIndex();
+                    if (index < 0L) continue;
+                    ComplexType coeff = cpTable[y][x].getCplxCoeff();
+                    ComplexType accum = result.elementAt(index) == null ? ZERO : result.elementAt(index);
+                    result.setElementAt((ComplexType) accum.add(this.elementAt((long) y).multiply(other.elementAt((long) x)).multiply(coeff)), index);
+                }
+            }
+        } else {
+            throw new ArithmeticException("Cross product undefined for " + this.length() + " dimensions.");
+        }
+        return result;
     }
 
     /**
