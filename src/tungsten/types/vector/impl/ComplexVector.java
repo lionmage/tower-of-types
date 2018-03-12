@@ -235,8 +235,7 @@ public class ComplexVector implements Vector<ComplexType> {
         {telt(5, -1), telt(4, 1), telt(3, 1), telt(2, -1), telt(1, -1), telt(0, 1), telt(-1, 0)}
     };
     
-    private static final RealType[] ZEROES = { new RealImpl(BigDecimal.ZERO), new RealImpl(BigDecimal.ZERO) };
-    private static final ComplexType ZERO = new ComplexRectImpl(ZEROES);
+    private static final ComplexType ZERO = new ComplexRectImpl(new RealImpl(BigDecimal.ZERO), new RealImpl(BigDecimal.ZERO));
 
     @Override
     public Vector<ComplexType> crossProduct(Vector<ComplexType> other) {
