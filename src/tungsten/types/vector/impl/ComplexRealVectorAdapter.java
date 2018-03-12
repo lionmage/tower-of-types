@@ -45,7 +45,7 @@ import tungsten.types.numerics.impl.RealImpl;
  * @author tarquin
  */
 public class ComplexRealVectorAdapter implements Vector<ComplexType> {
-    private Vector<RealType> realVector;
+    private final Vector<RealType> realVector;
     private static final RealType ZERO = new RealImpl(BigDecimal.ZERO);
     
     public ComplexRealVectorAdapter(Vector<RealType> realvect) {
@@ -81,6 +81,11 @@ public class ComplexRealVectorAdapter implements Vector<ComplexType> {
 
     @Override
     public Vector<ComplexType> add(Vector<ComplexType> addend) {
+        if (! (addend instanceof ComplexRealVectorAdapter)) {
+            // as long as the addend isn't itself a wrapper, this is
+            // more efficient (avoids an extra object creation)
+            return addend.add(this);
+        }
         return new ComplexVector(realVector).add(addend);
     }
 
@@ -91,12 +96,15 @@ public class ComplexRealVectorAdapter implements Vector<ComplexType> {
 
     @Override
     public Vector<ComplexType> negate() {
-        // cheaper to negate the real vector first and then create the complex vector
-        return new ComplexVector(realVector.negate());
+        // cheaper to negate the real vector first and then return the wrapper
+        return new ComplexRealVectorAdapter(realVector.negate());
     }
 
     @Override
     public Vector<ComplexType> scale(ComplexType factor) {
+        if (factor.imaginary().equals(ZERO)) {
+            return new ComplexRealVectorAdapter(realVector.scale(factor.real()));
+        }
         return new ComplexVector(realVector).scale(factor);
     }
 
@@ -107,6 +115,7 @@ public class ComplexRealVectorAdapter implements Vector<ComplexType> {
 
     @Override
     public ComplexType dotProduct(Vector<ComplexType> other) {
+        // the dot product is not commutative, so we must preserve order
         return new ComplexVector(realVector).dotProduct(other);
     }
 
@@ -117,11 +126,12 @@ public class ComplexRealVectorAdapter implements Vector<ComplexType> {
 
     @Override
     public Vector<ComplexType> normalize() {
-        return new ComplexVector(realVector.normalize());
+        return new ComplexRealVectorAdapter(realVector.normalize());
     }
 
     @Override
     public RealType computeAngle(Vector<ComplexType> other) {
+        // the dot product is not commutative, so we must preserve the order
         return new ComplexVector(realVector).computeAngle(other);
     }
 
