@@ -37,10 +37,10 @@ import tungsten.types.numerics.RealType;
  */
 public class RangeUtils {
     /**
-     * Generate a range of (-pi, pi] for the given MathContext.
+     * Generate a range of (-pi, pi] for the given {@link MathContext}.
      * Note that this is the typical range of return values for atan2.
-     * @param mctx
-     * @return 
+     * @param mctx the math context
+     * @return a range representing the interval (-pi, pi]
      */
     public static Range getAngularInstance(MathContext mctx) {
         Pi pi = Pi.getInstance(mctx);
@@ -52,6 +52,14 @@ public class RangeUtils {
         };
     }
     
+    /**
+     * Generate an interval that is symmetric around the origin, with the
+     * specified bound type on both ends.  Negative values for {@code distance}
+     * will be coerced to their absolute value.
+     * @param distance the distance of each boundary from the origin
+     * @param type the type of boundary for both ends
+     * @return the desired range
+     */
     public static Range symmetricAroundOrigin(RealType distance, BoundType type) {
         distance = distance.magnitude();  // absolute value
         
