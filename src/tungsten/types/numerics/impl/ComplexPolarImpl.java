@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
+import tungsten.types.Range;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.NumericHierarchy;
@@ -139,17 +140,18 @@ public class ComplexPolarImpl implements ComplexType {
         RealImpl negpi = (RealImpl) pi.negate();
         RealImpl twopi = (RealImpl) pi.multiply(TWO);
         RealImpl reimpl = (RealImpl) argument;
+        Range atan2range = new Range(negpi, Range.BoundType.EXCLUSIVE, pi, Range.BoundType.INCLUSIVE);
         
-        if (reimpl.compareTo(pi) <= 0 && reimpl.compareTo(negpi) > 0) {
+        if (atan2range.contains(reimpl)) {
             // already in the range (-pi, pi]
             return argument;
         } else {
             // reduce values > pi
-            while (reimpl.compareTo(pi) > 0) {
+            while (atan2range.isAbove(reimpl)) {
                 reimpl = (RealImpl) reimpl.subtract(twopi);
             }
             // increase values < -pi
-            while (reimpl.compareTo(negpi) < 0) {
+            while (atan2range.isBelow(reimpl)) {
                 reimpl = (RealImpl) reimpl.add(twopi);
             }
             return reimpl;
