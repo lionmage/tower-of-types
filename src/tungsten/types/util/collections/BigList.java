@@ -25,6 +25,7 @@ package tungsten.types.util.collections;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
  * @param <T> the parameterized type for this list
  */
 public class BigList<T> {
-    private ArrayList<ArrayList<T>> listOfLists = new ArrayList<>();
+    private final ArrayList<ArrayList<T>> listOfLists = new ArrayList<>();
     
     public BigList() {
         listOfLists.add(new ArrayList<>());
@@ -47,6 +48,26 @@ public class BigList<T> {
     
     public long size() {
         return listOfLists.parallelStream().mapToLong(x -> (long) x.size()).sum();
+    }
+    
+    public boolean isEmpty() {
+        return listOfLists.isEmpty() ||
+                (listOfLists.size() == 1 && listOfLists.get(0).isEmpty());
+    }
+    
+    public boolean contains(T obj) {
+        return listOfLists.parallelStream().filter(x -> x.contains(obj)).findAny().isPresent();
+    }
+    
+    public long indexOf(T obj) {
+        long position = 0L;
+        for (ArrayList<T> list : listOfLists) {
+            if (list.contains(obj)) {
+                return position + list.indexOf(obj);
+            }
+            position += (long) list.size();
+        }
+        return -1L;
     }
     
     public T get(long index) {
@@ -88,6 +109,11 @@ public class BigList<T> {
         listOfLists.parallelStream().filter(x -> x.contains(obj)).forEach(x -> x.removeIf(y -> y.equals(obj)));
     }
     
+    public void clear() {
+        listOfLists.clear();
+        allocNew();
+    }
+    
     public Stream<T> stream() {
         Stream<T> intermediate = Stream.empty();
         for (ArrayList<T> list : listOfLists) {
@@ -102,5 +128,26 @@ public class BigList<T> {
             intermediate = Stream.concat(intermediate, list.parallelStream());
         }
         return intermediate;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof BigList) {
+            BigList that = (BigList) o;
+            if (this.size() != that.size()) return false;
+            
+            for (long idx = 0; idx < this.size(); idx++) {
+                if (!this.get(idx).equals(that.get(idx))) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 97 * hash + Objects.hashCode(this.listOfLists);
+        return hash;
     }
 }
