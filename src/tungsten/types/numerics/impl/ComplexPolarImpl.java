@@ -37,6 +37,7 @@ import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.util.OptionalOperations;
+import tungsten.types.util.RangeUtils;
 
 /**
  *
@@ -136,11 +137,9 @@ public class ComplexPolarImpl implements ComplexType {
             // special case where argument is exactly pi
             return argument;
         }
-        Pi pi = Pi.getInstance(mctx);
-        RealImpl negpi = (RealImpl) pi.negate();
-        RealImpl twopi = (RealImpl) pi.multiply(TWO);
+        RealImpl twopi = (RealImpl) Pi.getInstance(mctx).multiply(TWO);
         RealImpl reimpl = (RealImpl) argument;
-        Range atan2range = new Range(negpi, Range.BoundType.EXCLUSIVE, pi, Range.BoundType.INCLUSIVE);
+        Range atan2range = RangeUtils.getAngularInstance(mctx);
         
         if (atan2range.contains(reimpl)) {
             // already in the range (-pi, pi]
