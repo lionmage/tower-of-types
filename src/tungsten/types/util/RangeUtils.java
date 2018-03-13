@@ -45,7 +45,12 @@ public class RangeUtils {
      */
     public static Range getAngularInstance(MathContext mctx) {
         Pi pi = Pi.getInstance(mctx);
-        return new Range(pi.negate(), BoundType.EXCLUSIVE, pi, BoundType.INCLUSIVE);
+        return new Range(pi.negate(), BoundType.EXCLUSIVE, pi, BoundType.INCLUSIVE) {
+            @Override
+            public String toString() {
+                return "(-\uD835\uDF0B, \uD835\uDF0B]";
+            }
+        };
     }
     
     public static Range symmetricAroundOrigin(RealType distance, BoundType type) {
