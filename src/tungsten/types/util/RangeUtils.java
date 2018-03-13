@@ -24,7 +24,6 @@
 package tungsten.types.util;
 
 import java.math.MathContext;
-import tungsten.types.Numeric;
 import tungsten.types.Range;
 import tungsten.types.numerics.impl.Pi;
 import static tungsten.types.Range.BoundType;
