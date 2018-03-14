@@ -28,6 +28,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 /**
@@ -167,6 +169,7 @@ public class BigList<T> implements Iterable<T> {
                     ArrayList<T> list = listOfLists.get(arrayidx);
                     return position < list.size();
                 } catch (IndexOutOfBoundsException e) {
+                    Logger.getLogger("BigListIterator").log(Level.FINER, stateInfo(), e);
                     return false;
                 }
             }
@@ -183,6 +186,7 @@ public class BigList<T> implements Iterable<T> {
                     removeCalled = false; // reset flag
                     return list.get(position++);
                 } catch (IndexOutOfBoundsException e) {
+                    Logger.getLogger("BigListIterator").log(Level.FINER, stateInfo(), e);
                     throw new NoSuchElementException("At the end of BigList.");
                 }
             }
@@ -195,14 +199,24 @@ public class BigList<T> implements Iterable<T> {
                         ArrayList<T> list = listOfLists.get(arrayidx);
                         list.remove(position - 1);
                     } catch (IndexOutOfBoundsException e) {
-                        throw new IllegalStateException("Unexpected state: failed at ArrayList #" + arrayidx + ", position " + (position - 1));
+                        Logger.getLogger("BigListIterator").log(Level.FINER, stateInfo(), e);
+                        throw new IllegalStateException("Unexpected state: failed at " + stateInfo());
                     }
                 } else {
                     if (removeCalled) {
-                        throw new IllegalStateException("Already called remove()");
+                        throw new IllegalStateException("Already called remove().");
                     }
-                    throw new IllegalStateException("Cannot call remove() before next()");
+                    throw new IllegalStateException("Cannot call remove() before next().");
                 }
+            }
+            
+            private String stateInfo() {
+                StringBuilder buf = new StringBuilder();
+                buf.append("ArrayList #").append(arrayidx);
+                buf.append(", position ").append(position + 1);
+                buf.append(" [nextCalled = ").append(nextCalled);
+                buf.append(", removeCalled = ").append(removeCalled).append(']');
+                return buf.toString();
             }
         };
     }
