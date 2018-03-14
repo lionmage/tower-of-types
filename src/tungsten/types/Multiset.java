@@ -32,6 +32,12 @@ package tungsten.types;
  * @param <T> the type of elements belonging to this multiset
  */
 public interface Multiset<T> extends Set<T> {
+    /**
+     * Returns the number of times that a given element occurs in this
+     * multiset.
+     * @param element the element to search for
+     * @return a non-negative long integer value
+     */
     public long multiplicity(T element);
     /**
      * Return a representation of this multiset as a {@link Set}.  The

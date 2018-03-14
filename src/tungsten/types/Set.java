@@ -29,7 +29,7 @@ package tungsten.types;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the type of elements in this set
  */
-public interface Set<T> {
+public interface Set<T> extends Iterable<T> {
     /**
      * Returns the cardinality (size) of this set.  If this is an
      * infinite set, returns -1.

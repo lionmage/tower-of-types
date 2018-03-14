@@ -23,6 +23,8 @@
  */
 package tungsten.types.set.impl;
 
+import java.util.Collections;
+import java.util.Iterator;
 import tungsten.types.Set;
 
 /**
@@ -73,5 +75,10 @@ public class EmptySet implements Set {
     @Override
     public Set difference(Set other) {
         return this;
+    }
+
+    @Override
+    public Iterator iterator() {
+        return Collections.emptyIterator();
     }
 }
