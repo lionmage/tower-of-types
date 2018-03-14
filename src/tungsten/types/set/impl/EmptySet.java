@@ -35,7 +35,9 @@ import tungsten.types.Set;
 public class EmptySet implements Set {
     private EmptySet() {}
     
-    public static Set getInstance() { return new EmptySet(); }
+    private static final EmptySet instance = new EmptySet();
+    
+    public static Set getInstance() { return instance; }
 
     @Override
     public long cardinality() {
