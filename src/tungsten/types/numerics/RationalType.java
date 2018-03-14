@@ -30,7 +30,7 @@ import tungsten.types.Numeric;
  *
  * @author tarquin
  */
-public interface RationalType extends Numeric {
+public interface RationalType extends Numeric, Comparable<RationalType> {
     /**
      * Returns the magnitude (absolute value) of this rational
      * number in reduced form.

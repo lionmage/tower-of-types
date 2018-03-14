@@ -30,7 +30,7 @@ import tungsten.types.Numeric;
  *
  * @author tarquin
  */
-public interface RealType extends Numeric {
+public interface RealType extends Numeric, Comparable<RealType> {
     public boolean isIrrational();
     @Override
     public RealType magnitude();

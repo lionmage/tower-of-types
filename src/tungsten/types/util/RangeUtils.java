@@ -46,9 +46,9 @@ public class RangeUtils {
      * @param mctx the math context
      * @return a range representing the interval (-pi, pi]
      */
-    public static Range getAngularInstance(MathContext mctx) {
+    public static Range<RealType> getAngularInstance(MathContext mctx) {
         Pi pi = Pi.getInstance(mctx);
-        return new Range(pi.negate(), BoundType.EXCLUSIVE, pi, BoundType.INCLUSIVE) {
+        return new Range<RealType>(pi.negate(), BoundType.EXCLUSIVE, pi, BoundType.INCLUSIVE) {
             @Override
             public String toString() {
                 return "(-\uD835\uDF0B, \uD835\uDF0B]";
@@ -64,22 +64,22 @@ public class RangeUtils {
      * @param type the type of boundary for both ends
      * @return the desired range
      */
-    public static Range symmetricAroundOrigin(RealType distance, BoundType type) {
+    public static Range<RealType> symmetricAroundOrigin(RealType distance, BoundType type) {
         distance = distance.magnitude();  // absolute value
         
-        return new Range(distance.negate(), distance, type);
+        return new Range<RealType>(distance.negate(), distance, type);
     }
 
-    public static Range symmetricAroundOrigin(IntegerType distance, BoundType type) {
+    public static Range<IntegerType> symmetricAroundOrigin(IntegerType distance, BoundType type) {
         distance = distance.magnitude();  // absolute value
         
-        return new Range(distance.negate(), distance, type);
+        return new Range<IntegerType>(distance.negate(), distance, type);
     }
     
 
     private static final IntegerType ONE = new IntegerImpl(BigInteger.ONE);
 
-    public static Set<IntegerType> asSet(Range<IntegerImpl> range) {
+    public static Set<IntegerType> asSet(Range<IntegerType> range) {
         return new Set<IntegerType>() {
             class RangeIterator implements Iterator<IntegerType> {
                 IntegerImpl current = new IntegerImpl(range.isLowerClosed() ? range.getLowerBound().asBigInteger() : ((IntegerType) range.getLowerBound().add(ONE)).asBigInteger());
@@ -116,8 +116,7 @@ public class RangeUtils {
 
             @Override
             public boolean contains(IntegerType element) {
-                IntegerImpl concrete = element instanceof IntegerImpl ? (IntegerImpl) element : new IntegerImpl(element.asBigInteger());
-                return range.contains(concrete);
+                return range.contains(element);
             }
 
             @Override

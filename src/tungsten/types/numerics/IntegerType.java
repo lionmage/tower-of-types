@@ -30,7 +30,7 @@ import tungsten.types.Numeric;
  *
  * @author tarquin
  */
-public interface IntegerType extends Numeric {
+public interface IntegerType extends Numeric, Comparable<IntegerType> {
     @Override
     public IntegerType magnitude();
     @Override

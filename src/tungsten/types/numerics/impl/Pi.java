@@ -51,7 +51,7 @@ import tungsten.types.numerics.Sign;
  * @author tarquin
  * @see <a href="https://en.wikipedia.org/wiki/Bailey%E2%80%93Borwein%E2%80%93Plouffe_formula">the Wikipedia article on BBP</a>
  */
-public class Pi implements RealType, Comparable<RealType> {
+public class Pi implements RealType {
     private BigDecimal value;
     private MathContext mctx;
     

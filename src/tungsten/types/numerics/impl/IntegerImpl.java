@@ -43,7 +43,7 @@ import tungsten.types.numerics.Sign;
  *
  * @author tarquin
  */
-public class IntegerImpl implements IntegerType, Comparable<IntegerType> {
+public class IntegerImpl implements IntegerType {
     private boolean exact = true;
     private BigInteger val;
     private static final BigInteger TWO = BigInteger.valueOf(2L);

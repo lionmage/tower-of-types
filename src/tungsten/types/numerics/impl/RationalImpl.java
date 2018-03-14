@@ -40,7 +40,7 @@ import tungsten.types.numerics.Sign;
  *
  * @author tarquin
  */
-public class RationalImpl implements RationalType, Comparable<RationalType> {
+public class RationalImpl implements RationalType {
     private boolean exact = true;
     private BigInteger numerator;
     private BigInteger denominator;

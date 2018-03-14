@@ -42,7 +42,7 @@ import tungsten.types.numerics.Sign;
  *
  * @author tarquin
  */
-public class RealImpl implements RealType, Comparable<RealType> {
+public class RealImpl implements RealType {
     private boolean irrational = false;
     private boolean exact = true;
     private BigDecimal val;
