@@ -139,7 +139,7 @@ public class IntegerImpl implements IntegerType, Comparable<IntegerType> {
     }
 
     private long numDigitsCache = -1L;
-    private Lock numDigitsLock = new ReentrantLock();
+    private final Lock numDigitsLock = new ReentrantLock();
 
     /**
      * This is based on an algorithm posted by OldCurmudgeon on StackOverflow.

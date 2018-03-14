@@ -23,12 +23,16 @@
  */
 package tungsten.types.util;
 
+import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.Iterator;
 import tungsten.types.Range;
 import tungsten.types.numerics.impl.Pi;
 import static tungsten.types.Range.BoundType;
+import tungsten.types.Set;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.impl.IntegerImpl;
 
 /**
  * Utility class with factory methods for commonly used types of ranges.
@@ -70,5 +74,81 @@ public class RangeUtils {
         distance = distance.magnitude();  // absolute value
         
         return new Range(distance.negate(), distance, type);
+    }
+    
+
+    private static final IntegerType ONE = new IntegerImpl(BigInteger.ONE);
+
+    public static Set<IntegerType> asSet(Range<IntegerImpl> range) {
+        return new Set<IntegerType>() {
+            class RangeIterator implements Iterator<IntegerType> {
+                IntegerImpl current = new IntegerImpl(range.isLowerClosed() ? range.getLowerBound().asBigInteger() : ((IntegerType) range.getLowerBound().add(ONE)).asBigInteger());
+                IntegerType limit = range.isUpperClosed() ? range.getUpperBound() : (IntegerType) range.getUpperBound().subtract(ONE);
+
+                @Override
+                public boolean hasNext() {
+                    return current.compareTo(limit) <= 0;
+                }
+
+                @Override
+                public IntegerType next() {
+                    IntegerImpl retval = current;
+                    current = (IntegerImpl) current.add(ONE);
+                    return retval;
+                }
+            }
+            
+            @Override
+            public long cardinality() {
+                RangeIterator iter = new RangeIterator();
+                long count = 0L;
+                while (iter.hasNext()) {
+                    count++;
+                    iter.next();
+                }
+                return count;
+            }
+
+            @Override
+            public boolean countable() {
+                return true;
+            }
+
+            @Override
+            public boolean contains(IntegerType element) {
+                IntegerImpl concrete = element instanceof IntegerImpl ? (IntegerImpl) element : new IntegerImpl(element.asBigInteger());
+                return range.contains(concrete);
+            }
+
+            @Override
+            public void append(IntegerType element) {
+                throw new UnsupportedOperationException("Cannot append to this set.");
+            }
+
+            @Override
+            public void remove(IntegerType element) {
+                throw new UnsupportedOperationException("Cannot remove elements from this set.");
+            }
+
+            @Override
+            public Set<IntegerType> union(Set<IntegerType> other) {
+                return other.union(this);
+            }
+
+            @Override
+            public Set<IntegerType> intersection(Set<IntegerType> other) {
+                return other.intersection(this);
+            }
+
+            @Override
+            public Set<IntegerType> difference(Set<IntegerType> other) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            @Override
+            public Iterator<IntegerType> iterator() {
+                return new RangeIterator();
+            }
+        };
     }
 }

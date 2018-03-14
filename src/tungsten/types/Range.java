@@ -30,11 +30,11 @@ package tungsten.types;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> a class or interface that extends {@link Numeric} and {@link Comparable}
  */
-public class Range<T extends Numeric & Comparable<T>> {
+public class Range<T extends Numeric & Comparable<? super T>> {
     public enum BoundType { INCLUSIVE, EXCLUSIVE };
     public class Bound implements Comparable<T> {
-        private BoundType type;
-        private T value;
+        private final BoundType type;
+        private final T value;
         
         public Bound(T value, BoundType type) {
             this.value = value;
@@ -72,7 +72,7 @@ public class Range<T extends Numeric & Comparable<T>> {
         public T getValue() { return value; }
     }
     
-    private Bound lowerBound, upperBound;
+    private final Bound lowerBound, upperBound;
     
     /**
      * A convenience constructor which generates an instance where both
@@ -125,6 +125,22 @@ public class Range<T extends Numeric & Comparable<T>> {
             default:
                 throw new IllegalStateException("Unknown bound of type " + upperBound.type);
         }
+    }
+    
+    public T getLowerBound() {
+        return lowerBound.getValue();
+    }
+    
+    public boolean isLowerClosed() {
+        return lowerBound.isInclusive();
+    }
+    
+    public T getUpperBound() {
+        return upperBound.getValue();
+    }
+    
+    public boolean isUpperClosed() {
+        return upperBound.isInclusive();
     }
     
     @Override
