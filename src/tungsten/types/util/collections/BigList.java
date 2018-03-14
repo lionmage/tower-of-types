@@ -25,6 +25,8 @@ package tungsten.types.util.collections;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -35,7 +37,7 @@ import java.util.stream.Stream;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the parameterized type for this list
  */
-public class BigList<T> {
+public class BigList<T> implements Iterable<T> {
     private final ArrayList<ArrayList<T>> listOfLists = new ArrayList<>();
     
     public BigList() {
@@ -149,5 +151,59 @@ public class BigList<T> {
         int hash = 3;
         hash = 97 * hash + Objects.hashCode(this.listOfLists);
         return hash;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private int arrayidx = 0;
+            private int position = 0;
+            private boolean nextCalled = false;
+            private boolean removeCalled = false;
+            
+            @Override
+            public boolean hasNext() {
+                try {
+                    ArrayList<T> list = listOfLists.get(arrayidx);
+                    return position < list.size();
+                } catch (IndexOutOfBoundsException e) {
+                    return false;
+                }
+            }
+
+            @Override
+            public T next() {
+                try {
+                    ArrayList<T> list = listOfLists.get(arrayidx);
+                    if (position >= list.size()) {
+                        list = listOfLists.get(++arrayidx);
+                        position = 0;
+                    }
+                    nextCalled = true;
+                    removeCalled = false; // reset flag
+                    return list.get(position++);
+                } catch (IndexOutOfBoundsException e) {
+                    throw new NoSuchElementException("At the end of BigList.");
+                }
+            }
+            
+            @Override
+            public void remove() {
+                if (nextCalled && !removeCalled) {
+                    removeCalled = true;
+                    try {
+                        ArrayList<T> list = listOfLists.get(arrayidx);
+                        list.remove(position - 1);
+                    } catch (IndexOutOfBoundsException e) {
+                        throw new IllegalStateException("Unexpected state: failed at ArrayList #" + arrayidx + ", position " + (position - 1));
+                    }
+                } else {
+                    if (removeCalled) {
+                        throw new IllegalStateException("Already called remove()");
+                    }
+                    throw new IllegalStateException("Cannot call remove() before next()");
+                }
+            }
+        };
     }
 }
