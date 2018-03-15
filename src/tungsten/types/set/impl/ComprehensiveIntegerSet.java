@@ -40,14 +40,33 @@ public class ComprehensiveIntegerSet<T extends IntegerType> extends Comprehensiv
     private final Range<T> range;
     private Predicate<T> additional = null;
     
+    /**
+     * Construct a comprehensive set of integers that satisfy the given
+     * {@link Range}.
+     * @param range the range of values describing the elements of this set
+     */
     public ComprehensiveIntegerSet(Range<T> range) {
         super(range.getPredicate());
         this.range = range;
     }
     
+    /**
+     * Construct a comprehensive set of integers that fall within the given
+     * {@link Range} and the {@code additional} predicate.
+     * @param range the range of values describing the elements of this set
+     * @param additional an additional predicate further constraining the values in this set
+     */
     public ComprehensiveIntegerSet(Range<T> range, Predicate<T> additional) {
         this(range);
         this.additional = additional;
+    }
+    
+    @Override
+    protected Predicate<T> getPredicate() {
+        if (additional == null) {
+            return super.getPredicate();
+        }
+        return super.getPredicate().and(additional);
     }
     
     @Override
