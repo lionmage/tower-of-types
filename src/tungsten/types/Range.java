@@ -23,6 +23,8 @@
  */
 package tungsten.types;
 
+import java.util.function.Predicate;
+
 /**
  * A class to represent a numeric range.  Any numeric type that can be
  * meaningfully compared can be used in a range.
@@ -141,6 +143,10 @@ public class Range<T extends Numeric & Comparable<? super T>> {
     
     public boolean isUpperClosed() {
         return upperBound.isInclusive();
+    }
+    
+    public Predicate<T> getPredicate() {
+        return (T t) -> this.contains(t);
     }
     
     @Override

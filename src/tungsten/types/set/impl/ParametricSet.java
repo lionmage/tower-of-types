@@ -35,6 +35,10 @@ import tungsten.types.Numeric;
  * Since values are generated parametrically, there is an implicit
  * ordering of the values, which {@link #contains(java.lang.Object&tungsten.types.Numeric&java.lang.Comparable<T>) }
  * uses to do its thing.
+ * 
+ * NOTE: I am not happy with the way this is currently.  I'd like to rewrite
+ * this to support negative as well as positive iteration.  Will probably still
+ * require monotonicity, but should support both decreasing as well as increasing.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the numeric type for this set
