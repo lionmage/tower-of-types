@@ -32,6 +32,8 @@ import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.impl.IntegerImpl;
 
 /**
+ * A {@link ComprehensiveSet} of {@link IntegerType} elements.  Currently
+ * does not support infinite bounds at either end.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> any instance of {@link IntegerType}
@@ -52,7 +54,7 @@ public class ComprehensiveIntegerSet<T extends IntegerType> extends Comprehensiv
     
     /**
      * Construct a comprehensive set of integers that fall within the given
-     * {@link Range} and the {@code additional} predicate.
+     * {@link Range} and satisfy the {@code additional} predicate.
      * @param range the range of values describing the elements of this set
      * @param additional an additional predicate further constraining the values in this set
      */
