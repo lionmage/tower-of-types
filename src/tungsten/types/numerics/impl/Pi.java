@@ -63,7 +63,7 @@ import tungsten.types.numerics.Sign;
  */
 public class Pi implements RealType {
     private BigDecimal value;
-    private MathContext mctx;
+    private final MathContext mctx;
     
     private Pi(MathContext mctx) {
         this.mctx = mctx;
@@ -84,6 +84,7 @@ public class Pi implements RealType {
             Pi instance = instanceMap.get(mctx);
             if (instance == null) {
                 instance = new Pi(mctx);
+                instanceMap.put(mctx, instance);
             }
             return instance;
         } finally {
