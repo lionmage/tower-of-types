@@ -283,6 +283,7 @@ public class RealImpl implements RealType {
         }
         final RealImpl inv = new RealImpl(BigDecimal.ONE.divide(val, mctx), exactness);
         inv.setMathContext(mctx);
+        if (!exactness) inv.setIrrational(this.isIrrational());
         return inv;
     }
 

@@ -31,6 +31,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
@@ -212,6 +213,26 @@ public class IntegerImpl implements IntegerType {
         // if we fell through here, it means position is not valid
         throw new IndexOutOfBoundsException("Index " + position
                 + " exceeds max value " + (count - 1L));
+    }
+    
+    /**
+     * Generate a stream of {@link Character}s representing the digits of this
+     * integer in base {@code radix}, starting from the least significant digit.
+     * @param radix the base of the representation; decimal representation is base 10
+     * @return a stream of characters representing this integer value in the given radix, or base
+     */
+    public Stream<Character> stream(int radix) {
+        Stream.Builder<Character> builder = Stream.builder();
+        BigInteger[] resultAndRemainder;
+        BigInteger temp = val.abs();
+        BigInteger bigRadix = radix == 10 ? BigInteger.TEN : BigInteger.valueOf((long) radix);
+
+        do {
+            resultAndRemainder = temp.divideAndRemainder(bigRadix);
+            builder.accept(Character.forDigit(resultAndRemainder[1].intValue(), radix));
+            temp = resultAndRemainder[0];
+        } while (temp.compareTo(BigInteger.ZERO) != 0);
+        return builder.build();
     }
 
     @Override

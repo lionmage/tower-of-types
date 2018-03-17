@@ -47,6 +47,16 @@ import tungsten.types.numerics.Sign;
  * 
  * Internally, this class uses the BBP formula for deriving Pi to an
  * arbitrary precision.
+ * 
+ * TODO: It would be nice to refactor this class such that we obtain greater
+ * reuse of prior calculations and store less redundant data, but this will
+ * require refactoring the BBP formula itself to generate hexadecimal digits
+ * and convert those to {@link BigDecimal} objects only when necessary.  Then
+ * we would only need to compute new terms for higher precision representations,
+ * not recompute already generated terms.  The problem with attempting to do
+ * this directly in {@link BigDecimal} objects is that intermediate results
+ * must be computed with rounding, and restarting computations from those
+ * intermediate results quickly results in deviation from the correct values.
  *
  * @author tarquin
  * @see <a href="https://en.wikipedia.org/wiki/Bailey%E2%80%93Borwein%E2%80%93Plouffe_formula">the Wikipedia article on BBP</a>
