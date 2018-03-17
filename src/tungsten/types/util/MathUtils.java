@@ -48,8 +48,7 @@ public class MathUtils {
             return new IntegerImpl(getCacheFor(n));
         }
         
-        final long ncmp = n.asBigInteger().longValueExact();
-        Long m = factorialCache.keySet().parallelStream().filter(x -> x < ncmp).max(Long::compareTo).orElse(null);
+        Long m = findMaxKeyUnder(n);
         
         BigInteger accum = m != null ? factorialCache.get(m) : BigInteger.ONE;
         BigInteger intermediate = n.asBigInteger();
@@ -61,10 +60,29 @@ public class MathUtils {
         cacheFact(n, accum);
         return new IntegerImpl(accum);
     }
+
+    /**
+     * If there's a cached factorial value, find the highest key that is less
+     * than n.
+     * @param n the upper bound of our search
+     * @return the highest cache key given the search parameter
+     */
+    private static Long findMaxKeyUnder(IntegerType n) {
+        try {
+            final long ncmp = n.asBigInteger().longValueExact();
+            return factorialCache.keySet().parallelStream().filter(x -> x < ncmp).max(Long::compareTo).orElse(null);
+        } catch (ArithmeticException e) {
+            Logger.getLogger(MathUtils.class.getName()).log(Level.FINER, "Attempt to find a max key < n outside Long range.", e);
+            // return the biggest key we can find since the given upper bound is too large for the cache
+            return factorialCache.keySet().parallelStream().max(Long::compareTo).orElse(null);
+        }
+    }
     
     private static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
     
     private static void cacheFact(BigInteger n, BigInteger value) {
+        // these bounds should prevent an ArithmeticException from being thrown
+        // if not, we want to fail fast to catch the problem
         if (n.compareTo(TWO) >= 0 && n.compareTo(MAX_LONG) < 0) {
             Long key = n.longValueExact();
             

@@ -28,6 +28,7 @@ import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
@@ -141,22 +142,22 @@ public class Euler implements RealType {
 
     @Override
     public Numeric add(Numeric addend) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return addend.add(this);
     }
 
     @Override
     public Numeric subtract(Numeric subtrahend) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return subtrahend.negate().add(this);
     }
 
     @Override
     public Numeric multiply(Numeric multiplier) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return multiplier.multiply(this);
     }
 
     @Override
     public Numeric divide(Numeric divisor) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return divisor.inverse().multiply(this);
     }
 
     @Override
@@ -205,6 +206,24 @@ public class Euler implements RealType {
     @Override
     public int compareTo(RealType o) {
         return this.value.compareTo(o.asBigDecimal());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Euler) {
+            Euler that = (Euler) o;
+            if (this.mctx.getRoundingMode() != that.mctx.getRoundingMode()) return false;
+            return this.numberOfDigits() == that.numberOfDigits();
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 11 * hash + Objects.hashCode(this.mctx);
+        hash = 11 * hash + Objects.hashCode(this.value);
+        return hash;
     }
 
     @Override
