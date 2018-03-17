@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 tarquin.
+ * Copyright © 2018 Robert Poole <Tarquin.AZ@gmail.com>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,6 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import tungsten.types.Numeric;
 import tungsten.types.numerics.RealType;
-import tungsten.types.numerics.Sign;
 
 /**
  *

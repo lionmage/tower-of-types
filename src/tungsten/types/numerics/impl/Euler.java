@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 tarquin.
+ * Copyright © 2018 Robert Poole <Tarquin.AZ@gmail.com>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.util.MathUtils;
@@ -51,6 +52,7 @@ import tungsten.types.util.MathUtils;
  *
  * @author tarquin
  * @see <a href="https://www.intmath.com/exponential-logarithmic-functions/calculating-e.php">an article at Interactive Mathematics about ways to calculate &#x212f;</a>
+ * @see <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)">the wikipedia article about this constant</a>
  */
 public class Euler implements RealType {
     private final MathContext mctx;
@@ -90,12 +92,15 @@ public class Euler implements RealType {
 
     @Override
     public RealType magnitude() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        RealImpl magnitude = new RealImpl(value, false);
+        magnitude.setMathContext(mctx);
+        magnitude.setIrrational(true);
+        return magnitude;
     }
 
     @Override
     public RealType negate() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return magnitude().negate();
     }
 
     @Override
@@ -115,12 +120,23 @@ public class Euler implements RealType {
 
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
+        // can be coerced to real or complex
+        return htype.compareTo(NumericHierarchy.REAL) >= 0;
     }
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
+        switch (htype) {
+            case REAL:
+                return this;  // it's already a real
+            case COMPLEX:
+                return new ComplexRectImpl(this, new RealImpl(BigDecimal.ZERO));
+            default:
+                throw new CoercionException("Euler can only be coerced to real or complex",
+                        this.getClass(), numtype);
+        }
     }
 
     @Override
@@ -145,16 +161,19 @@ public class Euler implements RealType {
 
     @Override
     public Numeric inverse() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        RealImpl inverse = new RealImpl(BigDecimal.ONE.divide(value, mctx), false);
+        inverse.setMathContext(mctx);
+        inverse.setIrrational(true);
+        return inverse;
     }
 
     @Override
     public Numeric sqrt() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return magnitude().sqrt();
     }
     
     public long numberOfDigits() {
-        return mctx.getPrecision();
+        return (long) mctx.getPrecision();
     }
     
     private void calculate() {

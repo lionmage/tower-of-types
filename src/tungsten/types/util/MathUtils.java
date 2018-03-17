@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 tarquin.
+ * Copyright © 2018 Robert Poole <Tarquin.AZ@gmail.com>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.impl.IntegerImpl;
 
 /**
+ * A utility class to hold commonly used functions and algorithms.
  *
  * @author tarquin
  */
@@ -44,7 +45,7 @@ public class MathUtils {
         while (intermediate.compareTo(TWO) >= 0) {
             accum = accum.multiply(intermediate);
             intermediate = intermediate.subtract(BigInteger.ONE);
-        };
+        }
         return new IntegerImpl(accum);
     }
 }
