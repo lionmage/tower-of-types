@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
 import java.math.MathContext;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * This is a utility class that uses reflection to safely implement operations
@@ -47,9 +48,44 @@ public class OptionalOperations {
         } catch (NoSuchMethodException ex) {
             // silently ignore this
         } catch (SecurityException | IllegalAccessException ex) {
-            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Failed to invoke setMathContext() due to security or access issue", ex);
+            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Failed to invoke setMathContext() due to security or access issue.", ex);
         } catch (IllegalArgumentException | InvocationTargetException ex) {
-            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Bad target or bad MathContext argument", ex);
+            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Bad target or bad MathContext argument.", ex);
         }
+    }
+    
+    public static <T> Stream<T> obtainStream(Object obj) {
+        Stream<T> s;
+        try {
+            Method m = obj.getClass().getMethod("stream");
+            s = (Stream<T>) m.invoke(obj);
+        } catch (NoSuchMethodException ex) {
+            s = Stream.empty();
+        } catch (SecurityException | IllegalAccessException ex) {
+            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Failed to invoke stream() due to security or access issue.", ex);
+            throw new IllegalStateException(ex);
+        } catch (InvocationTargetException ex) {
+            s = Stream.empty();
+            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Bad target.", ex);
+        }
+        return s;
+    }
+
+    public static <T> Stream<T> obtainParallelStream(Object obj) {
+        Stream<T> s;
+        try {
+            Method m = obj.getClass().getMethod("parallelStream");
+            s = (Stream<T>) m.invoke(obj);
+        } catch (NoSuchMethodException ex) {
+            // we can attempt to fake it out if there's a stream() method
+            s = ((Stream<T>) obtainStream(obj)).parallel();
+        } catch (SecurityException | IllegalAccessException ex) {
+            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Failed to invoke stream() due to security or access issue.", ex);
+            throw new IllegalStateException(ex);
+        } catch (InvocationTargetException ex) {
+            s = Stream.empty();
+            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Bad target.", ex);
+        }
+        return s;
     }
 }
