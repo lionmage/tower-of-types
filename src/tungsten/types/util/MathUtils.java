@@ -23,13 +23,20 @@
  */
 package tungsten.types.util;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tungsten.types.Numeric;
+import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.Sign;
 import tungsten.types.numerics.impl.IntegerImpl;
+import tungsten.types.numerics.impl.RealImpl;
 
 /**
  * A utility class to hold commonly used functions and algorithms.
@@ -105,5 +112,37 @@ public class MathUtils {
     
     private static BigInteger getCacheFor(IntegerType n) {
         return getCacheFor(n.asBigInteger());
+    }
+    
+    /**
+     * Compute x<sup>n</sup>.
+     * @param x the value to take the exponent of
+     * @param n the integer exponent
+     * @param mctx the {@link MathContext} for computing the exponent
+     * @return x raised to the n<sup>th</sup> power
+     */
+    public static RealType computeIntegerExponent(RealType x, int n, MathContext mctx) {
+        if (n == 0) return new RealImpl(BigDecimal.ONE);
+        if (n == 1) return x;
+        try {
+            if (n == -1) {
+                return (RealType) x.inverse().coerceTo(RealType.class);
+            }
+            
+            Numeric intermediate = x.magnitude();
+            Numeric factor = intermediate;
+            OptionalOperations.setMathContext(x, mctx);
+            for (int idx = 2; idx <= Math.abs(n); idx++) {
+                intermediate = intermediate.multiply(factor);
+                OptionalOperations.setMathContext(intermediate, mctx);
+            }
+            if (n < 0) intermediate = intermediate.inverse();
+            // if n is odd, preserve original sign
+            if (x.sign() == Sign.NEGATIVE && n % 2 != 0) intermediate = intermediate.negate();
+            return (RealType) intermediate.coerceTo(RealType.class);
+        } catch (CoercionException ex) {
+            Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Unrecoverable exception thrown while computing integer exponent.", ex);
+            throw new ArithmeticException("Failure to coerce to RealType.");
+        }
     }
 }

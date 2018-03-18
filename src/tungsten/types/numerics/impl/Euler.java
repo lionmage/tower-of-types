@@ -33,6 +33,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
@@ -190,12 +191,63 @@ public class Euler implements RealType {
     private static final BigDecimal TWO = BigDecimal.valueOf(2L);
     private static final BigInteger iTWO = BigInteger.valueOf(2L);
     
-    private BigDecimal computeKthTerm(int n, MathContext ctx) {
-        BigDecimal numerator = TWO.multiply(BigDecimal.valueOf((long) n), ctx).add(TWO, ctx);
-        BigInteger innerDenom = iTWO.multiply(BigInteger.valueOf((long) n)).add(BigInteger.ONE);
+    private BigDecimal computeKthTerm(int k, MathContext ctx) {
+        BigDecimal numerator = TWO.multiply(BigDecimal.valueOf((long) k), ctx).add(TWO, ctx);
+        BigInteger innerDenom = iTWO.multiply(BigInteger.valueOf((long) k)).add(BigInteger.ONE);
         IntegerType denominator = MathUtils.factorial(new IntegerImpl(innerDenom));
         
         return numerator.divide(new BigDecimal(denominator.asBigInteger(), ctx), ctx);
+    }
+    
+    /**
+     * Compute &#x212f;<sup>x</sup> for real-valued x.
+     * @param x the real-valued exponent
+     * @return &#x212f;<sup>x</sup>
+     */
+    public RealType exp(RealType x) {
+        if (x.asBigDecimal().equals(BigDecimal.ZERO)) return new RealImpl(BigDecimal.ONE);
+        else if (x.asBigDecimal().equals(BigDecimal.ONE)) return this;
+        
+        // otherwise compute the series
+        BigDecimal sum = BigDecimal.ZERO;
+        MathContext compctx = new MathContext(mctx.getPrecision() + 4, mctx.getRoundingMode());
+        for (int n = 0; n < mctx.getPrecision(); n++) {
+            sum = sum.add(computeNthTerm(n, sum, compctx), compctx);
+        }
+        RealImpl result = new RealImpl(sum.round(mctx), false);
+        result.setIrrational(true);
+        result.setMathContext(mctx);
+        return result;
+    }
+    
+    /**
+     * Compute &#x212f;<sup>z</sup> for complex-valued z.
+     * @param z the complex-valued exponent
+     * @return &#x212f;<sup>z</sup>
+     */
+    public ComplexType exp(ComplexType z) {
+        if (z.isCoercibleTo(RealType.class)) {
+            return new ComplexRectImpl(exp(z.real()), new RealImpl(BigDecimal.ZERO));
+        }
+        
+        // e^(x+iy) = (e^x)*(e^iy), where e^x becomes the modulus and y becomes the argument
+        final ComplexPolarImpl polarval = new ComplexPolarImpl(exp(z.real()), z.imaginary(), false);
+        polarval.setMathContext(mctx);
+        
+        return polarval;
+    }
+    
+    private BigDecimal computeNthTerm(int n, BigDecimal x, MathContext ctx) {
+        RealImpl xvalue = new RealImpl(x);
+        xvalue.setMathContext(ctx);
+        return computeNthTerm(n, xvalue, ctx);
+    }
+    
+    private BigDecimal computeNthTerm(int n, RealType x, MathContext ctx) {
+        RealType numerator = MathUtils.computeIntegerExponent(x, n, ctx);
+        IntegerType denominator = MathUtils.factorial(new IntegerImpl(BigInteger.valueOf(n)));
+        // a little clunky, but this is not publicly visible...
+        return numerator.asBigDecimal().divide(new BigDecimal(denominator.asBigInteger(), ctx), ctx);
     }
 
     @Override

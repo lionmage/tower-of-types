@@ -23,6 +23,8 @@
  */
 package tungsten.types.util;
 
+import java.math.MathContext;
+import java.math.RoundingMode;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -30,7 +32,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.IntegerImpl;
+import tungsten.types.numerics.impl.RealImpl;
 
 /**
  *
@@ -71,6 +75,32 @@ public class MathUtilsTest {
         n = new IntegerImpl("9");
         expResult = new IntegerImpl("362880");
         result = MathUtils.factorial(n);
+        assertEquals(expResult, result);
+    }
+
+    /**
+     * Test of computeIntegerExponent method, of class MathUtils.
+     */
+    @Test
+    public void testComputeIntegerExponent() {
+        System.out.println("computeIntegerExponent");
+        RealType x = new RealImpl("3.0");
+        int n = 3;
+        MathContext mctx = new MathContext(5, RoundingMode.HALF_UP);
+        RealType expResult = new RealImpl("27.0");
+        RealType result = MathUtils.computeIntegerExponent(x, n, mctx);
+        assertEquals(expResult, result);
+        
+        x = new RealImpl("2.0");
+        n = -2;
+        expResult = new RealImpl("0.25");
+        result = MathUtils.computeIntegerExponent(x, n, mctx);
+        assertEquals(expResult, result);
+        
+        x = new RealImpl("-2.0");
+        n = 3;
+        expResult = new RealImpl("-8.0");
+        result = MathUtils.computeIntegerExponent(x, n, mctx);
         assertEquals(expResult, result);
     }
     
