@@ -120,5 +120,38 @@ public class MathUtilsTest {
         expResult = new RealImpl("-0.356674944", false);
         result = MathUtils.ln(x, mctx);
         assertEquals(expResult, result);
+        
+        x = new RealImpl("25.7");
+        expResult = new RealImpl("3.24649099", false);
+        result = MathUtils.ln(x, mctx);
+        assertEquals(expResult, result);
+    }
+    
+    @Test
+    public void testMantissa() {
+        System.out.println("mantissa");
+        RealType x = new RealImpl("54.789");
+        RealType expResult = new RealImpl("5.4789");
+        RealType result = MathUtils.mantissa(x);
+        assertEquals(expResult, result);
+        
+        x = new RealImpl("0.00211");
+        expResult = new RealImpl("2.11");
+        result = MathUtils.mantissa(x);
+        assertEquals(expResult, result);
+    }
+    
+    @Test
+    public void testExponent() {
+        System.out.println("exponent");
+        RealType x = new RealImpl("54.789");
+        IntegerType expResult = new IntegerImpl("1");
+        IntegerType result = MathUtils.exponent(x);
+        assertEquals(expResult, result);
+        
+        x = new RealImpl("0.00211");
+        expResult = new IntegerImpl("-3");
+        result = MathUtils.exponent(x);
+        assertEquals(expResult, result);
     }
 }

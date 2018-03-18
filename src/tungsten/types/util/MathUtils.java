@@ -167,6 +167,19 @@ public class MathUtils {
         if (x.asBigDecimal().compareTo(BigDecimal.ZERO) <= 0) throw new ArithmeticException("ln is undefined for values <= 0");
         if (newtonRange.contains(x)) return lnNewton(x, mctx);
         
+        if (x.asBigDecimal().compareTo(BigDecimal.TEN) > 0) {
+            RealType mantissa = mantissa(x);
+            IntegerType exponent = exponent(x);
+            // use the identity ln(a*10^n) = ln(a) + n*ln(10)
+            RealType ln10 = lnSeries(new RealImpl(BigDecimal.TEN), mctx);
+            try {
+                return (RealType) ln(mantissa, mctx).add((RealType) ln10.multiply(exponent).coerceTo(RealType.class));
+            } catch (CoercionException ex) {
+                Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Failed to coerce ln(10)*n to RealType.", ex);
+                throw new IllegalStateException("Multiplication of real and integer should give us a real back.");
+            }
+        }
+        
         return lnSeries(x, mctx);
     }
     
@@ -211,5 +224,29 @@ public class MathUtils {
     private static BigDecimal computeNthTerm_ln(BigDecimal frac, int n, MathContext mctx) {
         BigDecimal ninv = BigDecimal.ONE.divide(BigDecimal.valueOf((long) n), mctx);
         return ninv.multiply(computeIntegerExponent(new RealImpl(frac), n, mctx).asBigDecimal(), mctx);
+    }
+    
+    /**
+     * Computes the mantissa of a real value as expressed in scientific
+     * notation, mantissa * 10^exponent.
+     * @param x the real value
+     * @return the mantissa of {@code x}
+     */
+    public static RealType mantissa(RealType x) {
+        BigDecimal mantissa = x.asBigDecimal().scaleByPowerOfTen(x.asBigDecimal().scale() + 1 - x.asBigDecimal().precision());
+        RealImpl result = new RealImpl(mantissa, x.isExact());
+        result.setMathContext(x.getMathContext());
+        return result;
+    }
+    
+    /**
+     * Computes the exponent of a real value as expressed in scientific
+     * notation, mantissa * 10^exponent.
+     * @param x the real value
+     * @return the exponent of {@code x}
+     */
+    public static IntegerType exponent(RealType x) {
+        int exponent = x.asBigDecimal().precision() - x.asBigDecimal().scale() - 1;
+        return new IntegerImpl(BigInteger.valueOf((long) exponent));  // the exponent should always be exact
     }
 }
