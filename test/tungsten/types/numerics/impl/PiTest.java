@@ -147,13 +147,11 @@ public class PiTest {
     @Test
     public void testAdd() {
         System.out.println("add");
-        Numeric addend = null;
-        Pi instance = null;
-        Numeric expResult = null;
+        Pi instance = Pi.getInstance(MathContext.DECIMAL64);
+        Numeric addend = instance;
+        Numeric expResult = instance.multiply(new RealImpl(BigDecimal.valueOf(2L)));
         Numeric result = instance.add(addend);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**

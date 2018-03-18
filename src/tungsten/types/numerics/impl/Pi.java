@@ -151,6 +151,13 @@ public class Pi implements RealType {
 
     @Override
     public Numeric add(Numeric addend) {
+        if (addend instanceof Pi) {
+            // to avoid a stack overflow
+            RealImpl real = new RealImpl(value.add(((RealType) addend).asBigDecimal(), mctx), false);
+            real.setIrrational(true);
+            real.setMathContext(mctx);
+            return real;
+        }
         return addend.add(this);
     }
 
@@ -161,6 +168,13 @@ public class Pi implements RealType {
 
     @Override
     public Numeric multiply(Numeric multiplier) {
+        if (multiplier instanceof Pi) {
+            // to avoid stack overflow
+            RealImpl real = new RealImpl(value.multiply(((RealType) multiplier).asBigDecimal(), mctx), false);
+            real.setIrrational(true);
+            real.setMathContext(mctx);
+            return real;
+        }
         return multiplier.multiply(this);
     }
 

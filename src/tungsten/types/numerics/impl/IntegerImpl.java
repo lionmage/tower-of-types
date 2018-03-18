@@ -184,7 +184,7 @@ public class IntegerImpl implements IntegerType {
             // using intValue() instead of intValueExact() so we don't throw
             // any unwanted exceptions
             if (temp.intValue() > 0) {  // original algorithm compared with 9
-                digits += 1L;
+                digits++;
             }
             numDigitsCache = digits;
             return digits;
