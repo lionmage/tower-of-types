@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
@@ -39,6 +41,7 @@ import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.util.MathUtils;
+import tungsten.types.util.OptionalOperations;
 
 /**
  * This class provides a representation of the mathematical constant &#x212f; &mdash;
@@ -212,7 +215,7 @@ public class Euler implements RealType {
         BigDecimal sum = BigDecimal.ZERO;
         MathContext compctx = new MathContext(mctx.getPrecision() + 4, mctx.getRoundingMode());
         for (int n = 0; n < mctx.getPrecision(); n++) {
-            sum = sum.add(computeNthTerm(n, sum, compctx), compctx);
+            sum = sum.add(computeNthTerm(n, x, compctx), compctx);
         }
         RealImpl result = new RealImpl(sum.round(mctx), false);
         result.setIrrational(true);
@@ -245,9 +248,15 @@ public class Euler implements RealType {
     
     private BigDecimal computeNthTerm(int n, RealType x, MathContext ctx) {
         RealType numerator = MathUtils.computeIntegerExponent(x, n, ctx);
-        IntegerType denominator = MathUtils.factorial(new IntegerImpl(BigInteger.valueOf(n)));
-        // a little clunky, but this is not publicly visible...
-        return numerator.asBigDecimal().divide(new BigDecimal(denominator.asBigInteger(), ctx), ctx);
+        OptionalOperations.setMathContext(numerator, ctx);
+        IntegerType denominator = MathUtils.factorial(new IntegerImpl(BigInteger.valueOf((long) n)));
+        try {
+            // a little clunky, but this is not publicly visible...
+            return ((RealType) numerator.divide(denominator).coerceTo(RealType.class)).asBigDecimal();
+        } catch (CoercionException ex) {
+            Logger.getLogger(Euler.class.getName()).log(Level.SEVERE, "Failed to compute term " + n + " of exp series.", ex);
+            throw new ArithmeticException("Fatal error while computing exp().");
+        }
     }
 
     @Override

@@ -26,6 +26,7 @@ package tungsten.types.numerics.impl;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -420,7 +421,8 @@ public class IntegerImpl implements IntegerType {
 
     @Override
     public MathContext getMathContext() {
-        return MathContext.UNLIMITED;
+        int digits = numberOfDigits() > (long) Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) numberOfDigits();
+        return new MathContext(digits, RoundingMode.HALF_UP);
     }
     
     @Override

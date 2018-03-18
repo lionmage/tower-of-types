@@ -31,10 +31,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
+import tungsten.types.Range;
+import static tungsten.types.Range.BoundType;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.numerics.impl.Euler;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.RealImpl;
 
@@ -144,5 +147,69 @@ public class MathUtils {
             Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Unrecoverable exception thrown while computing integer exponent.", ex);
             throw new ArithmeticException("Failure to coerce to RealType.");
         }
+    }
+    
+    public static RealType computeIntegerExponent(RealType x, int n) {
+        return computeIntegerExponent(x, n, x.getMathContext());
+    }
+    
+    private static final BigDecimal decTWO = BigDecimal.valueOf(2L);
+    private static final Range<RealType> newtonRange = new Range<RealType>(new RealImpl(BigDecimal.ZERO), new RealImpl(decTWO), BoundType.EXCLUSIVE);
+    
+    /**
+     * Compute the natural logarithm, ln(x)
+     * @param x the value for which to obtain the natural logarithm
+     * @param mctx the {@link MathContext} to use for this operation
+     * @return the natural logarithm of {@code x}
+     */
+    public static RealType ln(RealType x, MathContext mctx) {
+        if (x.asBigDecimal().compareTo(BigDecimal.ONE) == 0) return new RealImpl(BigDecimal.ZERO);
+        if (x.asBigDecimal().compareTo(BigDecimal.ZERO) <= 0) throw new ArithmeticException("ln is undefined for values <= 0");
+        if (newtonRange.contains(x)) return lnNewton(x, mctx);
+        
+        return lnSeries(x, mctx);
+    }
+    
+    public static RealType ln(RealType x) {
+        return ln(x, x.getMathContext());
+    }
+    
+    private static RealType lnNewton(RealType x, MathContext mctx) {
+        Euler e = Euler.getInstance(mctx);
+        BigDecimal xval = x.asBigDecimal();
+        BigDecimal y0 = BigDecimal.ONE;
+        BigDecimal y1;
+        while (true) {
+            final BigDecimal expval = e.exp(new RealImpl(y0, false)).asBigDecimal();
+            
+            BigDecimal num = xval.subtract(expval, mctx);
+            BigDecimal denom = xval.add(expval, mctx);
+            y1 = y0.add(decTWO.multiply(num.divide(denom, mctx), mctx), mctx);
+            if (y0.compareTo(y1) == 0) break;
+            
+            y0 = y1;
+        }
+        final RealImpl result = new RealImpl(y0, false);
+        result.setIrrational(true);
+        result.setMathContext(mctx);
+        return result;
+    }
+    
+    private static RealType lnSeries(RealType x, MathContext mctx) {
+        MathContext compctx = new MathContext(mctx.getPrecision() + 4, mctx.getRoundingMode());
+        BigDecimal xfrac = x.asBigDecimal().subtract(BigDecimal.ONE, compctx).divide(x.asBigDecimal(), compctx);
+        BigDecimal sum = BigDecimal.ZERO;
+        for (int n = 1; n < mctx.getPrecision() * 17; n++) {
+            sum = sum.add(computeNthTerm_ln(xfrac, n, compctx), compctx);
+        }
+        RealImpl result = new RealImpl(sum.round(mctx), false);
+        result.setIrrational(true);
+        result.setMathContext(mctx);
+        return result;
+    }
+    
+    private static BigDecimal computeNthTerm_ln(BigDecimal frac, int n, MathContext mctx) {
+        BigDecimal ninv = BigDecimal.ONE.divide(BigDecimal.valueOf((long) n), mctx);
+        return ninv.multiply(computeIntegerExponent(new RealImpl(frac), n, mctx).asBigDecimal(), mctx);
     }
 }

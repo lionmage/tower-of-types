@@ -255,7 +255,9 @@ public class RealImpl implements RealType {
         } else if (divisor instanceof IntegerType) {
             IntegerType intdivisor = (IntegerType) divisor;
             if (isIntegralValue()) {
-                return new RationalImpl(val.toBigIntegerExact(), intdivisor.asBigInteger());
+                final RationalImpl rationalValue = new RationalImpl(val.toBigIntegerExact(), intdivisor.asBigInteger());
+                rationalValue.setMathContext(mctx);
+                return rationalValue;
             } else {
                 BigDecimal decdivisor = new BigDecimal(intdivisor.asBigInteger());
                 return new RealImpl(val.divide(decdivisor, mctx));

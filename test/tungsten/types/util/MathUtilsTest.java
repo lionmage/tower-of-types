@@ -103,5 +103,22 @@ public class MathUtilsTest {
         result = MathUtils.computeIntegerExponent(x, n, mctx);
         assertEquals(expResult, result);
     }
-    
+
+    /**
+     * Test of ln method, of class MathUtils.
+     */
+    @Test
+    public void testLn() {
+        System.out.println("ln");
+        RealType x = new RealImpl("10.0");
+        MathContext mctx = new MathContext(9, RoundingMode.HALF_UP);
+        RealType expResult = new RealImpl("2.30258509", false);
+        RealType result = MathUtils.ln(x, mctx);
+        assertEquals(expResult, result);
+        
+        x = new RealImpl("0.7");
+        expResult = new RealImpl("-0.356674944", false);
+        result = MathUtils.ln(x, mctx);
+        assertEquals(expResult, result);
+    }
 }

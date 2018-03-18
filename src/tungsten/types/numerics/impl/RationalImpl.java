@@ -89,6 +89,12 @@ public class RationalImpl implements RationalType {
         this.numerator = numerator.asBigInteger();
         this.denominator = denominator.asBigInteger();
         this.exact = numerator.isExact() && denominator.isExact();
+        mctx = pickBestMC(numerator.getMathContext(), denominator.getMathContext());
+    }
+    
+    private MathContext pickBestMC(MathContext first, MathContext second) {
+        int precision = Math.min(first.getPrecision(), second.getPrecision());
+        return new MathContext(precision, first.getRoundingMode());
     }
     
     /**
@@ -99,6 +105,7 @@ public class RationalImpl implements RationalType {
     public RationalImpl(IntegerType val) {
         numerator = val.asBigInteger();
         denominator = BigInteger.ONE;
+        mctx = val.getMathContext();
     }
     
     public void setMathContext(MathContext nuCtx) {
