@@ -146,6 +146,13 @@ public class Euler implements RealType {
 
     @Override
     public Numeric add(Numeric addend) {
+        if (addend instanceof Euler) {
+            // to avoid a stack overflow
+            RealImpl real = new RealImpl(value.add(((RealType) addend).asBigDecimal(), mctx), false);
+            real.setIrrational(true);
+            real.setMathContext(mctx);
+            return real;
+        }
         return addend.add(this);
     }
 
@@ -156,6 +163,13 @@ public class Euler implements RealType {
 
     @Override
     public Numeric multiply(Numeric multiplier) {
+        if (multiplier instanceof Euler) {
+            // to avoid a stack overflow
+            RealImpl real = new RealImpl(value.multiply(((RealType) multiplier).asBigDecimal(), mctx), false);
+            real.setIrrational(true);
+            real.setMathContext(mctx);
+            return real;
+        }
         return multiplier.multiply(this);
     }
 
