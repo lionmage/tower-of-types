@@ -80,7 +80,7 @@ public class OptionalOperations {
             // we can attempt to fake it out if there's a stream() method
             s = ((Stream<T>) obtainStream(obj)).parallel();
         } catch (SecurityException | IllegalAccessException ex) {
-            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Failed to invoke stream() due to security or access issue.", ex);
+            Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Failed to invoke parallelStream() due to security or access issue.", ex);
             throw new IllegalStateException(ex);
         } catch (InvocationTargetException ex) {
             s = Stream.empty();
