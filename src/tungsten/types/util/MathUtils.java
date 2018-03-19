@@ -35,6 +35,8 @@ import tungsten.types.Range;
 import static tungsten.types.Range.BoundType;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.NumericHierarchy;
+import tungsten.types.numerics.RationalType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.numerics.impl.Euler;
@@ -228,7 +230,7 @@ public class MathUtils {
     
     /**
      * Computes the mantissa of a real value as expressed in scientific
-     * notation, mantissa * 10^exponent.
+     * notation, mantissa * 10<sup>exponent</sup>.
      * @param x the real value
      * @return the mantissa of {@code x}
      */
@@ -241,12 +243,96 @@ public class MathUtils {
     
     /**
      * Computes the exponent of a real value as expressed in scientific
-     * notation, mantissa * 10^exponent.
+     * notation, mantissa * 10<sup>exponent</sup>.
      * @param x the real value
      * @return the exponent of {@code x}
      */
     public static IntegerType exponent(RealType x) {
         int exponent = x.asBigDecimal().precision() - x.asBigDecimal().scale() - 1;
         return new IntegerImpl(BigInteger.valueOf((long) exponent));  // the exponent should always be exact
+    }
+    
+    /**
+     * Compute the general case of x<sup>y</sup>, where x and y are both real numbers.
+     * @param base the value to raise to a given power
+     * @param exponent the power to which we want to raise {@code base}
+     * @param mctx the {@link MathContext} to use for this calculation
+     * @return the value of base<sup>exponent</sup>
+     */
+    public static RealType generalizedExponent(RealType base, Numeric exponent, MathContext mctx) {
+        NumericHierarchy htype = NumericHierarchy.forNumericType(exponent.getClass());
+        switch (htype) {
+            case INTEGER:
+                int n = ((IntegerType) exponent).asBigInteger().intValueExact();
+                return computeIntegerExponent(base, n, mctx);
+            case REAL:
+                if (exponent.isCoercibleTo(IntegerType.class)) {
+                    try {
+                        IntegerType integer = (IntegerType) exponent.coerceTo(IntegerType.class);
+                        return generalizedExponent(base, integer, mctx);
+                    } catch (CoercionException ex) {
+                        Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Failed to coerce real to integer.", ex);
+                        throw new IllegalStateException("Should have been able to coerce RealType to IntegerType.", ex);
+                    }
+                }
+                // approximate with a rational
+                try {
+                    RationalType ratexponent = (RationalType) exponent.coerceTo(RationalType.class);
+                    return generalizedExponent(base, ratexponent, mctx);
+                } catch (CoercionException ex) {
+                    Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Failed to coerce real to rational.", ex);
+                    throw new IllegalStateException("Should have been able to coerce RealType to RationalType.", ex);
+                }
+            case RATIONAL:
+                // use the identity b^(u/v) = vth root of b^u
+                RationalType ratexponent = (RationalType) exponent;
+                final int n_num = ratexponent.numerator().asBigInteger().intValueExact();
+                RealType intermediate = computeIntegerExponent(base, n_num, mctx);
+                return nthRoot(intermediate, ratexponent.denominator(), mctx);
+            default:
+                throw new ArithmeticException("Currently generalizedExponent() has no support for exponents of type " + exponent.getClass().getTypeName());
+        }
+    }
+    
+    /**
+     * Compute the nth root of a real value a.  The result is the principal
+     * root of the equation x<sup>n</sup> = a.  Note that the {@link MathContext}
+     * is inferred from the argument {@code a}.
+     * @param a the value for which we want to find a root
+     * @param n the degree of the root
+     * @return the {@code n}th root of {@code a}
+     */
+    public static RealType nthRoot(RealType a, IntegerType n) {
+        return nthRoot(a, n, a.getMathContext());
+    }
+    
+    /**
+     * Compute the nth root of a real value a.  The result is the principal
+     * root of the equation x<sup>n</sup> = a.  The {@link MathContext}
+     * is explicitly supplied.
+     * @param a the value for which we want to find a root
+     * @param n the degree of the root
+     * @param mctx the {@link MathContext} to use for this calculation
+     * @return the {@code n}th root of {@code a}
+     */
+    public static RealType nthRoot(RealType a, IntegerType n, MathContext mctx) {
+        BigDecimal A = a.asBigDecimal();
+        if (A.compareTo(BigDecimal.ZERO) == 0) return new RealImpl(BigDecimal.ZERO);
+        
+        int nint = n.asBigInteger().intValueExact();
+        BigDecimal ncalc = new BigDecimal(n.asBigInteger());
+        BigDecimal nminus1 = ncalc.subtract(BigDecimal.ONE);
+        BigDecimal x0;
+        BigDecimal x1 = A.divide(new BigDecimal(n.asBigInteger())); // initial estimate
+        
+        while (true) {
+            x0 = x1;
+            x1 = nminus1.multiply(x0, mctx).add(A.divide(x0.pow(nint - 1, mctx), mctx), mctx).divide(ncalc, mctx);
+            if (x0.compareTo(x1) == 0) break;
+        }
+        final RealImpl result = new RealImpl(x1, a.isExact() && x1.stripTrailingZeros().scale() <= 0);
+        result.setIrrational(!result.isCoercibleTo(IntegerType.class));
+        result.setMathContext(mctx);
+        return result;
     }
 }

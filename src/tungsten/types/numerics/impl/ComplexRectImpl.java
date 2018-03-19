@@ -52,6 +52,7 @@ public class ComplexRectImpl implements ComplexType {
     public ComplexRectImpl(RealType real, RealType imaginary) {
         this.real = real;
         this.imag = imaginary;
+        this.exact = real.isExact() && imaginary.isExact();
     }
     
     public ComplexRectImpl(RealType real, RealType imaginary, boolean exact) {
