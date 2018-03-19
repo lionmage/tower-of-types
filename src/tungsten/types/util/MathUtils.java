@@ -363,9 +363,21 @@ public class MathUtils {
             x1 = nminus1.multiply(x0, mctx).add(A.divide(x0.pow(nint - 1, mctx), mctx), mctx).divide(ncalc, mctx);
             if (x0.compareTo(x1) == 0) break;
         }
-        final RealImpl result = new RealImpl(x1, a.isExact() && x1.stripTrailingZeros().scale() <= 0);
-        result.setIrrational(!result.isCoercibleTo(IntegerType.class));
+        x1 = x1.stripTrailingZeros();
+        final RealImpl result = new RealImpl(x1, a.isExact() && x1.scale() <= 0);
         result.setMathContext(mctx);
+        classifyIfIrrational(result);
         return result;
+    }
+    
+    private static void classifyIfIrrational(RealImpl realval) {
+        if (realval.getMathContext().equals(MathContext.UNLIMITED)) {
+            Logger.getLogger(MathUtils.class.getName()).log(Level.WARNING, "Classifying a real value {0}, but the MathContext may not have been set", realval);
+        }
+        boolean probableInteger = realval.isCoercibleTo(IntegerType.class);
+        IntegerType nonFractionPart = new IntegerImpl(realval.asBigDecimal().toBigInteger());
+        int reducedDigitLength = realval.getMathContext().getPrecision() - (int) nonFractionPart.numberOfDigits();
+        boolean atLimit = reducedDigitLength == realval.asBigDecimal().scale();
+        realval.setIrrational(!probableInteger && atLimit);
     }
 }

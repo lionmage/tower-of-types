@@ -319,9 +319,9 @@ public class RealImpl implements RealType {
         }
         
         x1 = x1.stripTrailingZeros(); // ensure this representation is as compact as possible
-        final boolean lendiff = fractionalLengthDifference(x1) == 0;
-        RealImpl result = new RealImpl(x1, exact && !lendiff);
-        result.setIrrational(lendiff);
+        final boolean atLimit = fractionalLengthDifference(x1) == 0;
+        RealImpl result = new RealImpl(x1, exact && !atLimit);
+        result.setIrrational(atLimit);
         result.setMathContext(mctx); // inherit the MathContext from this object
         return result;
     }
