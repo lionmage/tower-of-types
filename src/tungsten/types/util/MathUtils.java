@@ -110,7 +110,7 @@ public class MathUtils {
         try {
             return factorialCache.get(n.longValueExact());
         } catch (ArithmeticException e) {
-            Logger.getLogger(MathUtils.class.getName()).log(Level.FINER, "Attempt to cache a factorial value for n outside Long range.", e);
+            Logger.getLogger(MathUtils.class.getName()).log(Level.FINER, "Attempt to access cache of factorial value for n outside Long range.", e);
             return null; // this is the same as if we had a regular cache miss
         }
     }
@@ -151,12 +151,18 @@ public class MathUtils {
         }
     }
     
+    /**
+     * Compute x<sup>n</sup>. The {@link MathContext} is inferred from {@code x}.
+     * @param x the value to take the exponent of
+     * @param n the integer exponent
+     * @return x raised to the n<sup>th</sup> power
+     */
     public static RealType computeIntegerExponent(RealType x, int n) {
         return computeIntegerExponent(x, n, x.getMathContext());
     }
     
     private static final BigDecimal decTWO = BigDecimal.valueOf(2L);
-    private static final Range<RealType> newtonRange = new Range<RealType>(new RealImpl(BigDecimal.ZERO), new RealImpl(decTWO), BoundType.EXCLUSIVE);
+    private static final Range<RealType> newtonRange = new Range<>(new RealImpl(BigDecimal.ZERO), new RealImpl(decTWO), BoundType.EXCLUSIVE);
     
     /**
      * Compute the natural logarithm, ln(x)
@@ -185,6 +191,11 @@ public class MathUtils {
         return lnSeries(x, mctx);
     }
     
+    /**
+     * Compute the natural logarithm, ln(x)
+     * @param x the value for which to obtain the natural logarithm
+     * @return the natural logarithm of {@code x}
+     */
     public static RealType ln(RealType x) {
         return ln(x, x.getMathContext());
     }
@@ -226,6 +237,28 @@ public class MathUtils {
     private static BigDecimal computeNthTerm_ln(BigDecimal frac, int n, MathContext mctx) {
         BigDecimal ninv = BigDecimal.ONE.divide(BigDecimal.valueOf((long) n), mctx);
         return ninv.multiply(computeIntegerExponent(new RealImpl(frac), n, mctx).asBigDecimal(), mctx);
+    }
+    
+    /**
+     * Compute the general logarithm, log<sub>b</sub>(x).
+     * @param x the number for which we wish to take a logarithm
+     * @param base the base of the logarithm
+     * @param mctx the MathContext to use for the 
+     * @return the logarithm of {@code x} in {@code base}
+     */
+    public static RealType log(RealType x, RealType base, MathContext mctx) {
+        return (RealType) ln(x, mctx).divide(ln(base, mctx));
+    }
+    
+    /**
+     * Compute the general logarithm, log<sub>b</sub>(x).
+     * The {@link MathContext} is inferred from the argument {@code x}.
+     * @param x the number for which we wish to take a logarithm
+     * @param base the base of the logarithm
+     * @return the logarithm of {@code x} in {@code base}
+     */
+    public static RealType log(RealType x, RealType base) {
+        return log(x, base, x.getMathContext());
     }
     
     /**
