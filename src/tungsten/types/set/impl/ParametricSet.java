@@ -28,9 +28,9 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import tungsten.types.Set;
 import tungsten.types.Numeric;
-import tungsten.types.util.OptionalOperations;
 
 /**
  * Implementation of {@link Set} which is defined parametrically.
@@ -87,7 +87,7 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
     @Override
     public boolean contains(T element) {
         int direction = monotonicity();
-        if (direction == 0) {
+        if (direction == 0 && seedValue != null) {
             return seedValue.compareTo(element) == 0;
         }
         // the stream is infinite, and since takeWhile and dropWhile are only
@@ -139,44 +139,10 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
             final int direction = this.monotonicity();
             
             // construct a new ParametricSet that generates the union of these twp sets
-            final Supplier<T> merged = new Supplier<T>() {
-                Iterator<T> iter1;
-                Iterator<T> iter2;
-                Optional<T> cache1;
-                Optional<T> cache2;
-                
-                public void reset() {
-                    cache1 = Optional.empty();
-                    cache2 = Optional.empty();
-                    iter1 = parent.iterator();
-                    iter2 = that.iterator();
-                }
-                
-                @Override
-                public T get() {
-                    // both are infinite sets, so we never have to test with hasNext()
-                    T h1 = cache1.isPresent() ? cache1.get() : iter1.next();
-                    T h2 = cache2.isPresent() ? cache2.get() : iter2.next();
-                    if (Integer.signum(h1.compareTo(h2)) == -direction) {
-                        if (!cache2.isPresent()) cache2 = Optional.of(h2);
-                        cache1 = Optional.empty();
-                        return h1;
-                    } else if (Integer.signum(h2.compareTo(h1)) == -direction) {
-                        if (!cache1.isPresent()) cache1 = Optional.of(h1);
-                        cache2 = Optional.empty();
-                        return h2;
-                    } else {
-                        // values are equal, so return a single value
-                        cache1 = Optional.empty();
-                        cache2 = Optional.empty();
-                        return h1;
-                    }
-                }
-            };
-            return new ParametricSet() {
+            return new ParametricSet<T>() {
                 @Override
                 public Stream<T> stream() {
-                    OptionalOperations.reset(merged);
+                    MergeSupplier merged = new MergeSupplier(parent, that, direction);
                     return Stream.generate(merged);
                 }
                 @Override
@@ -188,12 +154,73 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    private class MergeSupplier implements Supplier<T> {
+        final Iterator<T> iter1;
+        final Iterator<T> iter2;
+        Optional<T> cache1;
+        Optional<T> cache2;
+        final int direction;
+
+        public MergeSupplier(ParametricSet<T> set1, ParametricSet<T> set2, int direction) {
+            cache1 = Optional.empty();
+            cache2 = Optional.empty();
+            iter1 = set1.iterator();
+            iter2 = set2.iterator();
+            this.direction = direction;
+        }
+
+        @Override
+        public T get() {
+            // both are infinite sets, so we never have to test with hasNext()
+            T h1 = cache1.isPresent() ? cache1.get() : iter1.next();
+            T h2 = cache2.isPresent() ? cache2.get() : iter2.next();
+            if (Integer.signum(h1.compareTo(h2)) == -direction) {
+                if (!cache2.isPresent()) cache2 = Optional.of(h2);
+                cache1 = Optional.empty();
+                return h1;
+            } else if (Integer.signum(h2.compareTo(h1)) == -direction) {
+                if (!cache1.isPresent()) cache1 = Optional.of(h1);
+                cache2 = Optional.empty();
+                return h2;
+            } else {
+                // values are equal, so return a single value
+                cache1 = Optional.empty();
+                cache2 = Optional.empty();
+                return h1;
+            }
+        }
+    }
+    
+    /**
+     * Perform an intersection operation between this parametric set
+     * and another set.  Note that this implementation assumes that
+     * {@code other} is a finite set, otherwise the implementation would
+     * be a nightmare.
+     * @param other the {@link Set} we wish to take an intersection with
+     * @return the intersection of two sets
+     */
     @Override
     public Set<T> intersection(Set<T> other) {
         final ParametricSet<T> parent = this;
         final int direction = monotonicity();
+        final T maxElement = StreamSupport.stream(other.spliterator(), false).max(T::compareTo).get();
+        final T minElement = StreamSupport.stream(other.spliterator(), false).min(T::compareTo).get();
 
         return new ParametricSet<T>() {
+            @Override
+            public boolean contains(T element) {
+                switch (direction) {
+                    case 0:
+                        return other.contains(parent.getSeed());
+                    case -1:
+                        if (element.compareTo(minElement) < 0) return false;
+                        break;
+                    case 1:
+                        if (element.compareTo(maxElement) > 0) return false;
+                        break;
+                }
+                return super.contains(element);
+            }
             @Override
             public Stream<T> stream() {
                 return parent.stream().filter(x -> other.contains(x));
@@ -205,6 +232,12 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
         };
     }
 
+    /**
+     * Take the difference between this set and the other.  The
+     * result should be all the elements in this set but not in the {@code other}.
+     * @param other the set with which to take the difference
+     * @return the difference between this set and the other
+     */
     @Override
     public Set<T> difference(Set<T> other) {
         final ParametricSet<T> parent = this;
@@ -212,8 +245,27 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
 
         return new ParametricSet<T>() {
             @Override
+            public Iterator<T> iterator() {
+                return new Iterator<T>() {
+                    final Iterator<T> fromParent = parent.stream().filter(x -> !other.contains(x)).iterator();
+                    
+                    @Override
+                    public boolean hasNext() {
+                        return fromParent.hasNext();
+                    }
+
+                    @Override
+                    public T next() {
+                        return fromParent.next();
+                    }
+                    
+                };
+            }
+            @Override
             public Stream<T> stream() {
-                return parent.stream().filter(x -> !other.contains(x));
+                Iterable<T> iterable = () -> iterator();
+                return StreamSupport.stream(iterable.spliterator(), false);
+//                return parent.stream().filter(x -> !other.contains(x));
             }
             @Override
             public int monotonicity() {

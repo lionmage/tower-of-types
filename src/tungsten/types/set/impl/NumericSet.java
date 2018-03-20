@@ -24,13 +24,17 @@
 package tungsten.types.set.impl;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import tungsten.types.Numeric;
 import tungsten.types.Set;
+import tungsten.types.exceptions.CoercionException;
 
 /**
  * Implementation of {@link Set} for {@link Numeric} values.
@@ -124,6 +128,65 @@ public class NumericSet implements Set<Numeric> {
         
         return new NumericSet(diff);
     }
+    
+    public <T extends Numeric> Set<T> coerceTo(Class<T> clazz) throws CoercionException {
+        final TreeSet<T> innerSet = new TreeSet<>();
+        for (Numeric element : internal) {
+            if (!element.isCoercibleTo(clazz)) {
+                throw new CoercionException("Element of NumericSet cannot be coerced to target type.", element.getClass(), clazz);
+            }
+            innerSet.add((T) element.coerceTo(clazz));
+        }
+        
+        return new Set<T>() {
+            private SortedSet<T> elements = Collections.unmodifiableSortedSet(innerSet);
+            
+            @Override
+            public long cardinality() {
+                return (long) elements.size();
+            }
+
+            @Override
+            public boolean countable() {
+                return true;
+            }
+
+            @Override
+            public boolean contains(T element) {
+                return elements.contains(element);
+            }
+
+            @Override
+            public void append(T element) {
+                throw new UnsupportedOperationException("Cannot modify this view.");
+            }
+
+            @Override
+            public void remove(T element) {
+                throw new UnsupportedOperationException("Cannot modify this view.");
+            }
+
+            @Override
+            public Set<T> union(Set<T> other) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            @Override
+            public Set<T> intersection(Set<T> other) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            @Override
+            public Set<T> difference(Set<T> other) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            @Override
+            public Iterator<T> iterator() {
+                return elements.iterator();
+            }
+        };
+    } 
     
     /**
      * Since ordering in sets isn't guaranteed (especially this implementation),
