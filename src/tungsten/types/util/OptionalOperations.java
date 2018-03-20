@@ -26,6 +26,7 @@ package tungsten.types.util;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.MathContext;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -87,5 +88,22 @@ public class OptionalOperations {
             Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Bad target.", ex);
         }
         return s;
+    }
+    
+    public static void reset(Object obj) {
+        if (obj instanceof Supplier) {
+            try {
+                Method m = obj.getClass().getMethod("reset");
+                m.invoke(obj);
+            } catch (NoSuchMethodException ex) {
+                Logger.getLogger(OptionalOperations.class.getName()).log(Level.WARNING, "reset() does not exist on given Supplier instance", ex);
+            } catch (SecurityException | IllegalAccessException ex) {
+                Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Failed to invoke reset() due to security or access issue.", ex);
+                throw new IllegalStateException(ex);
+            } catch (InvocationTargetException ex) {
+                Logger.getLogger(OptionalOperations.class.getName()).log(Level.SEVERE, "Bad target.", ex);
+            }
+        }
+        throw new IllegalArgumentException("Unknown target for reset(): " + obj.getClass().getTypeName());
     }
 }

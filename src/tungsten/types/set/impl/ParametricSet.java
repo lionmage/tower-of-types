@@ -24,21 +24,19 @@
 package tungsten.types.set.impl;
 
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import tungsten.types.Set;
 import tungsten.types.Numeric;
+import tungsten.types.util.OptionalOperations;
 
 /**
  * Implementation of {@link Set} which is defined parametrically.
  * Since values are generated parametrically, there is an implicit
  * ordering of the values, which {@link #contains(java.lang.Object&tungsten.types.Numeric&java.lang.Comparable<T>) }
  * uses to do its thing.
- * 
- * NOTE: I am not happy with the way this is currently.  I'd like to rewrite
- * this to support negative as well as positive iteration.  Will probably still
- * require monotonicity, but should support both decreasing as well as increasing.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the numeric type for this set
@@ -56,9 +54,9 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
      * Create a new {@code ParametricSet} with an initial seed value and a
      * function to generate additional values.  Some underlying assumptions:
      * <ul>
-     * <li>The value of {@code seed} is the lowest value contained in the set</li>
+     * <li>The value of {@code seed} is either the lowest or highest value contained in the set</li>
      * <li>The {@code function} produces no duplicate values</li>
-     * <li>Further, {@code function} generates values that are monotonically increasing</li>
+     * <li>Further, {@code function} generates values that are monotonic</li>
      * </ul>
      * @param seed an implementation of {@link Numeric} that is also {@link Comparable}
      * @param function a {@link UnaryOperator} that operates iteratively on {@link Numeric} values
@@ -88,15 +86,36 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
 
     @Override
     public boolean contains(T element) {
+        int direction = monotonicity();
+        if (direction == 0) {
+            return seedValue.compareTo(element) == 0;
+        }
+        // the stream is infinite, and since takeWhile and dropWhile are only
+        // implemented in JDK 9 and we're using Java 8, we'll use an iterator
+        
         Iterator<T> iter = iterator();
         while (iter.hasNext()) {
             T val = iter.next();
-            if (val.compareTo(element) < 0) continue;
+            if (Integer.signum(val.compareTo(element)) == -direction) continue;
             if (val.compareTo(element) == 0) return true;
             // otherwise, bail out of the loop
             break;
         }
         return false;
+    }
+    
+    /**
+     * Returns -1 if the elements of this set are monotonically decreasing,
+     * 1 if they are monotonically increasing, or 0 if the set contains
+     * repeating elements.
+     * 
+     * @return the monotonicity of this set's elements
+     */
+    public int monotonicity() {
+        T x0 = seedValue;
+        T x1 = func.apply(x0);
+        
+        return Integer.signum(x1.compareTo(x0));
     }
 
     @Override
@@ -112,35 +131,57 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
     @Override
     public Set<T> union(Set<T> other) {
         if (other instanceof ParametricSet) {
+            ParametricSet<T> parent = this;
             ParametricSet<T> that = (ParametricSet<T>) other;
+            if (this.monotonicity() != that.monotonicity()) {
+                throw new UnsupportedOperationException("Cannot merge two sets with different monotonicity.");
+            }
+            final int direction = this.monotonicity();
             
             // construct a new ParametricSet that generates the union of these twp sets
-            ParametricSet<T> first = this.seedValue.compareTo(that.getSeed()) < 0 ? this : that;
-            ParametricSet<T> second = this.seedValue.compareTo(that.getSeed()) >= 0 ? that : this;
             final Supplier<T> merged = new Supplier<T>() {
-                T firstNext = first.getSeed();
-                T secondNext = second.getSeed();
-
+                Iterator<T> iter1;
+                Iterator<T> iter2;
+                Optional<T> cache1;
+                Optional<T> cache2;
+                
+                public void reset() {
+                    cache1 = Optional.empty();
+                    cache2 = Optional.empty();
+                    iter1 = parent.iterator();
+                    iter2 = that.iterator();
+                }
+                
                 @Override
                 public T get() {
-                    T temp;
-                    
-                    if (firstNext.compareTo(secondNext) <= 0) {
-                        // in case of a tie, first wins
-                        temp = firstNext;
-                        firstNext = first.getFunction().apply(firstNext);
+                    // both are infinite sets, so we never have to test with hasNext()
+                    T h1 = cache1.isPresent() ? cache1.get() : iter1.next();
+                    T h2 = cache2.isPresent() ? cache2.get() : iter2.next();
+                    if (Integer.signum(h1.compareTo(h2)) == -direction) {
+                        if (!cache2.isPresent()) cache2 = Optional.of(h2);
+                        cache1 = Optional.empty();
+                        return h1;
+                    } else if (Integer.signum(h2.compareTo(h1)) == -direction) {
+                        if (!cache1.isPresent()) cache1 = Optional.of(h1);
+                        cache2 = Optional.empty();
+                        return h2;
                     } else {
-                        temp = secondNext;
-                        secondNext = second.getFunction().apply(secondNext);
+                        // values are equal, so return a single value
+                        cache1 = Optional.empty();
+                        cache2 = Optional.empty();
+                        return h1;
                     }
-                    return temp;
                 }
             };
             return new ParametricSet() {
                 @Override
                 public Stream<T> stream() {
-                    // TODO this needs to be seriously tested
-                    return Stream.generate(merged).distinct().sorted();
+                    OptionalOperations.reset(merged);
+                    return Stream.generate(merged);
+                }
+                @Override
+                public int monotonicity() {
+                    return direction;
                 }
             };
         }
@@ -149,12 +190,36 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
 
     @Override
     public Set<T> intersection(Set<T> other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final Stream<T> parentStream = stream();
+        final int direction = monotonicity();
+
+        return new ParametricSet<T>() {
+            @Override
+            public Stream<T> stream() {
+                return parentStream.filter(x -> other.contains(x));
+            }
+            @Override
+            public int monotonicity() {
+                return direction;
+            }
+        };
     }
 
     @Override
     public Set<T> difference(Set<T> other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final Stream<T> parentStream = stream();
+        final int direction = monotonicity();
+
+        return new ParametricSet<T>() {
+            @Override
+            public Stream<T> stream() {
+                return parentStream.filter(x -> !other.contains(x));
+            }
+            @Override
+            public int monotonicity() {
+                return direction;
+            }
+        };
     }
     
     public Stream<T> stream() {
