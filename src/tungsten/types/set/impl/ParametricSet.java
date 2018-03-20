@@ -190,13 +190,13 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
 
     @Override
     public Set<T> intersection(Set<T> other) {
-        final Stream<T> parentStream = stream();
+        final ParametricSet<T> parent = this;
         final int direction = monotonicity();
 
         return new ParametricSet<T>() {
             @Override
             public Stream<T> stream() {
-                return parentStream.filter(x -> other.contains(x));
+                return parent.stream().filter(x -> other.contains(x));
             }
             @Override
             public int monotonicity() {
@@ -207,13 +207,13 @@ public class ParametricSet<T extends Numeric & Comparable<T>> implements Set<T> 
 
     @Override
     public Set<T> difference(Set<T> other) {
-        final Stream<T> parentStream = stream();
+        final ParametricSet<T> parent = this;
         final int direction = monotonicity();
 
         return new ParametricSet<T>() {
             @Override
             public Stream<T> stream() {
-                return parentStream.filter(x -> !other.contains(x));
+                return parent.stream().filter(x -> !other.contains(x));
             }
             @Override
             public int monotonicity() {
