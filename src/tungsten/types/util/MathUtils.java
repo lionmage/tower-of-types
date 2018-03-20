@@ -364,20 +364,17 @@ public class MathUtils {
             if (x0.compareTo(x1) == 0) break;
         }
         x1 = x1.stripTrailingZeros();
-        final RealImpl result = new RealImpl(x1, a.isExact() && x1.scale() <= 0);
+        boolean irrational = classifyIfIrrational(x1, mctx);
+        final RealImpl result = new RealImpl(x1, a.isExact() && !irrational);
         result.setMathContext(mctx);
-        classifyIfIrrational(result);
+        result.setIrrational(irrational);
         return result;
     }
     
-    private static void classifyIfIrrational(RealImpl realval) {
-        if (realval.getMathContext().equals(MathContext.UNLIMITED)) {
-            Logger.getLogger(MathUtils.class.getName()).log(Level.WARNING, "Classifying a real value {0}, but the MathContext may not have been set", realval);
-        }
-        boolean probableInteger = realval.isCoercibleTo(IntegerType.class);
-        IntegerType nonFractionPart = new IntegerImpl(realval.asBigDecimal().toBigInteger());
-        int reducedDigitLength = realval.getMathContext().getPrecision() - (int) nonFractionPart.numberOfDigits();
-        boolean atLimit = reducedDigitLength == realval.asBigDecimal().scale();
-        realval.setIrrational(!probableInteger && atLimit);
+    private static boolean classifyIfIrrational(BigDecimal realval, MathContext mctx) {
+        if (realval.scale() <= 0) return false;  // this is an integer
+        IntegerType nonFractionPart = new IntegerImpl(realval.toBigInteger());
+        int reducedDigitLength = mctx.getPrecision() - (int) nonFractionPart.numberOfDigits();
+        return reducedDigitLength == realval.scale();
     }
 }
