@@ -12,3 +12,9 @@ many implement complex as the base type with other types subclassing the complex
 is that you wind up with integer types with methods that are simply inappropriate for anything but a complex number.  I am
 attempting to avoid that and code to interfaces with the philosophy that interfaces trump object oriented inheritance
 in utility.
+
+The project currently relies on the big-math library hosted at https://github.com/eobermuhlner/big-math for some
+trigonometric functions.  The Ant build script will automatically retrieve the appropriate Jar files and place them
+in a lib directory within the project.  If you load tower-of-types into Netbeans, you will need to do a "Clean and Build"
+at the root project node to obtain these dependencies.  If Netbeans prompts you to fix the dependencies, simply
+cancel the dialog and do the build once to resolve everything.
