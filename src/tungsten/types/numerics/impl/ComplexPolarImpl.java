@@ -46,6 +46,9 @@ import tungsten.types.util.OptionalOperations;
 import tungsten.types.util.RangeUtils;
 
 /**
+ * An implementation of {@link ComplexType} that uses a polar representation
+ * internally.  This representation is typically superior for computing
+ * multiplication, division, roots, and powers.
  *
  * @author tarquin
  */

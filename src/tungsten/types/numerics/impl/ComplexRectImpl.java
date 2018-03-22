@@ -43,6 +43,8 @@ import tungsten.types.util.MathUtils;
 import tungsten.types.util.OptionalOperations;
 
 /**
+ * An implementation of {@link ComplexType} that uses a rectangular
+ * representation internally.
  *
  * @author tarquin
  */
