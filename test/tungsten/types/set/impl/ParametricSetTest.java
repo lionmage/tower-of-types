@@ -103,7 +103,7 @@ public class ParametricSetTest {
     @Test
     public void testContains() {
         System.out.println("contains");
-        Numeric element = new IntegerImpl(BigInteger.valueOf(3L));
+        IntegerType element = new IntegerImpl(BigInteger.valueOf(3L));
         ParametricSet<IntegerType> instance = even;
         boolean expResult = false;
         boolean result = instance.contains(element);
