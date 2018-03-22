@@ -35,6 +35,7 @@ import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RationalType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.util.OptionalOperations;
 
 /**
  *
@@ -114,12 +115,16 @@ public class RationalImpl implements RationalType {
 
     @Override
     public RationalType magnitude() {
-        return new RationalImpl(numerator.abs(), denominator).reduce();
+        final RationalType magnitude = new RationalImpl(numerator.abs(), denominator).reduce();
+        OptionalOperations.setMathContext(magnitude, mctx);
+        return magnitude;
     }
 
     @Override
     public RationalType negate() {
-        return new RationalImpl(numerator.negate(), denominator);
+        final RationalImpl result = new RationalImpl(numerator.negate(), denominator);
+        result.setMathContext(mctx);
+        return result;
     }
 
     @Override
@@ -177,22 +182,21 @@ public class RationalImpl implements RationalType {
                 } else if (numerator.equals(BigInteger.ZERO)) {
                     return new IntegerImpl(BigInteger.ZERO, exact);
                 } else {
-                    throw new CoercionException("Cannot convert fraction to integer", this.getClass(), numtype);
+                    throw new CoercionException("Cannot convert fraction to integer.", this.getClass(), numtype);
                 }
             case RATIONAL:
                 return this;
             case REAL:
-                final RealImpl realval = new RealImpl(this);
-                realval.setMathContext(mctx);
+                final RealImpl realval = new RealImpl(this, mctx);
+//                realval.setMathContext(mctx);
                 return realval;
             case COMPLEX:
                 final RealImpl zero = new RealImpl(BigDecimal.ZERO);
                 zero.setMathContext(mctx);
-                final RealImpl creal = new RealImpl(this);
-                creal.setMathContext(mctx);
+                final RealImpl creal = new RealImpl(this, mctx);
                 return new ComplexRectImpl(creal, zero, exact);
             default:
-                throw new CoercionException("Cannot convert rational to unknown type", this.getClass(), numtype);
+                throw new CoercionException("Cannot convert rational to unknown type.", this.getClass(), numtype);
         }
     }
 
@@ -274,7 +278,9 @@ public class RationalImpl implements RationalType {
         if (numerator.equals(BigInteger.ONE)) {
             return new IntegerImpl(denominator);
         }
-        return new RationalImpl(denominator, numerator, exact);
+        final RationalImpl inverse = new RationalImpl(denominator, numerator, exact);
+        inverse.setMathContext(mctx);
+        return inverse;
     }
 
     /**
@@ -288,7 +294,9 @@ public class RationalImpl implements RationalType {
         RationalType reduced = this.reduce();
         IntegerType numroot = reduced.numerator().sqrt();
         IntegerType denomroot = reduced.denominator().sqrt();
-        return new RationalImpl(numroot, denomroot);
+        final RationalImpl root = new RationalImpl(numroot, denomroot);
+        root.setMathContext(mctx);
+        return root;
     }
     
     @Override

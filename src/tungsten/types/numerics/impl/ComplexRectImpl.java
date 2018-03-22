@@ -26,6 +26,8 @@ package tungsten.types.numerics.impl;
 import ch.obermuhlner.math.big.BigDecimalMath;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
@@ -34,6 +36,7 @@ import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.util.MathUtils;
 import tungsten.types.util.OptionalOperations;
 
 /**
@@ -52,6 +55,7 @@ public class ComplexRectImpl implements ComplexType {
     public ComplexRectImpl(RealType real, RealType imaginary) {
         this.real = real;
         this.imag = imaginary;
+        this.mctx = MathUtils.inferMathContext(Arrays.asList(real, imaginary));
         this.exact = real.isExact() && imaginary.isExact();
     }
     

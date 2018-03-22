@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.SortedSet;
+import java.util.LinkedHashSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,7 +45,7 @@ public class NumericSet implements Set<Numeric> {
     private final java.util.Set<Numeric> internal;
     
     public NumericSet() {
-        internal = new HashSet<>();
+        internal = new LinkedHashSet<>();
     }
     
     public NumericSet(Collection<Numeric> c) {
@@ -130,7 +130,7 @@ public class NumericSet implements Set<Numeric> {
     }
     
     public <T extends Numeric> Set<T> coerceTo(Class<T> clazz) throws CoercionException {
-        final TreeSet<T> innerSet = new TreeSet<>();
+        final java.util.Set<T> innerSet = Comparable.class.isAssignableFrom(clazz) ? new TreeSet<>() : new LinkedHashSet<>();
         for (Numeric element : internal) {
             if (!element.isCoercibleTo(clazz)) {
                 throw new CoercionException("Element of NumericSet cannot be coerced to target type.", element.getClass(), clazz);
@@ -139,7 +139,7 @@ public class NumericSet implements Set<Numeric> {
         }
         
         return new Set<T>() {
-            private SortedSet<T> elements = Collections.unmodifiableSortedSet(innerSet);
+            private final java.util.Set<T> elements = Collections.unmodifiableSet(innerSet);
             
             @Override
             public long cardinality() {
@@ -184,6 +184,14 @@ public class NumericSet implements Set<Numeric> {
             @Override
             public Iterator<T> iterator() {
                 return elements.iterator();
+            }
+            
+            public Stream<T> stream() {
+                return elements.stream();
+            }
+            
+            public Stream<T> parallelStream() {
+                return elements.parallelStream();
             }
         };
     } 

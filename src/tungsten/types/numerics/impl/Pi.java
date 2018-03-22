@@ -36,6 +36,7 @@ import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.util.OptionalOperations;
 
 /**
  * This class provides a representation of the mathematical constant pi (&pi;).
@@ -158,12 +159,16 @@ public class Pi implements RealType {
             real.setMathContext(mctx);
             return real;
         }
-        return addend.add(this);
+        final Numeric result = addend.add(this);
+        OptionalOperations.setMathContext(result, mctx);
+        return result;
     }
 
     @Override
     public Numeric subtract(Numeric subtrahend) {
-        return subtrahend.negate().add(this);
+        final Numeric result = subtrahend.negate().add(this);
+        OptionalOperations.setMathContext(result, mctx);
+        return result;
     }
 
     @Override
@@ -175,12 +180,16 @@ public class Pi implements RealType {
             real.setMathContext(mctx);
             return real;
         }
-        return multiplier.multiply(this);
+        final Numeric result = multiplier.multiply(this);
+        OptionalOperations.setMathContext(result, mctx);
+        return result;
     }
 
     @Override
     public Numeric divide(Numeric divisor) {
-        return divisor.inverse().multiply(this);
+        final Numeric result = divisor.inverse().multiply(this);
+        OptionalOperations.setMathContext(result, mctx);
+        return result;
     }
 
     @Override

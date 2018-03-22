@@ -254,12 +254,6 @@ public class Euler implements RealType {
         return polarval;
     }
     
-    private BigDecimal computeNthTerm(int n, BigDecimal x, MathContext ctx) {
-        RealImpl xvalue = new RealImpl(x);
-        xvalue.setMathContext(ctx);
-        return computeNthTerm(n, xvalue, ctx);
-    }
-    
     private BigDecimal computeNthTerm(int n, RealType x, MathContext ctx) {
         RealType numerator = MathUtils.computeIntegerExponent(x, n, ctx);
         OptionalOperations.setMathContext(numerator, ctx);

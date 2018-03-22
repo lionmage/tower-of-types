@@ -26,6 +26,8 @@ package tungsten.types.numerics.impl;
 import ch.obermuhlner.math.big.BigDecimalMath;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,6 +38,7 @@ import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.util.MathUtils;
 import tungsten.types.util.OptionalOperations;
 import tungsten.types.util.RangeUtils;
 
@@ -46,7 +49,7 @@ import tungsten.types.util.RangeUtils;
 public class ComplexPolarImpl implements ComplexType {
     private RealType modulus;
     private RealType argument;
-    private MathContext mctx = MathContext.UNLIMITED;
+    private MathContext mctx;
     private boolean exact = true;
 
     private static final RealType TWO = new RealImpl(BigDecimal.valueOf(2L));
@@ -57,6 +60,7 @@ public class ComplexPolarImpl implements ComplexType {
         }
         this.modulus = modulus;
         this.argument = argument;
+        this.mctx = MathUtils.inferMathContext(Arrays.asList(modulus, argument));
     }
     
     public ComplexPolarImpl(RealType modulus, RealType argument, boolean exact) {
@@ -93,15 +97,23 @@ public class ComplexPolarImpl implements ComplexType {
     @Override
     public RealType real() {
         final BigDecimal cosval = BigDecimalMath.cos(argument.asBigDecimal(), mctx);
-        RealImpl real = new RealImpl(modulus.asBigDecimal().multiply(cosval, mctx), false);
+        RealImpl real = new RealImpl(modulus.asBigDecimal().multiply(cosval, mctx).stripTrailingZeros(), false);
         real.setMathContext(mctx);
         return real;
     }
 
     @Override
     public RealType imaginary() {
+        final Pi pi = Pi.getInstance(mctx);
+        final BigDecimal normalizedArgument = this.normalizeArgument().asBigDecimal().stripTrailingZeros();
+        if (normalizedArgument.compareTo(BigDecimal.ZERO) == 0 || normalizedArgument.compareTo(pi.asBigDecimal()) == 0) {
+            final RealImpl zero = new RealImpl(BigDecimal.ZERO, true);
+            zero.setIrrational(false);
+            zero.setMathContext(mctx);
+            return zero;
+        }
         final BigDecimal sinval = BigDecimalMath.sin(argument.asBigDecimal(), mctx);
-        RealImpl imag = new RealImpl(modulus.asBigDecimal().multiply(sinval, mctx), false);
+        RealImpl imag = new RealImpl(modulus.asBigDecimal().multiply(sinval, mctx).stripTrailingZeros(), false);
         imag.setMathContext(mctx);
         return imag;
     }

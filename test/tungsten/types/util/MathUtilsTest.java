@@ -23,6 +23,7 @@
  */
 package tungsten.types.util;
 
+import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import org.junit.After;
@@ -31,6 +32,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import tungsten.types.Set;
+import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.IntegerImpl;
@@ -153,5 +156,21 @@ public class MathUtilsTest {
         expResult = new IntegerImpl("-3");
         result = MathUtils.exponent(x);
         assertEquals(expResult, result);
+    }
+    
+    @Test
+    public void testRootsOfUnity() {
+        System.out.println("rootsOfUnity");
+        Set<ComplexType> roots = MathUtils.rootsOfUnity(4, MathContext.DECIMAL128);
+        assertEquals(4L, roots.cardinality());
+        // dump out all the roots
+        for (ComplexType root : roots) {
+            System.out.println("Root at " + root);
+        }
+        // the first root should be equal to 1
+        ComplexType firstRoot = roots.iterator().next();
+        System.out.println("First root is exact? " + firstRoot.isExact());
+        assertEquals(new RealImpl(BigDecimal.ONE, false), firstRoot.real());
+        assertEquals(new RealImpl(BigDecimal.ZERO), firstRoot.imaginary());
     }
 }

@@ -27,21 +27,27 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.Range;
 import static tungsten.types.Range.BoundType;
+import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RationalType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.numerics.impl.ComplexPolarImpl;
 import tungsten.types.numerics.impl.Euler;
 import tungsten.types.numerics.impl.IntegerImpl;
+import tungsten.types.numerics.impl.Pi;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.set.impl.NumericSet;
 
 /**
  * A utility class to hold commonly used functions and algorithms.
@@ -376,5 +382,46 @@ public class MathUtils {
         IntegerType nonFractionPart = new IntegerImpl(realval.toBigInteger());
         int reducedDigitLength = mctx.getPrecision() - (int) nonFractionPart.numberOfDigits();
         return reducedDigitLength == realval.scale();
+    }
+    
+    /**
+     * Compute the nth roots of unity.
+     * @param n the degree of the roots
+     * @param mctx the {@link MathContext} for computing these values
+     * @return a {@link Set} of {@code n} complex roots
+     */
+    public static Set<ComplexType> rootsOfUnity(long n, MathContext mctx) {
+        RealImpl decTwo = new RealImpl(new BigDecimal(TWO));
+        decTwo.setMathContext(mctx);
+        RealImpl decOne = new RealImpl(BigDecimal.ONE);
+        decOne.setMathContext(mctx);
+        RealType twopi = (RealType) Pi.getInstance(mctx).multiply(decTwo);
+        NumericSet set = new NumericSet();
+        for (long idx = 1; idx <= n; idx++) {
+            RealType realN = new RealImpl(BigDecimal.valueOf(idx));
+            OptionalOperations.setMathContext(realN, mctx);
+            ComplexPolarImpl val = new ComplexPolarImpl(decOne, (RealType) twopi.divide(realN));
+            val.setMathContext(mctx);
+            set.append(val);
+        }
+        try {
+            return set.coerceTo(ComplexType.class);
+        } catch (CoercionException ex) {
+            Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "NumericSet -> Set<ComplexType>", ex);
+            throw new IllegalStateException("We should never have gotten here!", ex);
+        }
+    }
+
+    /**
+     * Method intended to determine the lowest precision of a {@link List} of {@link Numeric} arguments.
+     * @param args a {@link List} of {@link Numeric} arguments
+     * @return a {@link MathContext} constructed from the given arguments, or {@link MathContext#UNLIMITED} if none can be inferred from arguments
+     */
+    public static MathContext inferMathContext(List<? extends Numeric> args) {
+        int precision = args.stream().mapToInt(x -> x.getMathContext().getPrecision()).filter(x -> x > 0).min().orElse(-1);
+        if (precision > 0) {
+            return new MathContext(precision, args.get(0).getMathContext().getRoundingMode());
+        }
+        return MathContext.UNLIMITED;
     }
 }

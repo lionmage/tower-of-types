@@ -23,6 +23,8 @@
  */
 package tungsten.types.numerics;
 
+import java.math.MathContext;
+import java.util.List;
 import tungsten.types.Numeric;
 
 /**

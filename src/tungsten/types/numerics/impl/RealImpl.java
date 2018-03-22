@@ -37,6 +37,7 @@ import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RationalType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.util.OptionalOperations;
 
 /**
  *
@@ -76,6 +77,14 @@ public class RealImpl implements RealType {
         this(init.asBigDecimal(), init.isExact());
         this.setMathContext(init.getMathContext());
         irrational = false;
+    }
+    
+    public RealImpl(RationalType init, MathContext mctx) {
+        OptionalOperations.setMathContext(init, mctx);
+        this.val = init.asBigDecimal();
+        this.exact = init.isExact();
+        this.irrational = false;
+        this.setMathContext(mctx);
     }
     
     /**
@@ -175,7 +184,9 @@ public class RealImpl implements RealType {
     
     protected RationalType rationalize() {
         if (isIntegralValue()) {
-            return new RationalImpl(val.toBigIntegerExact(), BigInteger.ONE, exact);
+            final RationalImpl result = new RationalImpl(val.toBigIntegerExact(), BigInteger.ONE, exact);
+            result.setMathContext(mctx);
+            return result;
         }
         final BigDecimal stripped = val.stripTrailingZeros();
         IntegerImpl num = new IntegerImpl(stripped.unscaledValue(), exact);
@@ -223,23 +234,34 @@ public class RealImpl implements RealType {
         final boolean exactness = exact && multiplier.isExact();
         if (multiplier instanceof RealType) {
             RealType remult = (RealType) multiplier;
-            return new RealImpl(val.multiply(remult.asBigDecimal(), mctx), exactness);
+            final RealImpl result = new RealImpl(val.multiply(remult.asBigDecimal(), mctx), exactness);
+            result.setIrrational(irrational || remult.isIrrational());
+            result.setMathContext(mctx);
+            return result;
         } else if (multiplier instanceof RationalType) {
             RationalType ratmult = (RationalType) multiplier;
             BigDecimal num = new BigDecimal(ratmult.numerator().asBigInteger());
             BigDecimal denom = new BigDecimal(ratmult.denominator().asBigInteger());
-            return new RealImpl(val.multiply(num).divide(denom, mctx), exactness);
+            final RealImpl result = new RealImpl(val.multiply(num).divide(denom, mctx), exactness);
+            result.setIrrational(irrational);
+            result.setMathContext(mctx);
+            return result;
         } else if (multiplier instanceof IntegerType) {
             IntegerType intmult = (IntegerType) multiplier;
             if (isIntegralValue()) {
                 return new IntegerImpl(val.toBigIntegerExact().multiply(intmult.asBigInteger()), exactness);
             } else {
                 BigDecimal decmult = new BigDecimal(intmult.asBigInteger());
-                return new RealImpl(val.multiply(decmult, mctx), exactness);
+                final RealImpl result = new RealImpl(val.multiply(decmult, mctx), exactness);
+                result.setIrrational(irrational);
+                result.setMathContext(mctx);
+                return result;
             }
         } else {
             try {
-                return this.coerceTo(multiplier.getClass()).multiply(multiplier);
+                final Numeric result = this.coerceTo(multiplier.getClass()).multiply(multiplier);
+                OptionalOperations.setMathContext(result, mctx);
+                return result;
             } catch (CoercionException ex) {
                 Logger.getLogger(RealImpl.class.getName()).log(Level.SEVERE, "Failed to coerce type during real multiply.", ex);
             }
@@ -252,10 +274,16 @@ public class RealImpl implements RealType {
         final boolean exactness = exact && divisor.isExact();
         if (divisor instanceof RealType) {
             RealType redivisor = (RealType) divisor;
-            return new RealImpl(val.divide(redivisor.asBigDecimal(), mctx), exactness);
+            final RealImpl result = new RealImpl(val.divide(redivisor.asBigDecimal(), mctx), exactness);
+            result.setIrrational(this.irrational || redivisor.isIrrational());
+            result.setMathContext(mctx);
+            return result;
         } else if (divisor instanceof RationalType) {
             RationalType ratdivisor = (RationalType) divisor;
-            return new RealImpl(val.divide(ratdivisor.asBigDecimal(), mctx), exactness);
+            final RealImpl result = new RealImpl(val.divide(ratdivisor.asBigDecimal(), mctx), exactness);
+            result.setIrrational(irrational);
+            result.setMathContext(mctx);
+            return result;
         } else if (divisor instanceof IntegerType) {
             IntegerType intdivisor = (IntegerType) divisor;
             if (isIntegralValue()) {
@@ -265,11 +293,16 @@ public class RealImpl implements RealType {
                 return rationalValue;
             } else {
                 BigDecimal decdivisor = new BigDecimal(intdivisor.asBigInteger());
-                return new RealImpl(val.divide(decdivisor, mctx), exactness);
+                final RealImpl result = new RealImpl(val.divide(decdivisor, mctx), exactness);
+                result.setIrrational(irrational);
+                result.setMathContext(mctx);
+                return result;
             }
         } else {
             try {
-                return this.coerceTo(divisor.getClass()).divide(divisor);
+                final Numeric result = this.coerceTo(divisor.getClass()).divide(divisor);
+                OptionalOperations.setMathContext(result, mctx);
+                return result;
             } catch (CoercionException ex) {
                 Logger.getLogger(RealImpl.class.getName()).log(Level.SEVERE, "Failed to coerce type during real divide.", ex);
             }
@@ -282,7 +315,9 @@ public class RealImpl implements RealType {
         boolean exactness = isExact();
         if (exactness) {
             if (isIntegralValue()) {
-                return new RationalImpl(BigInteger.ONE, val.toBigIntegerExact(), exactness);
+                final RationalImpl result = new RationalImpl(BigInteger.ONE, val.toBigIntegerExact(), exactness);
+                result.setMathContext(mctx);
+                return result;
             }
             // TODO if this is not an integer, add a check to see if the
             // division will result in an infinitely repeating sequence.
