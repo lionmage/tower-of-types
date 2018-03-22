@@ -37,7 +37,12 @@ import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
 
 /**
- * Implementation of {@link Set} for {@link Numeric} values.
+ * Implementation of {@link Set} for {@link Numeric} values.  If created using
+ * the no-args constructor, this {@link Set} will attempt to preserve ordering
+ * equivalent to the insertion order.  (This is useful if building a set of
+ * {@link ComplexType} values, where insertion order may be critical but the
+ * values themselves have no natural ordering.)  If the copy constructor is
+ * used, there are no ordering guarantees.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
@@ -129,6 +134,19 @@ public class NumericSet implements Set<Numeric> {
         return new NumericSet(diff);
     }
     
+    /**
+     * Coerce the elements of the parent set to type {@code T} and insert
+     * them into a {@link Set<T>}, which is returned to the caller.
+     * If the elements of the coerced type have a natural ordering, the
+     * resulting set will be sorted according to that ordering, and the
+     * {@link Set<T>#iterator() } will return elements in that order.
+     * Otherwise, the returned set will attempt to preserve the insertion
+     * order of the parent set.
+     * @param <T> the desired subtype of {@link Numeric}
+     * @param clazz the {@link Class} representing the desired subtype
+     * @return an unmodifiable {@link Set} representing the elements of the parent set
+     * @throws CoercionException if any elements in the parent set cannot be coerced to {@code T}
+     */
     public <T extends Numeric> Set<T> coerceTo(Class<T> clazz) throws CoercionException {
         final java.util.Set<T> innerSet = Comparable.class.isAssignableFrom(clazz) ? new TreeSet<>() : new LinkedHashSet<>();
         for (Numeric element : internal) {
