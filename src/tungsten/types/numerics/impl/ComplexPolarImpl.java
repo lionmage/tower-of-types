@@ -25,6 +25,7 @@ package tungsten.types.numerics.impl;
 
 import ch.obermuhlner.math.big.BigDecimalMath;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.Arrays;
 import java.util.List;
@@ -33,11 +34,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.Range;
+import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
+import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
+import tungsten.types.set.impl.NumericSet;
 import tungsten.types.util.MathUtils;
 import tungsten.types.util.OptionalOperations;
 import tungsten.types.util.RangeUtils;
@@ -299,6 +303,38 @@ public class ComplexPolarImpl implements ComplexType {
         RealType modnew = (RealType) modulus.sqrt();
         RealType argnew = (RealType) argument.divide(TWO);
         return new ComplexPolarImpl(modnew, argnew, exact);
+    }
+    
+    @Override
+    public Set<ComplexType> nthRoots(IntegerType n) {
+        ComplexType principalRoot;
+        final long nLong = n.asBigInteger().longValueExact();
+        if (nLong == 2L) {
+            principalRoot = (ComplexType) sqrt();
+        } else {
+            try {
+                principalRoot = new ComplexPolarImpl(MathUtils.nthRoot(modulus, n, mctx),
+                        (RealType) argument.divide(n).coerceTo(RealType.class), exact);
+            } catch (CoercionException ex) {
+                Logger.getLogger(ComplexPolarImpl.class.getName()).log(Level.SEVERE, "Division by IntegerType n yielded non-coercible result.", ex);
+                throw new ArithmeticException("Error computing principal root");
+            }
+        }
+        Set<ComplexType> rootsOfUnity = MathUtils.rootsOfUnity(nLong, mctx);
+        NumericSet result = new NumericSet();
+        for (ComplexType root : rootsOfUnity) {
+            result.append(principalRoot.multiply(root));
+        }
+        try {
+            return result.coerceTo(ComplexType.class);
+        } catch (CoercionException ex) {
+            Logger.getLogger(ComplexPolarImpl.class.getName()).log(Level.SEVERE, "Error coercing all roots to ComplexType", ex);
+            throw new IllegalStateException("Coercing one of n roots failed", ex);
+        }
+    }
+    
+    public Set<ComplexType> nthRoots(long n) {
+        return nthRoots(new IntegerImpl(BigInteger.valueOf(n), true));
     }
     
     @Override

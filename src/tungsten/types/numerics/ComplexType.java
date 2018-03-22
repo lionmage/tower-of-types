@@ -26,6 +26,7 @@ package tungsten.types.numerics;
 import java.math.MathContext;
 import java.util.List;
 import tungsten.types.Numeric;
+import tungsten.types.Set;
 
 /**
  *
@@ -48,4 +49,5 @@ public interface ComplexType extends Numeric {
      * @return the argument of the polar form of this complex number
      */
     public RealType argument();
+    public Set<ComplexType> nthRoots(IntegerType n);
 }

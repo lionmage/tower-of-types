@@ -25,14 +25,18 @@ package tungsten.types.numerics.impl;
 
 import ch.obermuhlner.math.big.BigDecimalMath;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
+import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
+import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
@@ -261,6 +265,16 @@ public class ComplexRectImpl implements ComplexType {
     }
     
     @Override
+    public Set<ComplexType> nthRoots(IntegerType n) {
+        ComplexPolarImpl polar = new ComplexPolarImpl(magnitude(), argument(), exact);
+        return polar.nthRoots(n);
+    }
+    
+    public Set<ComplexType> nthRoots(long n) {
+        return nthRoots(new IntegerImpl(BigInteger.valueOf(n), true));
+    }
+    
+    @Override
     public boolean equals(Object o) {
         if (o instanceof ComplexType) {
             ComplexType that = (ComplexType) o;
@@ -270,6 +284,15 @@ public class ComplexRectImpl implements ComplexType {
             return requal && iequal && exactness;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 29 * hash + Objects.hashCode(this.real);
+        hash = 29 * hash + Objects.hashCode(this.imag);
+        hash = 29 * hash + (this.exact ? 1 : 0);
+        return hash;
     }
     
     @Override
