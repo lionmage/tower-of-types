@@ -79,7 +79,7 @@ public class ParametricSetTest {
     @Test
     public void testCardinality() {
         System.out.println("cardinality");
-        ParametricSet instance = even;
+        ParametricSet<IntegerType> instance = even;
         long expResult = -1L;
         long result = instance.cardinality();
         assertEquals(expResult, result);
@@ -91,7 +91,7 @@ public class ParametricSetTest {
     @Test
     public void testCountable() {
         System.out.println("countable");
-        ParametricSet instance = odd;
+        ParametricSet<IntegerType> instance = odd;
         boolean expResult = true;
         boolean result = instance.countable();
         assertEquals(expResult, result);
@@ -104,7 +104,7 @@ public class ParametricSetTest {
     public void testContains() {
         System.out.println("contains");
         Numeric element = new IntegerImpl(BigInteger.valueOf(3L));
-        ParametricSet instance = even;
+        ParametricSet<IntegerType> instance = even;
         boolean expResult = false;
         boolean result = instance.contains(element);
         assertEquals(expResult, result);
@@ -121,7 +121,7 @@ public class ParametricSetTest {
     @Test
     public void testMonotonicity() {
         System.out.println("monotonicity");
-        ParametricSet instance = odd;
+        ParametricSet<IntegerType> instance = odd;
         int expResult = 1;
         int result = instance.monotonicity();
         assertEquals(expResult, result);
