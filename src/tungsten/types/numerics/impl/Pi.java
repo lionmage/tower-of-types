@@ -32,7 +32,10 @@ import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
+import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.ComplexType;
+import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
@@ -200,6 +203,11 @@ public class Pi implements RealType {
     @Override
     public Numeric sqrt() {
         return this.magnitude().sqrt();
+    }
+
+    @Override
+    public Set<ComplexType> nthRoots(IntegerType n) {
+        return this.magnitude().nthRoots(n);
     }
     
     public long numberOfDigits() {

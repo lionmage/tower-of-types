@@ -34,6 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
+import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
@@ -189,6 +190,11 @@ public class Euler implements RealType {
     @Override
     public Numeric sqrt() {
         return magnitude().sqrt();
+    }
+    
+    @Override
+    public Set<ComplexType> nthRoots(IntegerType n) {
+        return magnitude().nthRoots(n);
     }
     
     public long numberOfDigits() {

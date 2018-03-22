@@ -25,6 +25,7 @@ package tungsten.types.numerics;
 
 import java.math.BigDecimal;
 import tungsten.types.Numeric;
+import tungsten.types.Set;
 
 /**
  *
@@ -38,4 +39,5 @@ public interface RealType extends Numeric, Comparable<RealType> {
     public RealType negate();
     public BigDecimal asBigDecimal();
     public Sign sign();
+    public Set<ComplexType> nthRoots(IntegerType n);
 }

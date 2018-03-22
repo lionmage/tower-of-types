@@ -31,7 +31,9 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
+import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RationalType;
@@ -359,6 +361,15 @@ public class RealImpl implements RealType {
         result.setIrrational(atLimit);
         result.setMathContext(mctx); // inherit the MathContext from this object
         return result;
+    }
+
+    @Override
+    public Set<ComplexType> nthRoots(IntegerType n) {
+        Pi pi = Pi.getInstance(mctx);
+        RealImpl zero = new RealImpl(BigDecimal.ZERO);
+        zero.setMathContext(mctx);
+        ComplexPolarImpl polar = new ComplexPolarImpl(this.magnitude(), this.sign() == Sign.NEGATIVE ? pi : zero);
+        return polar.nthRoots(n);
     }
     
     private int fractionalLengthDifference(BigDecimal num) {
