@@ -119,7 +119,7 @@ public class FastFourierTransform implements Function<List<ComplexType>, List<Co
         evenElements = new ArrayList<>(n);
         oddElements  = new ArrayList<>(n);
         
-        for (int i = 0; i < n; i ++) {
+        for (int i = 0; i < source.size(); i ++) {
             switch (i % 2) {
                 case 0:
                     evenElements.add(source.get(i));
