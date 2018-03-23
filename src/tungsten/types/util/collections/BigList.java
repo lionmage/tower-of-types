@@ -51,6 +51,15 @@ public class BigList<T> implements Iterable<T> {
         listOfLists.add(new ArrayList<>(source));
     }
     
+    public BigList(long capacity) {
+        while (capacity > (long) Integer.MAX_VALUE) {
+            listOfLists.add(new ArrayList<>(Integer.MAX_VALUE));
+        }
+        if (capacity > 0L) {
+            listOfLists.add(new ArrayList<>((int) capacity));
+        }
+    }
+    
     public long size() {
         return listOfLists.parallelStream().mapToLong(x -> (long) x.size()).sum();
     }
@@ -86,6 +95,8 @@ public class BigList<T> implements Iterable<T> {
     
     public void set(T obj, long index) {
         int arraycount = 0;
+        // TODO somehow need to figure out capacities of the sublists
+        // so we can do things like set elements at indices beyond the last element
         while (index > listOfLists.get(arraycount).size()) {
             index -= listOfLists.get(arraycount).size();
             arraycount++;
@@ -135,6 +146,36 @@ public class BigList<T> implements Iterable<T> {
         return intermediate;
     }
     
+    public static <E> BigList<E> singleton(E element) {
+        return new BigList<E>() {
+            E singleElement = element;
+            @Override
+            public long size() { return 1L; }
+            @Override
+            public boolean isEmpty() { return false; }
+            @Override
+            public boolean contains(E e) { return this.singleElement.equals(e); }
+            @Override
+            public long indexOf(E e) { return this.contains(e) ? 0L : -1L; }
+            @Override
+            public E get(long index) { return index == 0 ? singleElement : null; }
+            @Override
+            public void set(E obj, long index) { throw new UnsupportedOperationException("Not supported."); }
+            @Override
+            public void add(E obj) { throw new UnsupportedOperationException("Not supported."); }
+            @Override
+            public void remove(E obj) { throw new UnsupportedOperationException("Not supported."); }
+            @Override
+            public void clear() { throw new UnsupportedOperationException("Not supported."); }
+            @Override
+            public Stream<E> stream() { return Stream.of(singleElement); }
+            @Override
+            public Stream<E> parallelStream() { return stream(); }
+            @Override
+            public Iterator<E> iterator() { return stream().iterator(); }
+        };
+    }
+    
     /**
      * Apply the given function to each element of this {@link BigList},
      * returning a new {@link BigList} containing the transformed elements.
@@ -167,7 +208,7 @@ public class BigList<T> implements Iterable<T> {
             BigList that = (BigList) o;
             if (this.size() != that.size()) return false;
             
-            for (long idx = 0; idx < this.size(); idx++) {
+            for (long idx = 0L; idx < this.size(); idx++) {
                 if (!this.get(idx).equals(that.get(idx))) return false;
             }
             return true;
