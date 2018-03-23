@@ -51,7 +51,7 @@ import tungsten.types.numerics.impl.RealImpl;
  * @see <a href="https://introcs.cs.princeton.edu/java/97data/FFT.java.html">Princeton's FFT implementation</a>
  */
 public class FastFourierTransform implements Function<List<ComplexType>, List<ComplexType>> {
-    MathContext mctx;
+    final MathContext mctx;
     
     public FastFourierTransform(MathContext mctx) {
         this.mctx = mctx;

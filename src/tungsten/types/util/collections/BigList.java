@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -132,6 +133,32 @@ public class BigList<T> implements Iterable<T> {
             intermediate = Stream.concat(intermediate, list.parallelStream());
         }
         return intermediate;
+    }
+    
+    /**
+     * Apply the given function to each element of this {@link BigList},
+     * returning a new {@link BigList} containing the transformed elements.
+     * @param <R> the type of the elements in the returned {@link BigList}
+     * @param func a function which takes elements of type T and returns elements of type R
+     * @return a newly constructed {@link BigList} with the transformed elements
+     */
+    public <R> BigList<R> apply(Function<T, R> func) {
+        BigList<R> result = new BigList<>();
+        stream().map(func).forEachOrdered(result::add);
+        
+        return result;
+    }
+    
+    /**
+     * Atomically apply the given function to the entire {@link BigList} at once.
+     * The function takes a {@link BigList} of T elements and returns a
+     * {@link BigList} of R elements.
+     * @param <R> the type of the elements in the returned {@link BigList}
+     * @param func a function which takes a {@link BigList} of T and returns a {@link BigList} of R
+     * @return a newly constructed {@link BigList} resulting from the direct application of the function
+     */
+    public <R> BigList<R> applyAtomic(Function<BigList<T>, BigList<R>> func) {
+        return func.apply(this);
     }
     
     @Override
