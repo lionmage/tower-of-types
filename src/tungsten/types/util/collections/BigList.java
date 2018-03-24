@@ -42,21 +42,26 @@ import java.util.stream.Stream;
  */
 public class BigList<T> implements Iterable<T> {
     private final ArrayList<ArrayList<T>> listOfLists = new ArrayList<>();
+    private final ArrayList<Integer> capacities = new ArrayList<>();
     
     public BigList() {
         listOfLists.add(new ArrayList<>());
+        capacities.add(-1);  // unset capacity
     }
     
     public BigList(Collection<T> source) {
         listOfLists.add(new ArrayList<>(source));
+        capacities.add(source.size());  // capacity is at least size of source collection
     }
     
     public BigList(long capacity) {
         while (capacity > (long) Integer.MAX_VALUE) {
             listOfLists.add(new ArrayList<>(Integer.MAX_VALUE));
+            capacities.add(Integer.MAX_VALUE);
         }
         if (capacity > 0L) {
             listOfLists.add(new ArrayList<>((int) capacity));
+            capacities.add((int) capacity);
         }
     }
     
@@ -95,13 +100,15 @@ public class BigList<T> implements Iterable<T> {
     
     public void set(T obj, long index) {
         int arraycount = 0;
-        // TODO somehow need to figure out capacities of the sublists
-        // so we can do things like set elements at indices beyond the last element
-        while (index > listOfLists.get(arraycount).size()) {
-            index -= listOfLists.get(arraycount).size();
+        while (index > capacityOrSize(arraycount)) {
+            index -= capacityOrSize(arraycount);
             arraycount++;
         }
         listOfLists.get(arraycount).set((int) index, obj);
+    }
+    
+    private int capacityOrSize(int arrayidx) {
+        return Math.max(listOfLists.get(arrayidx).size(), capacities.get(arrayidx));
     }
     
     public void add(T obj) {
@@ -109,6 +116,9 @@ public class BigList<T> implements Iterable<T> {
         ArrayList<T> appendTarget;
         if (listOfLists.get(arrayidx).size() < Integer.MAX_VALUE) {
             appendTarget = listOfLists.get(arrayidx);
+            if (capacities.get(arrayidx) != -1) {
+                capacities.set(arrayidx, capacities.get(arrayidx) + 1);
+            }
         } else {
             appendTarget = allocNew();
         }
@@ -118,15 +128,21 @@ public class BigList<T> implements Iterable<T> {
     protected ArrayList<T> allocNew() {
         ArrayList<T> allocated = new ArrayList<>();
         listOfLists.add(allocated);
+        capacities.add(-1);  // no initial capacity, so use placeholder
         return allocated;
     }
     
     public void remove(T obj) {
+        // since this opperation has the potential to shift indices in multiple places,
+        // we set the capacities for all sublists to -1 to avoid problems with set and
+        // append operations on the underlying sublists
+        for (int k = 0; k < capacities.size(); k++) capacities.set(k, -1);
         listOfLists.parallelStream().filter(x -> x.contains(obj)).forEach(x -> x.removeIf(y -> y.equals(obj)));
     }
     
     public void clear() {
         listOfLists.clear();
+        capacities.clear();
         allocNew();
     }
     
