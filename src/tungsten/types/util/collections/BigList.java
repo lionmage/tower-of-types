@@ -164,7 +164,7 @@ public class BigList<T> implements Iterable<T> {
     
     public static <E> BigList<E> singleton(E element) {
         return new BigList<E>() {
-            E singleElement = element;
+            private final E singleElement = element;
             @Override
             public long size() { return 1L; }
             @Override
