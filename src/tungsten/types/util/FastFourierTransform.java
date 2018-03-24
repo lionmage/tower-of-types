@@ -65,7 +65,7 @@ public class FastFourierTransform implements Function<List<ComplexType>, List<Co
     }
     
     private class FFTRecursiveTask extends RecursiveTask<List<ComplexType>> {
-        private List<ComplexType> source;
+        private final List<ComplexType> source;
         
         private FFTRecursiveTask(List<ComplexType> source) {
             this.source = source;

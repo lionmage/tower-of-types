@@ -68,7 +68,7 @@ public class BigFastFourierTransform implements Function<BigList<ComplexType>, B
     }
     
     private class FFTRecursiveTask extends RecursiveTask<BigList<ComplexType>> {
-        private BigList<ComplexType> source;
+        private final BigList<ComplexType> source;
         
         private FFTRecursiveTask(BigList<ComplexType> source) {
             this.source = source;
