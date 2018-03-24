@@ -79,7 +79,7 @@ public class BigFastFourierTransform implements Function<BigList<ComplexType>, B
             long length = source.size();
             if (length == 1L) {
                 return BigList.singleton(source.get(0));
-            } else if (length % 2 != 0) {
+            } else if (length % 2L != 0L) {
                 throw new IllegalArgumentException("Fourier transform requires an even-length List.");
             }
             FFTRecursiveTask[] tasks = createSubtasks();
@@ -118,12 +118,12 @@ public class BigFastFourierTransform implements Function<BigList<ComplexType>, B
     private BigList<ComplexType>[] splitList(BigList<ComplexType> source) {
         BigList<ComplexType> evenElements;
         BigList<ComplexType> oddElements;
-        final long n = source.size() / 2;
+        final long n = source.size() / 2L;
         evenElements = new BigList<>(n);
         oddElements  = new BigList<>(n);
         
-        for (int i = 0; i < source.size(); i ++) {
-            switch (i % 2) {
+        for (long i = 0L; i < source.size(); i++) {
+            switch ((int) (i % 2L)) {
                 case 0:
                     evenElements.add(source.get(i));
                     break;
