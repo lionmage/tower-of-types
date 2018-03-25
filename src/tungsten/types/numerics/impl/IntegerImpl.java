@@ -198,6 +198,10 @@ public class IntegerImpl implements IntegerType {
         if (position < 0L) {
             throw new IndexOutOfBoundsException("Negative index is not supported");
         }
+        if (position == 0L) {
+            // optimization to avoid complex logic below for a common case
+            return val.mod(BigInteger.TEN).intValue();
+        }
 
         BigInteger[] resultAndRemainder;
         BigInteger temp = val.abs();
