@@ -23,11 +23,7 @@
  */
 package tungsten.types.numerics.impl;
 
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Real;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

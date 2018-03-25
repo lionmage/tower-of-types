@@ -25,7 +25,6 @@ package tungsten.types.numerics.impl;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -33,8 +32,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import tungsten.types.Numeric;
+import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RationalType;
+import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 
 /**
@@ -68,19 +69,6 @@ public class RationalImplTest {
     
     @After
     public void tearDown() {
-    }
-
-    /**
-     * Test of setMathContext method, of class RationalImpl.
-     */
-    @Test
-    public void testSetMathContext() {
-        System.out.println("setMathContext");
-        MathContext nuCtx = null;
-        RationalImpl instance = null;
-        instance.setMathContext(nuCtx);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -175,28 +163,29 @@ public class RationalImplTest {
     @Test
     public void testIsCoercibleTo() {
         System.out.println("isCoercibleTo");
-        Class<? extends Numeric> numtype = null;
-        RationalImpl instance = null;
-        boolean expResult = false;
+        Class<? extends Numeric> numtype = RealType.class;
+        RationalImpl instance = new RationalImpl("1/2");
+        boolean expResult = true;
         boolean result = instance.isCoercibleTo(numtype);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
      * Test of coerceTo method, of class RationalImpl.
      */
     @Test
-    public void testCoerceTo() throws Exception {
+    public void testCoerceTo() {
         System.out.println("coerceTo");
-        Class<? extends Numeric> numtype = null;
-        RationalImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.coerceTo(numtype);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Class<? extends Numeric> numtype = RealType.class;
+        RationalImpl instance = new RationalImpl("1/2");
+        Numeric expResult = new RealImpl("0.5");
+        try {
+            Numeric result = instance.coerceTo(numtype);
+            assertEquals(expResult, result);
+        } catch (CoercionException coercionException) {
+            coercionException.printStackTrace();
+            fail("Unexpected coercion failure: " + coercionException.getMessage());
+        }
     }
 
     /**
@@ -205,13 +194,11 @@ public class RationalImplTest {
     @Test
     public void testAdd() {
         System.out.println("add");
-        Numeric addend = null;
-        RationalImpl instance = null;
-        Numeric expResult = null;
+        Numeric addend = new RationalImpl("1/3");
+        RationalImpl instance = new RationalImpl("1/2");
+        Numeric expResult = new RationalImpl("5/6");
         Numeric result = instance.add(addend);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -220,13 +207,11 @@ public class RationalImplTest {
     @Test
     public void testSubtract() {
         System.out.println("subtract");
-        Numeric subtrahend = null;
-        RationalImpl instance = null;
-        Numeric expResult = null;
+        Numeric subtrahend = new RationalImpl("1/3");
+        RationalImpl instance = new RationalImpl("8/9");
+        Numeric expResult = new RationalImpl("5/9");
         Numeric result = instance.subtract(subtrahend);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -235,13 +220,16 @@ public class RationalImplTest {
     @Test
     public void testMultiply() {
         System.out.println("multiply");
-        Numeric multiplier = null;
-        RationalImpl instance = null;
-        Numeric expResult = null;
+        Numeric multiplier = new IntegerImpl("3");
+        RationalImpl instance = new RationalImpl("1/3");
+        Numeric expResult = new IntegerImpl(BigInteger.ONE);
         Numeric result = instance.multiply(multiplier);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        multiplier = new RationalImpl("2/3");
+        expResult = new RationalImpl("2/9");
+        result = instance.multiply(multiplier);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -250,13 +238,22 @@ public class RationalImplTest {
     @Test
     public void testDivide() {
         System.out.println("divide");
-        Numeric divisor = null;
-        RationalImpl instance = null;
-        Numeric expResult = null;
+        Numeric divisor = new IntegerImpl(BigInteger.valueOf(2L));
+        RationalImpl instance = new RationalImpl("3/8");
+        Numeric expResult = new RationalImpl("3/16");
         Numeric result = instance.divide(divisor);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        divisor = new RationalImpl("1/2");
+        expResult = new RationalImpl("3/4");
+        result = instance.divide(divisor);
+        assertEquals(expResult, result);
+        
+        instance = new RationalImpl("1/2");
+        // divisor is still 1/2
+        expResult = new IntegerImpl(BigInteger.ONE);
+        result = instance.divide(divisor);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -294,27 +291,11 @@ public class RationalImplTest {
     @Test
     public void testEquals() {
         System.out.println("equals");
-        Object other = null;
-        RationalImpl instance = null;
-        boolean expResult = false;
+        Object other = new RationalImpl("7/8");
+        RationalImpl instance = new RationalImpl(BigInteger.valueOf(7L), BigInteger.valueOf(8L));
+        boolean expResult = true;
         boolean result = instance.equals(other);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of hashCode method, of class RationalImpl.
-     */
-    @Test
-    public void testHashCode() {
-        System.out.println("hashCode");
-        RationalImpl instance = null;
-        int expResult = 0;
-        int result = instance.hashCode();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**

@@ -122,14 +122,14 @@ public class RationalImpl implements RationalType {
 
     @Override
     public RationalType negate() {
-        final RationalImpl result = new RationalImpl(numerator.negate(), denominator);
+        final RationalImpl result = new RationalImpl(numerator.negate(), denominator, exact);
         result.setMathContext(mctx);
         return result;
     }
 
     @Override
     public IntegerType numerator() {
-        return new IntegerImpl(numerator);
+        return new IntegerImpl(numerator, exact);
     }
 
     @Override
@@ -257,7 +257,12 @@ public class RationalImpl implements RationalType {
                     exact && that.isExact()).reduce();
         } else if (multiplier instanceof IntegerType) {
             IntegerType that = (IntegerType) multiplier;
-            return new RationalImpl(numerator.multiply(that.asBigInteger()), denominator, exact && that.isExact());
+            final RationalType intermediate = new RationalImpl(numerator.multiply(that.asBigInteger()),
+                    denominator, exact && that.isExact()).reduce();
+            if (intermediate.isCoercibleTo(IntegerType.class)) {
+                return numerator();
+            }
+            return intermediate;
         } else {
             try {
                 return this.coerceTo(multiplier.getClass()).multiply(multiplier);
@@ -337,5 +342,11 @@ public class RationalImpl implements RationalType {
     @Override
     public MathContext getMathContext() {
         return mctx;
+    }
+    
+    @Override public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append(numerator).append('/').append(denominator);
+        return buf.toString();
     }
 }
