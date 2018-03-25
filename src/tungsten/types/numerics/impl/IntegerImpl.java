@@ -363,7 +363,7 @@ public class IntegerImpl implements IntegerType {
      * approximation, try using {@link #coerceTo(java.lang.Class) } with
      * a type argument of {@link RealType}.
      * This algorithm was presented by Edward Falk on StackOverflow, with
-     * only minor corrections by me.
+     * a couple necessary corrections by me.
      * @return an integer approximation of a square root
      * @see <a href="https://stackoverflow.com/questions/4407839/how-can-i-find-the-square-root-of-a-java-biginteger">the StackOverflow article</a>
      */
@@ -380,13 +380,27 @@ public class IntegerImpl implements IntegerType {
             BigInteger y = div.add(val.divide(div)).shiftRight(1);
             if (y.equals(div) || y.equals(div2)) {
                 BigInteger lowest = div.min(div2);
-                boolean exactness = exact && lowest.multiply(lowest).equals(this.asBigInteger());
-                // original algorithm returned y
-                return new IntegerImpl(lowest, exactness);
+                // The oroginal algorithm always returned y, but that broke for
+                // some small integers.  Sadly, picking the lowest of div and div2
+                // *also* caused some bad behavior.  Sometimes y contains the right
+                // value after all.  This forces us to do a few more computations
+                // to get the right behavior, but at least we're still doing a
+                // minimal number of iterations.
+                BigInteger result = closestWithoutGoingOver(lowest, y);
+                boolean exactness = exact && result.multiply(result).equals(this.asBigInteger());
+                return new IntegerImpl(result, exactness);
             }
             div2 = div;
             div = y;
         }
+    }
+    
+    private BigInteger closestWithoutGoingOver(BigInteger a, BigInteger b) {
+        final BigInteger asquared = a.multiply(a);
+        if (asquared.compareTo(val) > 0) return b;
+        final BigInteger bsquared = b.multiply(b);
+        if (bsquared.compareTo(val) > 0) return a;
+        return val.subtract(asquared).compareTo(val.subtract(bsquared)) > 0 ? b : a;
     }
 
     @Override

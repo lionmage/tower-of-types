@@ -23,7 +23,10 @@
  */
 package tungsten.types.numerics.impl;
 
+import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Real;
 import java.math.BigInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -31,8 +34,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import tungsten.types.Numeric;
+import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RationalType;
+import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 
 /**
@@ -243,61 +248,34 @@ public class IntegerImplTest {
     }
 
     /**
-     * Test of asBigInteger method, of class IntegerImpl.
-     */
-    @Test
-    public void testAsBigInteger() {
-        System.out.println("asBigInteger");
-        IntegerImpl instance = null;
-        BigInteger expResult = null;
-        BigInteger result = instance.asBigInteger();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of isExact method, of class IntegerImpl.
-     */
-    @Test
-    public void testIsExact() {
-        System.out.println("isExact");
-        IntegerImpl instance = null;
-        boolean expResult = false;
-        boolean result = instance.isExact();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
      * Test of isCoercibleTo method, of class IntegerImpl.
      */
     @Test
     public void testIsCoercibleTo() {
         System.out.println("isCoercibleTo");
-        Class<? extends Numeric> numtype = null;
-        IntegerImpl instance = null;
-        boolean expResult = false;
+        Class<? extends Numeric> numtype = RealType.class;
+        IntegerImpl instance = new IntegerImpl("-42");
+        boolean expResult = true;
         boolean result = instance.isCoercibleTo(numtype);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
      * Test of coerceTo method, of class IntegerImpl.
      */
     @Test
-    public void testCoerceTo() throws Exception {
+    public void testCoerceTo() {
         System.out.println("coerceTo");
-        Class<? extends Numeric> numtype = null;
-        IntegerImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.coerceTo(numtype);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Class<? extends Numeric> numtype = RealType.class;
+        IntegerImpl instance = new IntegerImpl("-42");
+        try {
+            Numeric result = instance.coerceTo(numtype);
+            assertTrue(result instanceof RealType);
+            assertTrue(result.isExact());
+        } catch (CoercionException ex) {
+            ex.printStackTrace();
+            fail("Type coercion from IntegerType to RealType should not have failed!");
+        }
     }
 
     /**
