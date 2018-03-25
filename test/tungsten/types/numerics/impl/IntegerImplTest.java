@@ -24,6 +24,7 @@
 package tungsten.types.numerics.impl;
 
 import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Real;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -284,13 +285,12 @@ public class IntegerImplTest {
     @Test
     public void testAdd() {
         System.out.println("add");
-        Numeric addend = null;
-        IntegerImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.add(addend);
+        Numeric addend = new IntegerImpl("1");
+        IntegerImpl instance = new IntegerImpl(BigInteger.ZERO);
+        Numeric expResult = new IntegerImpl(BigInteger.TEN);
+        Numeric result = instance;
+        for (int k = 0; k < 10; k++) result = result.add(addend);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -299,13 +299,12 @@ public class IntegerImplTest {
     @Test
     public void testSubtract() {
         System.out.println("subtract");
-        Numeric subtrahend = null;
-        IntegerImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.subtract(subtrahend);
+        Numeric subtrahend = new IntegerImpl("1");
+        IntegerImpl instance = new IntegerImpl(BigInteger.TEN);
+        Numeric expResult = new IntegerImpl(BigInteger.ZERO);
+        Numeric result = instance;
+        for (int k = 0; k < 10; k++) result = result.subtract(subtrahend);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -314,13 +313,12 @@ public class IntegerImplTest {
     @Test
     public void testMultiply() {
         System.out.println("multiply");
-        Numeric multiplier = null;
-        IntegerImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.multiply(multiplier);
+        Numeric multiplier = new IntegerImpl(BigInteger.valueOf(2L));
+        IntegerImpl instance = new IntegerImpl(BigInteger.ONE);
+        Numeric expResult = new IntegerImpl("16");
+        Numeric result = instance;
+        for (int k = 0; k < 4; k++) result = result.multiply(multiplier);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -329,28 +327,12 @@ public class IntegerImplTest {
     @Test
     public void testDivide() {
         System.out.println("divide");
-        Numeric divsor = null;
-        IntegerImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.divide(divsor);
+        Numeric divisor = new IntegerImpl(BigInteger.valueOf(2L));
+        IntegerImpl instance = new IntegerImpl("16");
+        Numeric expResult = new IntegerImpl(BigInteger.ONE);
+        Numeric result = instance;
+        for (int k = 0; k < 4; k++) result = result.divide(divisor);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of sumDigits method, of class IntegerImpl.
-     */
-    @Test
-    public void testSumDigits() {
-        System.out.println("sumDigits");
-        IntegerType temp = null;
-        IntegerImpl instance = null;
-        IntegerType expResult = null;
-        IntegerType result = instance.sumDigits(temp);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -390,27 +372,11 @@ public class IntegerImplTest {
     @Test
     public void testEquals() {
         System.out.println("equals");
-        Object other = null;
-        IntegerImpl instance = null;
-        boolean expResult = false;
+        Object other = new IntegerImpl(BigInteger.ZERO);
+        IntegerImpl instance = new IntegerImpl("0");
+        boolean expResult = true;
         boolean result = instance.equals(other);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of hashCode method, of class IntegerImpl.
-     */
-    @Test
-    public void testHashCode() {
-        System.out.println("hashCode");
-        IntegerImpl instance = null;
-        int expResult = 0;
-        int result = instance.hashCode();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -419,13 +385,10 @@ public class IntegerImplTest {
     @Test
     public void testCompareTo() {
         System.out.println("compareTo");
-        IntegerType o = null;
-        IntegerImpl instance = null;
-        int expResult = 0;
+        IntegerType o = new IntegerImpl("8679");
+        IntegerImpl instance = new IntegerImpl("6243");
         int result = instance.compareTo(o);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertTrue(result < 0);
     }
 
     /**
@@ -434,12 +397,20 @@ public class IntegerImplTest {
     @Test
     public void testSign() {
         System.out.println("sign");
-        IntegerImpl instance = null;
-        Sign expResult = null;
+        IntegerImpl instance = new IntegerImpl("-77");
+        Sign expResult = Sign.NEGATIVE;
         Sign result = instance.sign();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+
+        instance = new IntegerImpl("8796");
+        expResult = Sign.POSITIVE;
+        result = instance.sign();
+        assertEquals(expResult, result);
+        
+        instance = new IntegerImpl("0");
+        expResult = Sign.ZERO;
+        result = instance.sign();
+        assertEquals(expResult, result);
     }
     
 }
