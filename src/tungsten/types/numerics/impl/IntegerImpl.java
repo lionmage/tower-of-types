@@ -323,7 +323,7 @@ public class IntegerImpl implements IntegerType {
             }
         } else {
             try {
-                this.coerceTo(multiplier.getClass()).multiply(multiplier);
+                return this.coerceTo(multiplier.getClass()).multiply(multiplier);
             } catch (CoercionException ex) {
                 Logger.getLogger(IntegerImpl.class.getName()).log(Level.SEVERE, "Failed to coerce type during integer multiply.", ex);
             }
@@ -344,7 +344,7 @@ public class IntegerImpl implements IntegerType {
             }
         } else {
             try {
-                this.coerceTo(divisor.getClass()).divide(divisor);
+                return this.coerceTo(divisor.getClass()).divide(divisor);
             } catch (CoercionException ex) {
                 Logger.getLogger(IntegerImpl.class.getName()).log(Level.SEVERE, "Failed to coerce type during integer divide.", ex);
             }
