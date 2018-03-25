@@ -315,17 +315,19 @@ public class RealImpl implements RealType {
     @Override
     public Numeric inverse() {
         boolean exactness = isExact();
+        BigDecimal bdinverse = BigDecimal.ONE.divide(val, mctx);
         if (exactness) {
             if (isIntegralValue()) {
                 final RationalImpl result = new RationalImpl(BigInteger.ONE, val.toBigIntegerExact(), exactness);
                 result.setMathContext(mctx);
                 return result;
             }
-            // TODO if this is not an integer, add a check to see if the
-            // division will result in an infinitely repeating sequence.
-            // If so, set exactness = false.
+            // not an integer, so check to see if division results in an
+            // infinite repeating sequence
+            bdinverse = bdinverse.stripTrailingZeros();
+            exactness = fractionalLengthDifference(bdinverse) != 0;
         }
-        final RealImpl inv = new RealImpl(BigDecimal.ONE.divide(val, mctx), exactness);
+        final RealImpl inv = new RealImpl(bdinverse, exactness);
         inv.setMathContext(mctx);
         if (!exactness) inv.setIrrational(this.isIrrational());
         return inv;
@@ -374,7 +376,10 @@ public class RealImpl implements RealType {
     
     private int fractionalLengthDifference(BigDecimal num) {
         IntegerType nonFractionPart = new IntegerImpl(num.toBigInteger());
-        int reducedDigitLength = mctx.getPrecision() - (int) nonFractionPart.numberOfDigits();
+        int reducedDigitLength = mctx.getPrecision();
+        if (!nonFractionPart.asBigInteger().equals(BigInteger.ZERO)) {
+            reducedDigitLength -= (int) nonFractionPart.numberOfDigits();
+        }
         return reducedDigitLength - num.scale();
     }
     

@@ -34,6 +34,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import tungsten.types.Numeric;
+import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.RationalType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 
@@ -63,43 +65,16 @@ public class RealImplTest {
     }
 
     /**
-     * Test of setIrrational method, of class RealImpl.
-     */
-    @Test
-    public void testSetIrrational() {
-        System.out.println("setIrrational");
-        boolean irrational = false;
-        RealImpl instance = null;
-        instance.setIrrational(irrational);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of setMathContext method, of class RealImpl.
-     */
-    @Test
-    public void testSetMathContext() {
-        System.out.println("setMathContext");
-        MathContext mctx = null;
-        RealImpl instance = null;
-        instance.setMathContext(mctx);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
      * Test of isIrrational method, of class RealImpl.
      */
     @Test
     public void testIsIrrational() {
         System.out.println("isIrrational");
-        RealImpl instance = null;
-        boolean expResult = false;
-        boolean result = instance.isIrrational();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        RealImpl instance = (RealImpl) new RealImpl("2");
+        instance.setMathContext(MathContext.DECIMAL128);
+        boolean expResult = true;
+        boolean result = ((RealType) instance.sqrt()).isIrrational();
+        assertEquals("Square root of 2 should be irrational", expResult, result);
     }
 
     /**
@@ -108,12 +83,10 @@ public class RealImplTest {
     @Test
     public void testMagnitude() {
         System.out.println("magnitude");
-        RealImpl instance = null;
-        RealType expResult = null;
+        RealImpl instance = new RealImpl("-78");
+        RealType expResult = new RealImpl("78");
         RealType result = instance.magnitude();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -122,12 +95,10 @@ public class RealImplTest {
     @Test
     public void testAsBigDecimal() {
         System.out.println("asBigDecimal");
-        RealImpl instance = null;
-        BigDecimal expResult = null;
+        RealImpl instance = new RealImpl("10");
+        BigDecimal expResult = BigDecimal.TEN;
         BigDecimal result = instance.asBigDecimal();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -157,12 +128,16 @@ public class RealImplTest {
     @Test
     public void testIsExact() {
         System.out.println("isExact");
-        RealImpl instance = null;
-        boolean expResult = false;
+        RealImpl instance = new RealImpl("2");
+        instance.setMathContext(MathContext.DECIMAL128);
+        boolean expResult = true;
         boolean result = instance.isExact();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        // sqrt should not be exact
+        expResult = false;
+        result = instance.sqrt().isExact();
+        assertEquals("Square root of 2 should not be exact", expResult, result);
     }
 
     /**
@@ -171,28 +146,37 @@ public class RealImplTest {
     @Test
     public void testIsCoercibleTo() {
         System.out.println("isCoercibleTo");
-        Class<? extends Numeric> numtype = null;
-        RealImpl instance = null;
-        boolean expResult = false;
+        Class<? extends Numeric> numtype = RationalType.class;
+        RealImpl instance = new RealImpl("0.25");
+        boolean expResult = true;
         boolean result = instance.isCoercibleTo(numtype);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        instance = new RealImpl("2");
+        instance.setMathContext(MathContext.DECIMAL128);
+        RealType root = (RealType) instance.sqrt();
+        expResult = false;
+        result = root.isCoercibleTo(numtype);
+        assertEquals(expResult, result);
     }
 
     /**
      * Test of coerceTo method, of class RealImpl.
      */
     @Test
-    public void testCoerceTo() throws Exception {
+    public void testCoerceTo() {
         System.out.println("coerceTo");
-        Class<? extends Numeric> numtype = null;
-        RealImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.coerceTo(numtype);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Class<? extends Numeric> numtype = RationalType.class;
+        RealImpl instance = new RealImpl("0.25");
+        instance.setMathContext(MathContext.DECIMAL128);
+        Numeric expResult = new RationalImpl("1/4");
+        try {
+            Numeric result = instance.coerceTo(numtype);
+            assertEquals(expResult, result);
+        } catch (CoercionException coercionException) {
+            coercionException.printStackTrace();
+            fail("Unable to coerce real to rational.");
+        }
     }
 
     /**
@@ -201,13 +185,12 @@ public class RealImplTest {
     @Test
     public void testAdd() {
         System.out.println("add");
-        Numeric addend = null;
-        RealImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.add(addend);
+        Numeric addend = new RealImpl("0.1");
+        RealImpl instance = new RealImpl(BigDecimal.ZERO);
+        Numeric expResult = new RealImpl(BigDecimal.ONE);
+        Numeric result = instance;
+        for (int k = 0; k < 10; k++) result = result.add(addend);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -216,13 +199,12 @@ public class RealImplTest {
     @Test
     public void testSubtract() {
         System.out.println("subtract");
-        Numeric subtrahend = null;
-        RealImpl instance = null;
-        Numeric expResult = null;
-        Numeric result = instance.subtract(subtrahend);
+        Numeric subtrahend = new RealImpl("0.1");
+        RealImpl instance = new RealImpl(BigDecimal.ONE);
+        Numeric expResult = new RealImpl(BigDecimal.ZERO);
+        Numeric result = instance;
+        for (int k = 0; k < 10; k++) result = result.subtract(subtrahend);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -231,13 +213,12 @@ public class RealImplTest {
     @Test
     public void testMultiply() {
         System.out.println("multiply");
-        Numeric multiplier = null;
-        RealImpl instance = null;
-        Numeric expResult = null;
+        Numeric multiplier = new RationalImpl("3/1000");
+        RealImpl instance = new RealImpl("10.0");
+        instance.setMathContext(MathContext.DECIMAL128);
+        Numeric expResult = new RealImpl("0.03");
         Numeric result = instance.multiply(multiplier);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -246,13 +227,12 @@ public class RealImplTest {
     @Test
     public void testDivide() {
         System.out.println("divide");
-        Numeric divisor = null;
-        RealImpl instance = null;
-        Numeric expResult = null;
+        Numeric divisor = new RealImpl("4.0");
+        RealImpl instance = new RealImpl("3.0");
+        instance.setMathContext(MathContext.DECIMAL128);
+        Numeric expResult = new RealImpl("0.75");
         Numeric result = instance.divide(divisor);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -261,12 +241,18 @@ public class RealImplTest {
     @Test
     public void testInverse() {
         System.out.println("inverse");
-        RealImpl instance = null;
-        Numeric expResult = null;
+        RealImpl instance = new RealImpl("100.0");
+        instance.setMathContext(MathContext.DECIMAL128);
+        Numeric expResult = new RationalImpl("1/100");
         Numeric result = instance.inverse();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        instance = new RealImpl("1.2");
+        instance.setMathContext(MathContext.DECIMAL32);
+        expResult = new RealImpl("0.8333333", false);
+        result = instance.inverse();
+        assertFalse(result.isExact());
+        assertEquals(expResult, result);
     }
 
     /**
