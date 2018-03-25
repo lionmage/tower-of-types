@@ -24,6 +24,8 @@
 package tungsten.types.numerics.impl;
 
 import java.math.BigInteger;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -409,4 +411,13 @@ public class IntegerImplTest {
         assertEquals(expResult, result);
     }
     
+    @Test
+    public void testStream() {
+        String expResult = "5877432";
+        IntegerImpl instance = new IntegerImpl(expResult);
+//        Stream<Character> stream = instance.stream(10);
+        String result = instance.stream(10).collect(StringBuilder::new,
+                (x, y) -> x.insert(0, y), StringBuilder::append).toString();
+        assertEquals(expResult, result);
+    }
 }
