@@ -140,6 +140,43 @@ public class BigList<T> implements Iterable<T> {
         listOfLists.parallelStream().filter(x -> x.contains(obj)).forEach(x -> x.removeIf(y -> y.equals(obj)));
     }
     
+    /**
+     * Compactify this {@link BigList} so that its internal storage
+     * is as efficient as possible.  This is the sort of operation
+     * one might use after performing a {@link #remove(java.lang.Object) }
+     * operation.  This could get expensive for very large lists.
+     */
+    public void compact() {
+        int lastIndex = listOfLists.size() - 1;
+        for (int k = 0; k < lastIndex; k++) {
+            ArrayList<T> workingList = listOfLists.get(k);
+            ArrayList<T> nextList = listOfLists.get(k + 1);
+            while (nextList.size() > 0 && workingList.size() < Integer.MAX_VALUE) {
+                T element = nextList.remove(0);
+                workingList.add(element);
+            }
+        }
+        int lastCapIndex = capacities.size() - 1;
+        assert lastCapIndex == lastIndex;
+        if (listOfLists.get(lastIndex).isEmpty()) {
+            listOfLists.remove(lastIndex--);
+            capacities.remove(lastCapIndex--);
+        }
+        // now clean up the capacities list
+        for (int k = 0; k < listOfLists.size() - 2; k++) {
+            final int size = listOfLists.get(k).size();
+            if (size < Integer.MAX_VALUE) {
+                Logger.getLogger(BigList.class.getName()).log(Level.WARNING, "Unexpected size for sublist {0} is {1}", new Object[]{k, size});
+            }
+            capacities.set(k, size);
+        }
+        // ensure the max capacity for the last list
+        if (capacities.size() > 1 && capacities.get(lastCapIndex) < Integer.MAX_VALUE) {
+            listOfLists.get(lastIndex).ensureCapacity(Integer.MAX_VALUE);
+            capacities.set(lastCapIndex, Integer.MAX_VALUE);
+        }
+    }
+    
     public void clear() {
         listOfLists.clear();
         capacities.clear();
