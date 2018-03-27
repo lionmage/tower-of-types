@@ -226,6 +226,12 @@ public class NumericMultiset implements Multiset<Numeric> {
     
     public <T extends Numeric> Multiset<T> coerceTo(Class<T> clazz) throws CoercionException {
         final NumericMultiset parent = this;
+        // first, check to see that all the elements of this multiset can be
+        // coerced to the target type
+        boolean coercible = internal.parallelStream().map(x -> x.getValue()).allMatch(x -> x.isCoercibleTo(clazz));
+        if (!coercible) {
+            throw new CoercionException("Cannot coerce elements of NumericMultiset to " + clazz.getTypeName(), Numeric.class, clazz);
+        }
         
         return new Multiset<T>() {
             @Override
@@ -239,7 +245,7 @@ public class NumericMultiset implements Multiset<Numeric> {
                     return ((NumericSet) parent.asSet()).coerceTo(clazz);
                 } catch (CoercionException ex) {
                     Logger.getLogger(NumericMultiset.class.getName()).log(Level.WARNING, "Failed to coerce set element to " + clazz.getTypeName(), ex);
-                    throw new RuntimeException(ex);
+                    throw new IllegalStateException(ex);
                 }
             }
 
@@ -314,7 +320,7 @@ public class NumericMultiset implements Multiset<Numeric> {
                     return (T) value.coerceTo(clazz);
                 } catch (CoercionException ex) {
                     Logger.getLogger(NumericMultiset.class.getName()).log(Level.WARNING, "Problems coercing NumericMultiset to generic Multiset.", ex);
-                    throw new RuntimeException(ex);
+                    throw new IllegalStateException(ex);
                 }
             }
         };
