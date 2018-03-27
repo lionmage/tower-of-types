@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 import tungsten.types.Multiset;
 import tungsten.types.Numeric;
 import tungsten.types.Set;
+import tungsten.types.exceptions.CoercionException;
 
 /**
  * Implementation of {@link Multiset} for {@link Numeric} types.
@@ -221,6 +222,102 @@ public class NumericMultiset implements Multiset<Numeric> {
         }
         
         return diff;
+    }
+    
+    public <T extends Numeric> Multiset<T> coerceTo(Class<T> clazz) throws CoercionException {
+        final NumericMultiset parent = this;
+        
+        return new Multiset<T>() {
+            @Override
+            public long multiplicity(T element) {
+                return parent.multiplicity(element);
+            }
+
+            @Override
+            public Set<T> asSet() {
+                try {
+                    return ((NumericSet) parent.asSet()).coerceTo(clazz);
+                } catch (CoercionException ex) {
+                    Logger.getLogger(NumericMultiset.class.getName()).log(Level.WARNING, "Failed to coerce set element to " + clazz.getTypeName(), ex);
+                    throw new RuntimeException(ex);
+                }
+            }
+
+            @Override
+            public long cardinality() {
+                return parent.cardinality();
+            }
+
+            @Override
+            public boolean countable() {
+                return parent.countable();
+            }
+
+            @Override
+            public boolean contains(T element) {
+                return parent.contains(element);
+            }
+
+            @Override
+            public void append(T element) {
+                parent.append(element);
+            }
+
+            @Override
+            public void remove(T element) {
+                parent.remove(element);
+            }
+
+            @Override
+            public Set<T> union(Set<T> other) {
+                Set<Numeric> temp = (Set<Numeric>) other;
+                Set<Numeric> intermediate = parent.union(temp);
+                try {
+                    return ((NumericMultiset) intermediate).coerceTo(clazz);
+                } catch (CoercionException ex) {
+                    Logger.getLogger(NumericMultiset.class.getName()).log(Level.SEVERE, "Unable to coerce types in Multiset.union()", ex);
+                    throw new UnsupportedOperationException(ex);
+                }
+            }
+
+            @Override
+            public Set<T> intersection(Set<T> other) {
+                Set<Numeric> temp = (Set<Numeric>) other;
+                Set<Numeric> intermediate = parent.intersection(temp);
+                try {
+                    return ((NumericMultiset) intermediate).coerceTo(clazz);
+                } catch (CoercionException ex) {
+                    Logger.getLogger(NumericMultiset.class.getName()).log(Level.SEVERE, "Unable to coerce types in Multiset.intersection()", ex);
+                    throw new UnsupportedOperationException(ex);
+                }
+            }
+
+            @Override
+            public Set<T> difference(Set<T> other) {
+                Set<Numeric> temp = (Set<Numeric>) other;
+                Set<Numeric> intermediate = parent.difference(temp);
+                try {
+                    return ((NumericMultiset) intermediate).coerceTo(clazz);
+                } catch (CoercionException ex) {
+                    Logger.getLogger(NumericMultiset.class.getName()).log(Level.SEVERE, "Unable to coerce types in Multiset.difference()", ex);
+                    throw new UnsupportedOperationException(ex);
+                }
+            }
+
+            @Override
+            public Iterator<T> iterator() {
+                return parent.internal.stream().flatMap(x -> x.stream()).map(this::mapper).iterator();
+            }
+            
+            private T mapper(Numeric value) {
+                try {
+                    return (T) value.coerceTo(clazz);
+                } catch (CoercionException ex) {
+                    Logger.getLogger(NumericMultiset.class.getName()).log(Level.WARNING, "Problems coercing NumericMultiset to generic Multiset.", ex);
+                    throw new RuntimeException(ex);
+                }
+            }
+        };
     }
 
     @Override

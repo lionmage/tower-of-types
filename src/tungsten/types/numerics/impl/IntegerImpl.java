@@ -108,6 +108,9 @@ public class IntegerImpl implements IntegerType {
      */
     @Override
     public boolean isPerfectSquare() {
+        if (val.equals(BigInteger.ZERO) || val.equals(BigInteger.ONE)) {
+            return true;
+        }
         if (val.compareTo(BigInteger.ZERO) < 0) {
             return false;
         }
