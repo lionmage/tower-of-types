@@ -82,6 +82,7 @@ public class Celsius extends Temperature {
             return x -> x.multiply(ratio).add(offset);
         } else if (Kelvin.class.isAssignableFrom(clazz)) {
             final RealImpl offset = new RealImpl("273.15");
+            offset.setMathContext(mctx);
             return x -> x.add(offset);
         }
         
