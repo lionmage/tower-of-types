@@ -23,8 +23,15 @@
  */
 package tungsten.types;
 
+import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import tungsten.types.units.Temperature;
 
 /**
  * A fundamental class representing types of units of measurement.
@@ -35,7 +42,7 @@ public abstract class UnitType {
     protected List<CompositionElement> elements;
     
     public class CompositionElement {
-        private UnitType subunit;
+        private final UnitType subunit;
         private int exponent;
         
         public CompositionElement(UnitType type, int exponent) {
@@ -46,10 +53,15 @@ public abstract class UnitType {
         public UnitType getType() { return subunit; }
         public int exponent() { return exponent; }
         public void addExponent(int exponent) { this.exponent += exponent; }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(subunit, exponent);
+        }
     }
     
     public List<CompositionElement> getComposition() {
-        return elements;
+        return elements == null ? Collections.emptyList() : elements;
     }
     
     protected void compose(UnitType other, int exponent) {
@@ -63,5 +75,39 @@ public abstract class UnitType {
         }
         // if any exponents cancel out, remove the composition element
         elements.removeIf(x -> x.exponent() == 0);
+    }
+    
+    public abstract String unitName();
+    public abstract String unitSymbol();
+    public abstract String unitIntervalSymbol();
+    public abstract <R extends UnitType> Class<R> baseType();
+    
+    public abstract <R extends UnitType> Function<? extends Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx);
+    
+    protected boolean isSubtypeOfBase(Class<? extends UnitType> clazz) {
+        final boolean assignable = baseType().isAssignableFrom(clazz);
+        
+        if (!assignable) {
+            Logger.getLogger(UnitType.class.getName()).log(Level.WARNING, "Mismatched unit types: {0} is not a subtype of {1}",
+                    new Object[]{clazz.getTypeName(), baseType().getTypeName()});
+        }
+        return assignable;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof UnitType) {
+            UnitType type = (UnitType) o;
+            return type.unitName().equals(this.unitName());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 13 * hash + Objects.hashCode(this.elements);
+        hash = 13 * hash + Objects.hashCode(this.unitName());
+        return hash;
     }
 }
