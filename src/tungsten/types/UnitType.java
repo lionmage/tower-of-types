@@ -59,6 +59,27 @@ public abstract class UnitType {
         public int hashCode() {
             return Objects.hash(subunit, exponent);
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final CompositionElement other = (CompositionElement) obj;
+            if (this.exponent != other.exponent) {
+                return false;
+            }
+            if (!Objects.equals(this.subunit, other.subunit)) {
+                return false;
+            }
+            return true;
+        }
     }
     
     public List<CompositionElement> getComposition() {
@@ -73,7 +94,11 @@ public abstract class UnitType {
             if (exp != 1) {
                 buf.append(UnicodeTextEffects.numericSuperscript(exp));
             }
+            buf.append("\u22C5");  // dot multiplication symbol
         }
+        // now remove the last appended dot
+        int index = buf.lastIndexOf("\u22C5");
+        buf.deleteCharAt(index);
         return buf.toString();
     }
     
