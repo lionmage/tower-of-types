@@ -32,6 +32,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.units.Temperature;
+import tungsten.types.util.UnicodeTextEffects;
 
 /**
  * A fundamental class representing types of units of measurement.
@@ -64,21 +65,13 @@ public abstract class UnitType {
         return elements == null ? Collections.emptyList() : elements;
     }
     
-    // Unicode superscript numerals 0 - 9
-    private static final String[] superscripts = {
-        "\u2070", "\u00B9", "\u00B2", "\u00B3", "\u2074", "\u2075",
-        "\u2076", "\u2077", "\u2078", "\u2079"
-    };
-    private static final String negativeSup = "\u207B";
-    
     public String getCompositionAsString() {
         StringBuilder buf = new StringBuilder();
         for (CompositionElement e : getComposition()) {
             buf.append(e.getType().unitSymbol());
             int exp = e.exponent();
             if (exp != 1) {
-                if (exp < 0) buf.append(negativeSup);
-                if (Math.abs(exp) < 10) buf.append(superscripts[Math.abs(exp)]);
+                buf.append(UnicodeTextEffects.numericSuperscript(exp));
             }
         }
         return buf.toString();
