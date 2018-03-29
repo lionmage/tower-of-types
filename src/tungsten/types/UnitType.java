@@ -23,15 +23,18 @@
  */
 package tungsten.types;
 
+import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tungsten.types.units.Temperature;
+import tungsten.types.units.ScalePrefix;
 import tungsten.types.util.UnicodeTextEffects;
 
 /**
@@ -41,6 +44,8 @@ import tungsten.types.util.UnicodeTextEffects;
  */
 public abstract class UnitType {
     protected List<CompositionElement> elements;
+    protected final ScalePrefix scalePrefix;
+    protected static Map<ScalePrefix, UnitType> instanceMap = new EnumMap<>(ScalePrefix.class);
     
     public class CompositionElement {
         private final UnitType subunit;
@@ -82,6 +87,21 @@ public abstract class UnitType {
         }
     }
     
+    protected UnitType() {
+        scalePrefix = null;
+    }
+    
+    protected UnitType(ScalePrefix prefix) {
+        scalePrefix = prefix;
+    }
+    
+    protected static void cacheInstance(ScalePrefix prefix, UnitType t) {
+        if (instanceMap.containsKey(prefix)) {
+            Logger.getLogger(UnitType.class.getName()).log(Level.WARNING, "There is already a cached instance of {0} for {1}", new Object[]{t.getClass(), prefix.getName()});
+        }
+        instanceMap.put(prefix, t);
+    }
+    
     public List<CompositionElement> getComposition() {
         return elements == null ? Collections.emptyList() : elements;
     }
@@ -98,7 +118,8 @@ public abstract class UnitType {
         }
         // now remove the last appended dot
         int index = buf.lastIndexOf("\u22C5");
-        buf.deleteCharAt(index);
+        int count = Character.charCount(buf.codePointAt(index));
+        for (int k = 0; k < count; k++) buf.deleteCharAt(index);
         return buf.toString();
     }
     
@@ -132,6 +153,10 @@ public abstract class UnitType {
         return assignable;
     }
     
+    public BigDecimal getScale() {
+        return scalePrefix == null ? BigDecimal.ONE : scalePrefix.getScale();
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (o instanceof UnitType) {
@@ -147,5 +172,15 @@ public abstract class UnitType {
         hash = 13 * hash + Objects.hashCode(this.elements);
         hash = 13 * hash + Objects.hashCode(this.unitName());
         return hash;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        if (scalePrefix != null) {
+            buf.append(scalePrefix.getSymbol());
+        }
+        buf.append(unitSymbol());
+        return buf.toString();
     }
 }
