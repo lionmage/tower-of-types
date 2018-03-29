@@ -114,14 +114,15 @@ public abstract class UnitType {
             if (exp != 1) {
                 buf.append(UnicodeTextEffects.numericSuperscript(exp));
             }
-            buf.append("\u22C5");  // dot multiplication symbol
+            buf.append(DOTMULT);
         }
         // now remove the last appended dot
-        int index = buf.lastIndexOf("\u22C5");
+        int index = buf.lastIndexOf(DOTMULT);
         int count = Character.charCount(buf.codePointAt(index));
         for (int k = 0; k < count; k++) buf.deleteCharAt(index);
         return buf.toString();
     }
+    private static final String DOTMULT = "\u22C5"; // dot multiplier symbol
     
     protected void compose(UnitType other, int exponent) {
         if (elements == null) {
@@ -155,6 +156,16 @@ public abstract class UnitType {
     
     public BigDecimal getScale() {
         return scalePrefix == null ? BigDecimal.ONE : scalePrefix.getScale();
+    }
+    
+    public UnitType obtainScaledUnit(ScalePrefix prefix) {
+        if (instanceMap.containsKey(prefix)) {
+            return instanceMap.get(prefix);
+        }
+        Logger.getLogger(UnitType.class.getName()).log(Level.FINEST,
+                "No instance of {0} found for {1}; should be instantiated and cached in subclass.",
+                new Object[]{this.getClass().getTypeName(), prefix.getName()});
+        return null;
     }
     
     @Override
