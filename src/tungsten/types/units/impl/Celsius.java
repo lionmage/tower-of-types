@@ -24,6 +24,8 @@
 package tungsten.types.units.impl;
 
 import java.math.MathContext;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import tungsten.types.Numeric;
 import tungsten.types.UnitType;
@@ -31,6 +33,7 @@ import tungsten.types.numerics.RationalType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RationalImpl;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.units.ScalePrefix;
 import tungsten.types.units.Temperature;
 import tungsten.types.util.OptionalOperations;
 
@@ -42,11 +45,32 @@ public class Celsius extends Temperature {
     private static final Celsius instance = new Celsius();
 
     private Celsius() {
-        // we only want to instantiate one
+        super();
+    }
+    
+    private Celsius(ScalePrefix scalePrefix) {
+        super(scalePrefix);
     }
     
     public static Celsius getInstance() {
         return instance;
+    }
+    
+    private static Lock instanceLock = new ReentrantLock();
+    
+    public static Celsius getInstance(ScalePrefix scalePrefix) {
+        instanceLock.lock();
+        try {
+            Celsius result = (Celsius) obtainScaledUnit(scalePrefix);
+            if (result == null) {
+                result = new Celsius(scalePrefix);
+                cacheInstance(scalePrefix, result);
+            }
+            
+            return result;
+        } finally {
+            instanceLock.unlock();
+        }
     }
 
     @Override

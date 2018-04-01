@@ -30,6 +30,9 @@ import tungsten.types.UnitType;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public abstract class Temperature extends UnitType {
+    public Temperature(ScalePrefix prefix) { super(prefix); }
+    public Temperature() { super(); }
+    
     public abstract boolean isAbsolute();
     @Override
     public Class<Temperature> baseType() { return Temperature.class; }

@@ -163,13 +163,13 @@ public abstract class UnitType {
         return scalePrefix;
     }
     
-    public UnitType obtainScaledUnit(ScalePrefix prefix) {
+    public static UnitType obtainScaledUnit(ScalePrefix prefix) {
         if (instanceMap.containsKey(prefix)) {
             return instanceMap.get(prefix);
         }
         Logger.getLogger(UnitType.class.getName()).log(Level.FINEST,
                 "No instance of {0} found for {1}; should be instantiated and cached in subclass.",
-                new Object[]{this.getClass().getTypeName(), prefix.getName()});
+                new Object[]{UnitType.class.getTypeName(), prefix.getName()});
         return null;
     }
     
