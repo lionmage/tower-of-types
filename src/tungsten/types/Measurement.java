@@ -25,10 +25,14 @@ package tungsten.types;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.units.ScalePrefix;
+import tungsten.types.util.OptionalOperations;
 
 /**
  * Encapsulates a physical measurement of some type.
@@ -57,6 +61,9 @@ public class Measurement<V extends Numeric, U extends UnitType> {
     }
     
     public Measurement rescale(ScalePrefix prefix) {
+        if (prefix == unit.getScalePrefix()) {
+            return this;
+        }
         BigDecimal oldScale = unit.getScale();
         BigDecimal newScale = prefix.getScale();
         try {
@@ -68,6 +75,22 @@ public class Measurement<V extends Numeric, U extends UnitType> {
             return new Measurement(result, newUnit);
         } catch (CoercionException ce) {
             throw new ArithmeticException("Unable to rescale measurement from " + unit + " to " + prefix.getName());
+        }
+    }
+    
+    public <T extends UnitType> Measurement convertTo(T targetUnit) {
+        BigDecimal oldScale = unit.getScale();
+        BigDecimal newScale = targetUnit.getScale();
+        try {
+            RealType realValue = (RealType) value.coerceTo(RealType.class);
+            RealImpl intermediate = new RealImpl(realValue.asBigDecimal().multiply(oldScale), value.isExact());
+            intermediate.setMathContext(mctx);
+            Function<Numeric, ? extends Numeric> func = unit.getConversion(targetUnit.getClass(), mctx);
+            RealType converted = (RealType) func.andThen(x -> x.divide(new RealImpl(newScale))).apply(intermediate).coerceTo(RealType.class);
+            return new Measurement(converted, targetUnit);
+        } catch (CoercionException ce) {
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Unable to coerce measurement unit from " + unit + " to " + targetUnit, ce);
+            throw new ArithmeticException("Unanle to coerce measurement from " + unit + " to " + targetUnit);
         }
     }
     

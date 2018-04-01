@@ -142,7 +142,7 @@ public abstract class UnitType {
     public abstract String unitIntervalSymbol();
     public abstract <R extends UnitType> Class<R> baseType();
     
-    public abstract <R extends UnitType> Function<? extends Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx);
+    public abstract <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx);
     
     protected boolean isSubtypeOfBase(Class<? extends UnitType> clazz) {
         final boolean assignable = baseType().isAssignableFrom(clazz);
@@ -156,6 +156,11 @@ public abstract class UnitType {
     
     public BigDecimal getScale() {
         return scalePrefix == null ? BigDecimal.ONE : scalePrefix.getScale();
+    }
+    
+    // package private
+    ScalePrefix getScalePrefix() {
+        return scalePrefix;
     }
     
     public UnitType obtainScaledUnit(ScalePrefix prefix) {

@@ -70,8 +70,17 @@ public class Celsius extends Temperature {
         return false;
     }
 
+    /**
+     * Returns an anonymous function that can convert values of
+     * this unit type to those of another unit type.
+     *
+     * @param <R> the target unit type
+     * @param clazz the class of the target unit type
+     * @param mctx the {@link MathContext} to use for this function's evaluation
+     * @return a function to convert from one base unit to another
+     */
     @Override
-    public <R extends UnitType> Function<? extends Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
+    public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
         if (!isSubtypeOfBase(clazz)) throw new UnsupportedOperationException("Bad unit conversion.");
         
         if (Fahrenheit.class.isAssignableFrom(clazz)) {

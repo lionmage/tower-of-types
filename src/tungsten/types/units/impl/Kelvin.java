@@ -59,7 +59,7 @@ public class Kelvin extends Temperature {
     }
 
     @Override
-    public <R extends UnitType> Function<? extends Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
+    public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
         if (!isSubtypeOfBase(clazz)) {
             throw new UnsupportedOperationException("Bad unit conversion.");
         }
