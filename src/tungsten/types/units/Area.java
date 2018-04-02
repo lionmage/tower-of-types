@@ -21,53 +21,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package tungsten.types.units.impl;
+package tungsten.types.units;
 
-import java.math.MathContext;
-import java.util.function.Function;
-import tungsten.types.Numeric;
 import tungsten.types.UnitType;
-import tungsten.types.numerics.impl.RealImpl;
-import tungsten.types.units.Mass;
 
 /**
- * This is the unit of mass in the Imperial system of measurement.
- * It is also found in the Customary (U.S.) units of measure.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public class Slug extends Mass {
-    private static final Slug instance = new Slug();
+public abstract class Area extends UnitType {
+    public Area() { super(); }
+    public Area(ScalePrefix prefix) { super(prefix); }
     
-    private Slug() { super(); }
-    
-    public Slug getInstance() { return instance; }
-
-    @Override
-    public String unitName() {
-        return "slug";
+    /** 
+     * Subclasses should use this to easily create the unit composition.
+     * All measures of area are derived from units of length.
+     * @param lengthType the unit of length
+     */
+    protected void composeFromLength(Length lengthType) {
+        this.compose(lengthType, 2);
     }
 
     @Override
-    public String unitSymbol() {
-        return "slug";
+    public Class<Area> baseType() {
+        return Area.class;
     }
 
     @Override
-    public String unitIntervalSymbol() {
-        return "slug";
-    }
-
-    @Override
-    public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
-        if (!isSubtypeOfBase(clazz)) throw new UnsupportedOperationException("Bad unit conversion.");
-        
-        if (Gram.class.isAssignableFrom(clazz)) {
-            final RealImpl factor = new RealImpl("14593.9"); // grams per slug
-            factor.setMathContext(mctx);
-            return x -> x.multiply(factor);
+    public boolean equals(Object o) {
+        if (o instanceof Area) {
+            super.equals(o);
         }
-        throw new UnsupportedOperationException("Cannot convert Slug to " + clazz.getSimpleName());
+        return false;
     }
-    
 }

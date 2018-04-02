@@ -35,6 +35,8 @@ import tungsten.types.units.Mass;
 import tungsten.types.units.ScalePrefix;
 
 /**
+ * The metric unit of mass.  In SI, the kilogram is the chosen unit
+ * of mass, so we pre-cache an instance of kilogram.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */

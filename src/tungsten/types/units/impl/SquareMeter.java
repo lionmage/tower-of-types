@@ -24,50 +24,69 @@
 package tungsten.types.units.impl;
 
 import java.math.MathContext;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import tungsten.types.Numeric;
 import tungsten.types.UnitType;
-import tungsten.types.numerics.impl.RealImpl;
-import tungsten.types.units.Mass;
+import static tungsten.types.UnitType.obtainScaledUnit;
+import tungsten.types.units.Area;
+import tungsten.types.units.ScalePrefix;
 
 /**
- * This is the unit of mass in the Imperial system of measurement.
- * It is also found in the Customary (U.S.) units of measure.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public class Slug extends Mass {
-    private static final Slug instance = new Slug();
+public class SquareMeter extends Area {
+    private static final SquareMeter instance = new SquareMeter();
     
-    private Slug() { super(); }
+    private SquareMeter() {
+        super();
+        composeFromLength(Meter.getInstance());
+    }
     
-    public Slug getInstance() { return instance; }
+    private SquareMeter(ScalePrefix prefix) {
+        super(prefix);
+        composeFromLength(Meter.getInstance());
+    }
+    
+    public SquareMeter getInstance() { return instance; }
+    
+    private static Lock instanceLock = new ReentrantLock();
+    
+    public static SquareMeter getInstance(ScalePrefix scalePrefix) {
+        instanceLock.lock();
+        try {
+            SquareMeter result = (SquareMeter) obtainScaledUnit(scalePrefix);
+            if (result == null) {
+                result = new SquareMeter(scalePrefix);
+                cacheInstance(scalePrefix, result);
+            }
+            
+            return result;
+        } finally {
+            instanceLock.unlock();
+        }
+    }
 
     @Override
     public String unitName() {
-        return "slug";
+        return "square meter";
     }
 
     @Override
     public String unitSymbol() {
-        return "slug";
+        return getCompositionAsString();
     }
 
     @Override
     public String unitIntervalSymbol() {
-        return "slug";
+        return getCompositionAsString();
     }
 
     @Override
     public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
-        if (!isSubtypeOfBase(clazz)) throw new UnsupportedOperationException("Bad unit conversion.");
-        
-        if (Gram.class.isAssignableFrom(clazz)) {
-            final RealImpl factor = new RealImpl("14593.9"); // grams per slug
-            factor.setMathContext(mctx);
-            return x -> x.multiply(factor);
-        }
-        throw new UnsupportedOperationException("Cannot convert Slug to " + clazz.getSimpleName());
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }
