@@ -30,6 +30,8 @@ import tungsten.types.UnitType;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public abstract class Length extends UnitType {
+    public Length() { super(); }
+    public Length(ScalePrefix prefix) { super(prefix); }
 
     @Override
     public Class<Length> baseType() {

@@ -24,9 +24,12 @@
 package tungsten.types.units.impl;
 
 import java.math.MathContext;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import tungsten.types.Numeric;
 import tungsten.types.UnitType;
+import static tungsten.types.UnitType.obtainScaledUnit;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.units.Mass;
 import tungsten.types.units.ScalePrefix;
@@ -36,19 +39,42 @@ import tungsten.types.units.ScalePrefix;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class Gram extends Mass {
+    private static final Gram instance = new Gram();
+    
     static {
         // since the official SI unit is kg, cache an instance
         cacheInstance(ScalePrefix.KILO, new Gram(ScalePrefix.KILO));
     }
     
-    public Gram() {
+    private Gram() {
         super();
     }
     
-    public Gram(ScalePrefix prefix) {
+    private Gram(ScalePrefix prefix) {
         super(prefix);
     }
 
+    public static Gram getInstance() {
+        return instance;
+    }
+    
+    private static Lock instanceLock = new ReentrantLock();
+    
+    public static Gram getInstance(ScalePrefix scalePrefix) {
+        instanceLock.lock();
+        try {
+            Gram result = (Gram) obtainScaledUnit(scalePrefix);
+            if (result == null) {
+                result = new Gram(scalePrefix);
+                cacheInstance(scalePrefix, result);
+            }
+            
+            return result;
+        } finally {
+            instanceLock.unlock();
+        }
+    }
+    
     @Override
     public String unitName() {
         return "gram";

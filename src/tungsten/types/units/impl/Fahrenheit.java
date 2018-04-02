@@ -42,7 +42,7 @@ public class Fahrenheit extends Temperature {
     private static final Fahrenheit instance = new Fahrenheit();
     
     private Fahrenheit() {
-        // we want this to be a singleton
+        super();
     }
     
     public static Fahrenheit getInstance() {

@@ -24,17 +24,56 @@
 package tungsten.types.units.impl;
 
 import java.math.MathContext;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import tungsten.types.Numeric;
 import tungsten.types.UnitType;
+import static tungsten.types.UnitType.obtainScaledUnit;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.units.Length;
+import tungsten.types.units.ScalePrefix;
 
 /**
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class Meter extends Length {
+    private static final Meter instance = new Meter();
+    
+    static {
+        // since the official SI unit is kg, cache an instance
+        cacheInstance(ScalePrefix.KILO, new Meter(ScalePrefix.KILO));
+    }
+    
+    private Meter() {
+        super();
+    }
+    
+    private Meter(ScalePrefix prefix) {
+        super(prefix);
+    }
+
+    public static Meter getInstance() {
+        return instance;
+    }
+    
+    private static Lock instanceLock = new ReentrantLock();
+    
+    public static Meter getInstance(ScalePrefix scalePrefix) {
+        instanceLock.lock();
+        try {
+            Meter result = (Meter) obtainScaledUnit(scalePrefix);
+            if (result == null) {
+                result = new Meter(scalePrefix);
+                cacheInstance(scalePrefix, result);
+            }
+            
+            return result;
+        } finally {
+            instanceLock.unlock();
+        }
+    }
 
     @Override
     public String unitName() {

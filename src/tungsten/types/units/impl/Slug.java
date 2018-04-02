@@ -35,6 +35,11 @@ import tungsten.types.units.Mass;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class Slug extends Mass {
+    private static final Slug instance = new Slug();
+    
+    private Slug() { super(); }
+    
+    public Slug getInstance() { return instance; }
 
     @Override
     public String unitName() {

@@ -23,9 +23,6 @@
  */
 package tungsten.types.units;
 
-import java.math.MathContext;
-import java.util.function.Function;
-import tungsten.types.Numeric;
 import tungsten.types.UnitType;
 
 /**

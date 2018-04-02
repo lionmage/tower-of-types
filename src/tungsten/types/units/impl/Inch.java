@@ -36,6 +36,11 @@ import tungsten.types.units.Length;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class Inch extends Length {
+    private static final Inch instance = new Inch();
+    
+    private Inch() { super(); }
+    
+    public Inch getInstance() { return instance; }
 
     @Override
     public String unitName() {
@@ -56,7 +61,7 @@ public class Inch extends Length {
     public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
         if (!isSubtypeOfBase(clazz)) throw new UnsupportedOperationException("Bad unit conversion.");
 
-        if (Foot.class.isAssignableFrom(clazz)) {
+        if (Inch.class.isAssignableFrom(clazz)) {
             return x -> x.divide(new IntegerImpl(BigInteger.valueOf(12L)));
         }
         throw new UnsupportedOperationException("Cannot convert Inch to " + clazz.getSimpleName());

@@ -24,10 +24,14 @@
 package tungsten.types.units.impl;
 
 import java.math.MathContext;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import tungsten.types.Numeric;
 import tungsten.types.UnitType;
+import static tungsten.types.UnitType.obtainScaledUnit;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.units.ScalePrefix;
 import tungsten.types.units.Temperature;
 
 /**
@@ -35,6 +39,33 @@ import tungsten.types.units.Temperature;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class Kelvin extends Temperature {
+    private static final Kelvin instance = new Kelvin();
+    
+    private Kelvin() { super(); }
+    
+    private Kelvin(ScalePrefix scalePrefix) {
+        super(scalePrefix);
+    }
+    public static Kelvin getInstance() {
+        return instance;
+    }
+    
+    private static Lock instanceLock = new ReentrantLock();
+    
+    public static Kelvin getInstance(ScalePrefix scalePrefix) {
+        instanceLock.lock();
+        try {
+            Kelvin result = (Kelvin) obtainScaledUnit(scalePrefix);
+            if (result == null) {
+                result = new Kelvin(scalePrefix);
+                cacheInstance(scalePrefix, result);
+            }
+            
+            return result;
+        } finally {
+            instanceLock.unlock();
+        }
+    }
 
     @Override
     public boolean isAbsolute() {

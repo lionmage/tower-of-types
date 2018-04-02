@@ -37,6 +37,11 @@ import tungsten.types.units.Length;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class Foot extends Length {
+    private static final Foot instance = new Foot();
+    
+    private Foot() { super(); }
+    
+    public Foot getInstance() { return instance; }
 
     @Override
     public String unitName() {
