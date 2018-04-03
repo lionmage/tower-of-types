@@ -31,37 +31,36 @@ import tungsten.types.Numeric;
 import tungsten.types.UnitType;
 import static tungsten.types.UnitType.obtainScaledUnit;
 import tungsten.types.numerics.impl.IntegerImpl;
-import tungsten.types.numerics.impl.RealImpl;
-import tungsten.types.units.Area;
 import tungsten.types.units.ScalePrefix;
+import tungsten.types.units.Volume;
 
 /**
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public class SquareMeter extends Area {
-    private static final SquareMeter instance = new SquareMeter();
+public class CubicMeter extends Volume {
+    private static final CubicMeter instance = new CubicMeter();
     
-    private SquareMeter() {
+    private CubicMeter() {
         super();
         composeFromLength(Meter.getInstance());
     }
     
-    private SquareMeter(ScalePrefix prefix) {
+    private CubicMeter(ScalePrefix prefix) {
         super(prefix);
         composeFromLength(Meter.getInstance(prefix));
     }
     
-    public SquareMeter getInstance() { return instance; }
+    public CubicMeter getInstance() { return instance; }
     
     private static Lock instanceLock = new ReentrantLock();
     
-    public static SquareMeter getInstance(ScalePrefix scalePrefix) {
+    public static CubicMeter getInstance(ScalePrefix scalePrefix) {
         instanceLock.lock();
         try {
-            SquareMeter result = (SquareMeter) obtainScaledUnit(scalePrefix);
+            CubicMeter result = (CubicMeter) obtainScaledUnit(scalePrefix);
             if (result == null) {
-                result = new SquareMeter(scalePrefix);
+                result = new CubicMeter(scalePrefix);
                 cacheInstance(scalePrefix, result);
             }
             
@@ -73,7 +72,7 @@ public class SquareMeter extends Area {
 
     @Override
     public String unitName() {
-        return "square meter";
+        return "cubic meter";
     }
 
     @Override
@@ -90,12 +89,11 @@ public class SquareMeter extends Area {
     public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
         if (!isSubtypeOfBase(clazz)) throw new UnsupportedOperationException("Bad unit conversion.");
         
-         if (SquareFoot.class.isAssignableFrom(clazz)) {
-            final RealImpl factor = new RealImpl("10.7639", false);
-            factor.setMathContext(mctx);
-            return x -> x.multiply(factor);
+        if (Liter.class.isAssignableFrom(clazz)) {
+            final Numeric litersPerCubicMeter = new IntegerImpl("1000");
+            return x -> x.multiply(litersPerCubicMeter);
         }
-        throw new UnsupportedOperationException("Cannot convert SquareMeter to " + clazz.getSimpleName());
+        throw new UnsupportedOperationException("Cannot convert CubicMeter to " + clazz.getSimpleName());
     }
     
 }
