@@ -41,7 +41,7 @@ public class Foot extends Length {
     
     private Foot() { super(); }
     
-    public Foot getInstance() { return instance; }
+    public static Foot getInstance() { return instance; }
 
     @Override
     public String unitName() {

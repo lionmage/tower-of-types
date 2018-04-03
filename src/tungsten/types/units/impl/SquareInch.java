@@ -24,56 +24,27 @@
 package tungsten.types.units.impl;
 
 import java.math.MathContext;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import tungsten.types.Numeric;
 import tungsten.types.UnitType;
-import static tungsten.types.UnitType.obtainScaledUnit;
 import tungsten.types.numerics.impl.IntegerImpl;
-import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.units.Area;
-import tungsten.types.units.ScalePrefix;
 
 /**
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public class SquareMeter extends Area {
-    private static final SquareMeter instance = new SquareMeter();
+public class SquareInch extends Area {
+    private static final SquareInch instance = new SquareInch();
     
-    private SquareMeter() {
+    private SquareInch() {
         super();
-        composeFromLength(Meter.getInstance());
-    }
-    
-    private SquareMeter(ScalePrefix prefix) {
-        super(prefix);
-        composeFromLength(Meter.getInstance());
-    }
-    
-    public SquareMeter getInstance() { return instance; }
-    
-    private static Lock instanceLock = new ReentrantLock();
-    
-    public static SquareMeter getInstance(ScalePrefix scalePrefix) {
-        instanceLock.lock();
-        try {
-            SquareMeter result = (SquareMeter) obtainScaledUnit(scalePrefix);
-            if (result == null) {
-                result = new SquareMeter(scalePrefix);
-                cacheInstance(scalePrefix, result);
-            }
-            
-            return result;
-        } finally {
-            instanceLock.unlock();
-        }
+        composeFromLength(Inch.getInstance());
     }
 
     @Override
     public String unitName() {
-        return "square meter";
+        return "square inch";
     }
 
     @Override
@@ -90,12 +61,11 @@ public class SquareMeter extends Area {
     public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
         if (!isSubtypeOfBase(clazz)) throw new UnsupportedOperationException("Bad unit conversion.");
         
-         if (SquareFoot.class.isAssignableFrom(clazz)) {
-            final RealImpl factor = new RealImpl("10.7639", false);
-            factor.setMathContext(mctx);
-            return x -> x.multiply(factor);
+        if (SquareFoot.class.isAssignableFrom(clazz)) {
+            final Numeric sqInPerSqFoot = new IntegerImpl("12").pow(new IntegerImpl("2"));
+            return x -> x.divide(sqInPerSqFoot);
         }
-        throw new UnsupportedOperationException("Cannot convert SquareMeter to " + clazz.getSimpleName());
+        throw new UnsupportedOperationException("Cannot convert SquareInch to " + clazz.getSimpleName());
     }
     
 }

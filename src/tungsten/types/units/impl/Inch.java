@@ -40,7 +40,7 @@ public class Inch extends Length {
     
     private Inch() { super(); }
     
-    public Inch getInstance() { return instance; }
+    public static Inch getInstance() { return instance; }
 
     @Override
     public String unitName() {
