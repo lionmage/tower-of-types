@@ -29,9 +29,9 @@ import tungsten.types.UnitType;
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public abstract class Volume extends UnitType {
-    public Volume() { super(); }
-    public Volume(ScalePrefix prefix) { super(prefix); }
+public abstract class Angle extends UnitType {
+    public Angle() { super(); }
+    public Angle(ScalePrefix prefix) { super(prefix); }
     
     /** 
      * Subclasses should use this to easily create the unit composition.
@@ -43,13 +43,13 @@ public abstract class Volume extends UnitType {
     }
 
     @Override
-    public Class<Volume> baseType() {
-        return Volume.class;
+    public Class<Angle> baseType() {
+        return Angle.class;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof Volume) {
+        if (o instanceof Angle) {
             super.equals(o);
         }
         return false;
