@@ -203,10 +203,14 @@ public class RealImpl implements RealType {
         final boolean exactness = exact && addend.isExact();
         if (addend instanceof RealType) {
             RealType that = (RealType) addend;
-            return new RealImpl(val.add(that.asBigDecimal(), mctx), exactness);
+            final RealImpl result = new RealImpl(val.add(that.asBigDecimal(), mctx), exactness);
+            result.setMathContext(mctx);
+            return result;
         } else if (addend instanceof RationalType) {
             RationalType that = (RationalType) addend;
-            return new RealImpl(val.add(that.asBigDecimal(), mctx), exactness);
+            final RealImpl result = new RealImpl(val.add(that.asBigDecimal(), mctx), exactness);
+            result.setMathContext(mctx);
+            return result;
         } else if (addend instanceof IntegerType) {
             // convenience constructor preserves exactness
             RealType that = new RealImpl((IntegerType) addend);
