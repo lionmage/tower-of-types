@@ -141,6 +141,16 @@ public abstract class UnitType {
     public abstract String unitSymbol();
     public abstract String unitIntervalSymbol();
     public abstract <R extends UnitType> Class<R> baseType();
+    /**
+     * Most units will either be base units in a particular system of measurement
+     * (e.g., seconds, meters), or they will have some dimension to them (i.e.,
+     * they can be broken down into fundamental units).  Some units of measure
+     * are dimensionless: they are derived from other measurements whose units
+     * cancel out.  For measurements that are dimensionless, this method
+     * should return {@code true}.
+     * @return true if this unit of measure is dimensionless, false otherwise
+     */
+    public boolean isDimensionless() { return false; }
     
     public abstract <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx);
     

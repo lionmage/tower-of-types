@@ -44,7 +44,7 @@ import tungsten.types.util.OptionalOperations;
 public class Measurement<V extends Numeric, U extends UnitType> {
     private final V value;
     private final U unit;
-    private MathContext mctx;
+    protected MathContext mctx;
     
     public Measurement(V value, U unit) {
         this.value = value;
@@ -52,6 +52,21 @@ public class Measurement<V extends Numeric, U extends UnitType> {
         mctx = value.getMathContext();
     }
     
+    /**
+     * Hidden constructor for subclasses.
+     * @param unit the units of this measurement
+     */
+    protected Measurement(U unit) {
+        this.value = null;
+        this.unit = unit;
+    }
+    
+    /**
+     * Return the value of this measurement.  This method may be overridden
+     * in subclasses, so it is best to avoid directly accessing {@code value}
+     * when modifying this class.
+     * @return 
+     */
     public V getValue() {
         return value;
     }
@@ -97,7 +112,7 @@ public class Measurement<V extends Numeric, U extends UnitType> {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        buf.append(value).append(' ').append(unit);
+        buf.append(getValue()).append(' ').append(unit);
         return buf.toString();
     }
 }

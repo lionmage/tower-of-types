@@ -83,6 +83,9 @@ public class Radian extends Angle {
     public String unitIntervalSymbol() {
         return "\u33AD";
     }
+    
+    @Override
+    public boolean isDimensionless() { return true; }
 
     @Override
     public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {

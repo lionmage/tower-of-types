@@ -44,7 +44,7 @@ public class Degree extends Angle {
     
     private Degree() { super(); }
     
-    public Degree getInstance() {
+    public static Degree getInstance() {
         return instance;
     }
 
@@ -75,6 +75,9 @@ public class Degree extends Angle {
         result.setMathContext(mctx);
         return result;
     }
+    
+    @Override
+    public boolean isDimensionless() { return true; }
 
     @Override
     public <R extends UnitType> Function<Numeric, ? extends Numeric> getConversion(Class<R> clazz, MathContext mctx) {
