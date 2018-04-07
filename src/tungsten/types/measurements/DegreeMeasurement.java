@@ -37,6 +37,11 @@ import tungsten.types.units.impl.Degree;
 import tungsten.types.util.MathUtils;
 
 /**
+ * Subclass of {@link Measurement} that provides specific features for
+ * measurements expressed in degrees, minutes, and seconds. Degrees and
+ * minutes are assumed to be integer values, whereas seconds can be expressed
+ * as any {@link Numeric} subtype.  Internally, seconds are represented
+ * as a {@link RealType} value.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
