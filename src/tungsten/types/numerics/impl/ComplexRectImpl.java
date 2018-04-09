@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import tungsten.types.Numeric;
 import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
@@ -67,6 +69,46 @@ public class ComplexRectImpl implements ComplexType {
     public ComplexRectImpl(RealType real, RealType imaginary, boolean exact) {
         this(real, imaginary);
         this.exact = exact;
+    }
+    
+    /*
+      This is OK since Pattern is considered thread-safe.  (Matcher, however,
+      is not.)  Unlimited whitespace is allowed around the middle + or -
+      character, but only 1 optional whitespace character is allowed before
+      the terminal i.
+    */
+    private static Pattern cplxPat = Pattern.compile("([+-]?\\d+)\\s*([+-])\\s*(\\d+)\\s?i");
+    
+    /**
+     * Convenience constructor that will give us a complex value for any
+     * reasonable representation of a complex value.  Because this uses
+     * regular expressions under the hood, this constructor should be used
+     * judiciously.  This pattern allows generous whitespace between most
+     * expected tokens.  Some valid inputs should be:
+     * <ul>
+     * <li> -5+ 4i</li>
+     * <li> 3 - 2 i</li>
+     * </ul>
+     * Some non-valid inputs would be:
+     * <ul>
+     * <li>- 7+2.5i</li>
+     * <li>+  5  - 2i</li>
+     * <li>-2+5    i</li>
+     * </ul>
+     * @param strval the string representing the complex value we need to parse
+     */
+    public ComplexRectImpl(String strval) {
+        Matcher m = cplxPat.matcher(strval);
+        if (m.matches()) {
+            assert m.groupCount() == 3;
+            // group 0 is the entire matched pattern, so skip that
+            real = new RealImpl(m.group(1));
+            boolean imNeg = m.group(2).equals("-");
+            RealImpl temp = new RealImpl(m.group(3));
+            imag = imNeg ? temp.negate() : temp;
+        } else {
+            throw new IllegalArgumentException("Illegal init string for complex number value: " + strval);
+        }
     }
     
     public void setMathContext(MathContext context) {
