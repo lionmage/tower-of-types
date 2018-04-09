@@ -77,7 +77,7 @@ public class ComplexRectImpl implements ComplexType {
       character, but only 1 optional whitespace character is allowed before
       the terminal i.
     */
-    private static Pattern cplxPat = Pattern.compile("([+-]?\\d+)\\s*([+-])\\s*(\\d+)\\s?i");
+    private static Pattern cplxPat = Pattern.compile("([+-]?\\d+\\.?\\d*)\\s*([+-])\\s*(\\d+\\.?\\d*)\\s?i");
     
     /**
      * Convenience constructor that will give us a complex value for any
