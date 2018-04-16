@@ -25,6 +25,7 @@ package tungsten.types;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -121,5 +122,25 @@ public class Measurement<V extends Numeric, U extends UnitType> implements Compa
             return ((Comparable<V>) this.getValue()).compareTo(o.getValue());
         }
         throw new ClassCastException("Value of type " + this.getValue().getClass().getTypeName() + " is not Comparable.");
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Measurement) {
+            Measurement that = (Measurement) o;
+            if (this.getUnit().isSubtypeOfBase(that.getUnit().baseType())) {
+                Measurement converted = that.convertTo(this.getUnit());
+                return this.getValue().equals(converted.getValue());
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + Objects.hashCode(this.value);
+        hash = 89 * hash + Objects.hashCode(this.unit);
+        return hash;
     }
 }
