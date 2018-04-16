@@ -32,7 +32,6 @@ import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.units.ScalePrefix;
-import tungsten.types.util.OptionalOperations;
 
 /**
  * Encapsulates a physical measurement of some type.
@@ -41,7 +40,7 @@ import tungsten.types.util.OptionalOperations;
  * @param <V> the measurement value type
  * @param <U> the measurement unit type
  */
-public class Measurement<V extends Numeric, U extends UnitType> {
+public class Measurement<V extends Numeric, U extends UnitType> implements Comparable<Measurement<V, U>> {
     private final V value;
     private final U unit;
     protected MathContext mctx;
@@ -114,5 +113,13 @@ public class Measurement<V extends Numeric, U extends UnitType> {
         StringBuilder buf = new StringBuilder();
         buf.append(getValue()).append(' ').append(unit);
         return buf.toString();
+    }
+
+    @Override
+    public int compareTo(Measurement<V, U> o) {
+        if (this.getValue() instanceof Comparable) {
+            return ((Comparable<V>) this.getValue()).compareTo(o.getValue());
+        }
+        throw new ClassCastException("Value of type " + this.getValue().getClass().getTypeName() + " is not Comparable.");
     }
 }
