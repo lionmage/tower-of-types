@@ -25,6 +25,7 @@ package tungsten.types.measurements;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Measurement;
@@ -46,7 +47,7 @@ import tungsten.types.util.MathUtils;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class DegreeMeasurement extends Measurement {
-    public class DMSTuple {
+    public class DMSTuple implements Comparable<DMSTuple> {
         private IntegerType degrees;
         private IntegerType minutes;
         private RealType seconds;
@@ -86,9 +87,42 @@ public class DegreeMeasurement extends Measurement {
             result.setMathContext(mctx);
             return result;
         }
+
+        @Override
+        public int compareTo(DMSTuple o) {
+            int result = this.getDegrees().compareTo(o.getDegrees());
+            if (result == 0) {
+                result = this.getMinutes().compareTo(o.getMinutes());
+                if (result == 0) {
+                    result = this.getSeconds().compareTo(o.getSeconds());
+                }
+            }
+            
+            return result;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof DMSTuple) {
+                DMSTuple that = (DMSTuple) o;
+                return this.getDegrees().equals(that.getDegrees()) &&
+                        this.getMinutes().equals(that.getMinutes()) &&
+                        this.getSeconds().equals(that.getSeconds());
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 61 * hash + Objects.hashCode(this.degrees);
+            hash = 61 * hash + Objects.hashCode(this.minutes);
+            hash = 61 * hash + Objects.hashCode(this.seconds);
+            return hash;
+        }
     }
     
-    private DMSTuple tuple;
+    private final DMSTuple tuple;
     
     public DegreeMeasurement(IntegerType degrees, IntegerType minutes, Numeric seconds) {
         super(Degree.getInstance());

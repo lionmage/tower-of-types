@@ -88,12 +88,14 @@ public class ComplexRectImpl implements ComplexType {
      * <ul>
      * <li> -5+ 4i</li>
      * <li> 3 - 2 i</li>
+     * <li>-4.2+8.43i</li>
      * </ul>
-     * Some non-valid inputs would be:
+     * Some <em>non-valid</em> inputs would be:
      * <ul>
      * <li>- 7+2.5i</li>
      * <li>+  5  - 2i</li>
      * <li>-2+5    i</li>
+     * <li>5 + -3i</li>
      * </ul>
      * @param strval the string representing the complex value we need to parse
      */
