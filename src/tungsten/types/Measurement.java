@@ -118,6 +118,9 @@ public class Measurement<V extends Numeric, U extends UnitType> implements Compa
 
     @Override
     public int compareTo(Measurement<V, U> o) {
+        if (!this.getUnit().equals(o.getUnit())) {
+            throw new IllegalStateException("Trying to compare " + this.getUnit() + " to " + o.getUnit());
+        }
         if (this.getValue() instanceof Comparable) {
             return ((Comparable<V>) this.getValue()).compareTo(o.getValue());
         }
