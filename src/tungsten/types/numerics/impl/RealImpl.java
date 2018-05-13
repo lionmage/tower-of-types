@@ -166,7 +166,7 @@ public class RealImpl implements RealType {
             case REAL:
                 return this;
             case COMPLEX:
-                RealType zero = new RealImpl(BigDecimal.ZERO);
+                RealType zero = (RealType) Zero.getInstance(mctx).coerceTo(RealType.class);
                 ComplexRectImpl cplx = new ComplexRectImpl(this, zero, exact);
                 cplx.setMathContext(mctx);
                 return cplx;

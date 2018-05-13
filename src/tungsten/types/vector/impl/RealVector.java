@@ -38,6 +38,7 @@ import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.numerics.impl.Zero;
 import tungsten.types.util.OptionalOperations;
 
 /**
@@ -218,8 +219,12 @@ public class RealVector implements Vector<RealType> {
                     long index = cpTable[y][x].getIndex();
                     if (index < 0L) continue;
                     RealType coeff = cpTable[y][x].getCoeff();
-                    RealType accum = result.elementAt(index) == null ? new RealImpl(BigDecimal.ZERO) : result.elementAt(index);
-                    result.setElementAt((RealType) accum.add(this.elementAt((long) y).multiply(other.elementAt((long) x)).multiply(coeff)), index);
+                    try {
+                        RealType accum = result.elementAt(index) == null ? (RealType) Zero.getInstance(mctx).coerceTo(RealType.class) : result.elementAt(index);
+                        result.setElementAt((RealType) accum.add(this.elementAt((long) y).multiply(other.elementAt((long) x)).multiply(coeff)), index);
+                    } catch (CoercionException ce) {
+                        throw new IllegalStateException(ce); // we should not get here
+                    }
                 }
             }
         } else {

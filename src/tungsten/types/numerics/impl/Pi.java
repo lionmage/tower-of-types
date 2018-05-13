@@ -146,7 +146,7 @@ public class Pi implements RealType {
             case REAL:
                 return this;  // it's already a real
             case COMPLEX:
-                return new ComplexRectImpl(this, new RealImpl(BigDecimal.ZERO));
+                return new ComplexRectImpl(this, (RealType) Zero.getInstance(mctx).coerceTo(RealType.class));
             default:
                 throw new CoercionException("Pi can only be coerced to real or complex",
                         this.getClass(), numtype);

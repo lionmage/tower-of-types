@@ -47,6 +47,7 @@ import tungsten.types.numerics.impl.Euler;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.Pi;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.numerics.impl.Zero;
 import tungsten.types.set.impl.NumericSet;
 
 /**
@@ -177,7 +178,14 @@ public class MathUtils {
      * @return the natural logarithm of {@code x}
      */
     public static RealType ln(RealType x, MathContext mctx) {
-        if (x.asBigDecimal().compareTo(BigDecimal.ONE) == 0) return new RealImpl(BigDecimal.ZERO);
+        if (x.asBigDecimal().compareTo(BigDecimal.ONE) == 0) {
+            try {
+                return (RealType) Zero.getInstance(mctx).coerceTo(RealType.class);
+            } catch (CoercionException ex) {
+                // We should never get here!
+                throw new IllegalStateException(ex);
+            }
+        }
         if (x.asBigDecimal().compareTo(BigDecimal.ZERO) <= 0) throw new ArithmeticException("ln is undefined for values <= 0");
         if (newtonRange.contains(x)) return lnNewton(x, mctx);
         
@@ -356,7 +364,14 @@ public class MathUtils {
      */
     public static RealType nthRoot(RealType a, IntegerType n, MathContext mctx) {
         BigDecimal A = a.asBigDecimal();
-        if (A.compareTo(BigDecimal.ZERO) == 0) return new RealImpl(BigDecimal.ZERO);
+        if (A.compareTo(BigDecimal.ZERO) == 0) {
+            try {
+                return (RealType) Zero.getInstance(mctx).coerceTo(RealType.class);
+            } catch (CoercionException ex) {
+                // we should never get here
+                throw new IllegalStateException(ex);
+            }
+        }
         
         int nint = n.asBigInteger().intValueExact();
         BigDecimal ncalc = new BigDecimal(n.asBigInteger());

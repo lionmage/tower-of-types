@@ -59,7 +59,7 @@ public class ZeroVector implements Vector<RealType> {
 
     @Override
     public long length() {
-        return length();
+        return length;
     }
 
     @Override
@@ -127,6 +127,6 @@ public class ZeroVector implements Vector<RealType> {
 
     @Override
     public RealType computeAngle(Vector<RealType> other) {
-        throw new UnsupportedOperationException("Zero vector cannot form an angle with any vector."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Zero vector cannot form an angle with any vector.");
     }
 }

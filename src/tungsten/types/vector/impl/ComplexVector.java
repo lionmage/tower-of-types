@@ -40,6 +40,7 @@ import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.numerics.impl.ComplexRectImpl;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.numerics.impl.Zero;
 import tungsten.types.util.OptionalOperations;
 
 /**
@@ -210,7 +211,13 @@ public class ComplexVector implements Vector<ComplexType> {
         if (this.length() != other.length()) {
             throw new ArithmeticException("Cannot compute dot product for vectors of different length");
         }
-        final RealType zero = new RealImpl(BigDecimal.ZERO);
+        final RealType zero;
+        try {
+            zero = (RealType) Zero.getInstance(mctx).coerceTo(RealType.class);
+        } catch (CoercionException ex) {
+            // we should never get here
+            throw new IllegalStateException(ex);
+        }
         ComplexType accum = new ComplexRectImpl(zero, zero, true);
         for (long idx = 0L; idx < this.length(); idx++) {
             accum = (ComplexType) accum.add(this.elementAt(idx).multiply(other.elementAt(idx).conjugate()));
@@ -235,7 +242,8 @@ public class ComplexVector implements Vector<ComplexType> {
         {telt(5, -1), telt(4, 1), telt(3, 1), telt(2, -1), telt(1, -1), telt(0, 1), telt(-1, 0)}
     };
     
-    private static final ComplexType ZERO = new ComplexRectImpl(new RealImpl(BigDecimal.ZERO), new RealImpl(BigDecimal.ZERO));
+    private static final RealType ReZERO = new RealImpl(BigDecimal.ZERO);
+    private static final ComplexType ZERO = new ComplexRectImpl(ReZERO, ReZERO);
 
     @Override
     public Vector<ComplexType> crossProduct(Vector<ComplexType> other) {
@@ -292,17 +300,6 @@ public class ComplexVector implements Vector<ComplexType> {
         } catch (CoercionException ex) {
             Logger.getLogger(RealVector.class.getName()).log(Level.SEVERE, "Coercion failed for computed scale", ex);
         }
-//        final RealType zero = new RealImpl(BigDecimal.ZERO);
-//        OptionalOperations.setMathContext(zero, mctx);
-//        RealType sumofsquares = elements.parallelStream().map(x -> (RealType) x.magnitude().multiply(x.magnitude()))
-//                .reduce(zero, (a, b) -> (RealType) a.add(b));
-//        try {
-//            ComplexType result = (ComplexType) sumofsquares.sqrt().inverse().coerceTo(ComplexType.class);
-//            OptionalOperations.setMathContext(result, mctx);
-//            return this.scale(result);
-//        } catch (CoercionException ex) {
-//            Logger.getLogger(ComplexVector.class.getName()).log(Level.SEVERE, null, ex);
-//        }
         throw new ArithmeticException("Could not compute the normal of this vector.");
     }
 

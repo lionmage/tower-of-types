@@ -34,6 +34,7 @@ import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RationalType;
+import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.util.OptionalOperations;
 
@@ -180,7 +181,7 @@ public class RationalImpl implements RationalType {
                 if (denominator.equals(BigInteger.ONE)) {
                     return new IntegerImpl(numerator, exact);
                 } else if (numerator.equals(BigInteger.ZERO)) {
-                    return new IntegerImpl(BigInteger.ZERO, exact);
+                    return Zero.getInstance(mctx);
                 } else {
                     throw new CoercionException("Cannot convert fraction to integer.", this.getClass(), numtype);
                 }
@@ -191,8 +192,7 @@ public class RationalImpl implements RationalType {
 //                realval.setMathContext(mctx);
                 return realval;
             case COMPLEX:
-                final RealImpl zero = new RealImpl(BigDecimal.ZERO);
-                zero.setMathContext(mctx);
+                final RealType zero = (RealType) Zero.getInstance(mctx).coerceTo(RealType.class);
                 final RealImpl creal = new RealImpl(this, mctx);
                 return new ComplexRectImpl(creal, zero, exact);
             default:
