@@ -400,7 +400,7 @@ public class MathUtils {
     }
     
     /**
-     * Compute the nth roots of unity.
+     * Compute the n<sup>th</sup> roots of unity.
      * @param n the degree of the roots
      * @param mctx the {@link MathContext} for computing these values
      * @return a {@link Set} of {@code n} complex roots
@@ -438,5 +438,46 @@ public class MathUtils {
             return new MathContext(precision, args.get(0).getMathContext().getRoundingMode());
         }
         return MathContext.UNLIMITED;
+    }
+    
+    public String inScientificNotation(RealType value) {
+        return convertToScientificNotation(value.asBigDecimal());
+    }
+    
+    public String inScientificNotation(RationalType value) {
+        return convertToScientificNotation(value.asBigDecimal());
+    }
+    
+    private String convertToScientificNotation(BigDecimal decValue) {
+        if (decValue.scale() <= 0) {
+            IntegerImpl temp = new IntegerImpl(decValue.toBigIntegerExact());
+            return inScientificNotation(temp);
+        }
+        StringBuilder buf = new StringBuilder();
+        
+        int exponent = decValue.scale();
+        BigDecimal temp = decValue;
+        while (temp.abs().compareTo(BigDecimal.TEN) > 0) {
+            temp = temp.movePointLeft(1);
+            exponent++;
+        }
+        buf.append(temp.toPlainString()).append("\u2009\u00D7\u200910");
+        buf.append(UnicodeTextEffects.numericSuperscript(exponent));
+        
+        return buf.toString();
+    }
+    
+    public String inScientificNotation(IntegerType value) {
+        long digits = value.numberOfDigits();
+        int exponent = (int) (digits - 1L);
+        StringBuilder buf = new StringBuilder();
+        buf.append(value.asBigInteger());
+        int insertionPoint = 1;
+        if (value.sign() == Sign.NEGATIVE) insertionPoint++;
+        buf.insert(insertionPoint, '.');
+        // U+2009 is thin space, U+00D7 is multiplication symbol
+        buf.append("\u2009\u00D7\u200910").append(UnicodeTextEffects.numericSuperscript(exponent));
+        
+        return buf.toString();
     }
 }
