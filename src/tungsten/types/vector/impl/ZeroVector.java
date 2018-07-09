@@ -24,6 +24,11 @@
 package tungsten.types.vector.impl;
 
 import java.math.MathContext;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.numerics.RealType;
@@ -46,8 +51,26 @@ public class ZeroVector implements Vector<Numeric> {
         this.zero = Zero.getInstance(mctx);
     }
     
+    private static final Lock instanceLock = new ReentrantLock();
+    private static final Map<Long, ZeroVector> instanceMap = new HashMap<>();
+    
     public static ZeroVector getInstance(long length, MathContext ctx) {
-        return new ZeroVector(length, ctx);
+        instanceLock.lock();
+        try {
+            final Long key = computeKey(length, ctx);
+            ZeroVector instance = instanceMap.get(key);
+            if (instance == null) {
+                instance = new ZeroVector(length, ctx);
+                instanceMap.put(key, instance);
+            }
+            return instance;
+        } finally {
+            instanceLock.unlock();
+        }
+    }
+    
+    private static Long computeKey(long length, MathContext ctx) {
+        return Long.valueOf(length * 31L + (long) ctx.hashCode());
     }
     
     /**
