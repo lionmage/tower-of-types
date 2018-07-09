@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
@@ -76,8 +78,7 @@ public class Zero implements Numeric {
         return true;
     }
     
-    private static final IntegerType INTZERO = new IntegerImpl(BigInteger.ZERO);
-    private static final RealType REALZERO = new RealImpl(BigDecimal.ZERO);
+    private static final IntegerType INT_ZERO = new IntegerImpl(BigInteger.ZERO);
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
@@ -85,22 +86,28 @@ public class Zero implements Numeric {
         Numeric retval;
         switch (htype) {
             case INTEGER:
-                retval = INTZERO;
+                // we can get away with this because IntegerImpl doesn't keep
+                // math context state
+                retval = INT_ZERO;
                 break;
             case RATIONAL:
-                retval = new RationalImpl(INTZERO);
+                retval = new RationalImpl(INT_ZERO);
                 break;
             case REAL:
-                retval = REALZERO;
+                retval = obtainRealZero();
                 break;
             case COMPLEX:
-                retval = new ComplexRectImpl(REALZERO, REALZERO);
+                retval = new ComplexRectImpl(obtainRealZero(), obtainRealZero());
                 break;
             default:
                 throw new CoercionException("Cannot coerce zero to expected type", Zero.class, numtype);
         }
         OptionalOperations.setMathContext(retval, mctx);
         return retval;
+    }
+    
+    private RealType obtainRealZero() {
+        return new RealImpl(BigDecimal.ZERO);
     }
 
     @Override
@@ -146,5 +153,33 @@ public class Zero implements Numeric {
     @Override
     public MathContext getMathContext() {
         return mctx;
+    }
+    
+    /**
+     * Test for equality with a given value.  If the given value is:
+     * <ul><li>an implementation of {@link Numeric}</li>
+     * <li>is exact, and</li>
+     * <li>has a numeric value equivalent to zero (0),</li></ul>
+     * then it is considered equal.
+     * @param o the value to compare
+     * @return true if equal, false otherwise
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Zero) return true;
+        if (o instanceof Numeric) {
+            final Numeric that = (Numeric) o;
+            
+            if (!that.isExact()) return false;
+            Class<? extends Numeric> clazz = that.getClass();
+            try {
+                Numeric temp = this.coerceTo(clazz);
+                return temp.equals(o);
+            } catch (CoercionException ex) {
+                Logger.getLogger(Zero.class.getName()).log(Level.SEVERE, "Exception during test for equality with " + o, ex);
+                return false;
+            }
+        }
+        return false;
     }
 }

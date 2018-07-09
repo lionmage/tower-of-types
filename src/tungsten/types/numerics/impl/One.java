@@ -28,8 +28,11 @@ import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
@@ -38,6 +41,11 @@ import tungsten.types.numerics.RealType;
 import tungsten.types.util.OptionalOperations;
 
 /**
+ * Abstract implementation of the number 1 (one).
+ * Note that this is not exactly a singleton implementation &mdash;
+ * one instance exists for each MathContext in use.
+ * Note that {@link #equals(java.lang.Object) } may be inconsistent
+ * with {@link #hashCode() }.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
@@ -75,9 +83,7 @@ public class One implements Numeric {
         return true;
     }
 
-    private static final IntegerType INTUNITY = new IntegerImpl(BigInteger.ONE);
-    private static final RealType REALUNITY = new RealImpl(BigDecimal.ONE);
-    private static final RealType REALZERO = new RealImpl(BigDecimal.ZERO);
+    private static final IntegerType INT_UNITY = new IntegerImpl(BigInteger.ONE);
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
@@ -85,22 +91,32 @@ public class One implements Numeric {
         Numeric retval;
         switch (htype) {
             case INTEGER:
-                retval = INTUNITY;
+                // we can get away with this because IntegerImpl doesn't maintain
+                // a MathContext as state
+                retval = INT_UNITY;
                 break;
             case RATIONAL:
-                retval = new RationalImpl(INTUNITY);
+                retval = new RationalImpl(INT_UNITY);
                 break;
             case REAL:
-                retval = REALUNITY;
+                retval = obtainRealUnity();
                 break;
             case COMPLEX:
-                retval = new ComplexRectImpl(REALUNITY, REALZERO);
+                retval = new ComplexRectImpl(obtainRealUnity(), obtainRealZero());
                 break;
             default:
                 throw new CoercionException("Cannot coerce unity to expected type", One.class, numtype);
         }
         OptionalOperations.setMathContext(retval, mctx);
         return retval;
+    }
+    
+    private RealType obtainRealUnity() {
+        return new RealImpl(BigDecimal.ONE);
+    }
+    
+    private RealType obtainRealZero() {
+        return new RealImpl(BigDecimal.ZERO);
     }
 
     @Override
@@ -110,17 +126,31 @@ public class One implements Numeric {
 
     @Override
     public Numeric negate() {
-        return INTUNITY.negate();
+        return INT_UNITY.negate();
+    }
+    
+    private boolean isArgumentRealOrCplx(Numeric argument) {
+        return NumericHierarchy.forNumericType(argument.getClass()).compareTo(NumericHierarchy.RATIONAL) > 0;
     }
 
     @Override
     public Numeric add(Numeric addend) {
-        return INTUNITY.add(addend);
+        if (isArgumentRealOrCplx(addend)) {
+            RealType unity = obtainRealUnity();
+            OptionalOperations.setMathContext(unity, mctx);
+            return unity.add(addend);
+        }
+        return INT_UNITY.add(addend);
     }
 
     @Override
     public Numeric subtract(Numeric subtrahend) {
-        return INTUNITY.subtract(subtrahend);
+        if (isArgumentRealOrCplx(subtrahend)) {
+            RealType unity = obtainRealUnity();
+            OptionalOperations.setMathContext(unity, mctx);
+            return unity.subtract(subtrahend);
+        }
+        return INT_UNITY.subtract(subtrahend);
     }
 
     @Override
@@ -146,5 +176,33 @@ public class One implements Numeric {
     @Override
     public MathContext getMathContext() {
         return mctx;
+    }
+    
+    /**
+     * Test for equality with a given value.  If the given value is:
+     * <ul><li>an implementation of {@link Numeric}</li>
+     * <li>is exact, and</li>
+     * <li>has a numeric value equivalent to unity (1),</li></ul>
+     * then it is considered equal.
+     * @param o the value to compare
+     * @return true if equal, false otherwise
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof One) return true;
+        if (o instanceof Numeric) {
+            final Numeric that = (Numeric) o;
+            
+            if (!that.isExact()) return false;
+            Class<? extends Numeric> clazz = that.getClass();
+            try {
+                Numeric temp = this.coerceTo(clazz);
+                return temp.equals(o);
+            } catch (CoercionException ex) {
+                Logger.getLogger(One.class.getName()).log(Level.SEVERE, "Exception during test for equality with " + o, ex);
+                return false;
+            }
+        }
+        return false;
     }
 }
