@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 Robert Poole <Tarquin.AZ@gmail.com>.
+ * Copyright © 2018 Robert Poole <Tarquin.AZ@gmail.com>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,11 @@ import tungsten.types.numerics.RealType;
 import tungsten.types.util.OptionalOperations;
 
 /**
- * A universal representation of zero.
+ * A universal representation of zero (0).
+ * Note that this is not exactly a singleton implementation &mdash;
+ * one instance exists for each {@link MathContext} in use.
+ * Note that {@link #equals(java.lang.Object) } may be inconsistent
+ * with {@link #hashCode() }.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */

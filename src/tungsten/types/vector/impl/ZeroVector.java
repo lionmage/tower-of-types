@@ -23,11 +23,11 @@
  */
 package tungsten.types.vector.impl;
 
-import java.math.BigDecimal;
 import java.math.MathContext;
+import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.numerics.RealType;
-import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.numerics.impl.Zero;
 
 /**
  * An implementation of the zero vector, which has the value of 0
@@ -35,26 +35,29 @@ import tungsten.types.numerics.impl.RealImpl;
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public class ZeroVector implements Vector<RealType> {
+public class ZeroVector implements Vector<Numeric> {
     private final long length;
-    private static final RealType ZERO = new RealImpl(BigDecimal.ZERO);
+    private final Numeric zero;
+    private final MathContext mctx;
     
-    private ZeroVector(long length) {
+    private ZeroVector(long length, MathContext mctx) {
         this.length = length;
+        this.mctx = mctx;
+        this.zero = Zero.getInstance(mctx);
     }
     
-    public static ZeroVector getInstance(long length) {
-        return new ZeroVector(length);
+    public static ZeroVector getInstance(long length, MathContext ctx) {
+        return new ZeroVector(length, ctx);
     }
     
     /**
      * Convenience factory method that returns a {@link ZeroVector} with
      * the same length as the supplied vector.
-     * @param rvector the vector whose length must be matched
+     * @param vector the vector whose length must be matched
      * @return a zero vector
      */
-    public static ZeroVector getInstance(Vector<RealType> rvector) {
-        return getInstance(rvector.length());
+    public static ZeroVector getInstance(Vector<? extends Numeric> vector) {
+        return getInstance(vector.length(), vector.getMathContext());
     }
 
     @Override
@@ -63,70 +66,84 @@ public class ZeroVector implements Vector<RealType> {
     }
 
     @Override
-    public RealType elementAt(long position) {
-        if (position < length) {
-            return ZERO;
+    public Numeric elementAt(long position) {
+        if (position >= 0L && position < length) {
+            return zero;
         }
         throw new IndexOutOfBoundsException("Specified index is out of range.");
     }
 
     @Override
-    public void setElementAt(RealType element, long position) {
+    public void setElementAt(Numeric element, long position) {
         throw new UnsupportedOperationException("Zero vector is immutable.");
     }
 
     @Override
-    public void append(RealType element) {
+    public void append(Numeric element) {
         throw new UnsupportedOperationException("Zero vector is immutable.");
     }
 
     @Override
-    public Vector<RealType> add(Vector<RealType> addend) {
+    public Vector<Numeric> add(Vector<Numeric> addend) {
         return addend;
     }
 
     @Override
-    public Vector<RealType> subtract(Vector<RealType> subtrahend) {
+    public Vector<Numeric> subtract(Vector<Numeric> subtrahend) {
         return subtrahend.negate();
     }
 
     @Override
-    public Vector<RealType> negate() {
+    public Vector<Numeric> negate() {
         return this;
     }
 
     @Override
-    public Vector<RealType> scale(RealType factor) {
+    public Vector<Numeric> scale(Numeric factor) {
         return this;
     }
 
     @Override
-    public RealType magnitude() {
-        return ZERO;
+    public Numeric magnitude() {
+        return zero;
     }
 
     @Override
-    public RealType dotProduct(Vector<RealType> other) {
-        return ZERO;
+    public Numeric dotProduct(Vector<Numeric> other) {
+        return zero;
     }
 
     @Override
-    public Vector<RealType> crossProduct(Vector<RealType> other) {
+    public Vector<Numeric> crossProduct(Vector<Numeric> other) {
         return this;
     }
 
     @Override
-    public Vector<RealType> normalize() {
+    public Vector<Numeric> normalize() {
         throw new UnsupportedOperationException("Zero vector cannot be normalized.");
     }
 
     @Override
     public MathContext getMathContext() {
-        return MathContext.UNLIMITED;
+        return mctx;
     }
 
     @Override
-    public RealType computeAngle(Vector<RealType> other) {
+    public RealType computeAngle(Vector<Numeric> other) {
         throw new UnsupportedOperationException("Zero vector cannot form an angle with any vector.");
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Vector) {
+            Vector<? extends Numeric> that = (Vector<? extends Numeric>) o;
+            if (that.length() != this.length()) return false;
+            for (long k = 0L; k < that.length(); k++) {
+                if (!zero.equals(that.elementAt(k))) return false;
+            }
+            // we must have matched all elements
+            return true;
+        }
+        return false;
     }
 }
