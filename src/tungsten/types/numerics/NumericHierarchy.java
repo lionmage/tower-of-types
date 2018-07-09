@@ -23,6 +23,7 @@
  */
 package tungsten.types.numerics;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import tungsten.types.Numeric;
@@ -67,5 +68,16 @@ public enum NumericHierarchy {
         }
         
         return retval;
+    }
+    
+    public static Comparator<Class<? extends Numeric>> obtainTypeComparator() {
+        return new Comparator<Class<? extends Numeric>>() {
+            @Override
+            public int compare(Class<? extends Numeric> o1, Class<? extends Numeric> o2) {
+                NumericHierarchy htype1 = forNumericType(o1);
+                NumericHierarchy htype2 = forNumericType(o2);
+                return htype1.compareTo(htype2);
+            }
+        };
     }
 }

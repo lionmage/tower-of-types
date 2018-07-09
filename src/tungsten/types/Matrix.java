@@ -34,5 +34,6 @@ public interface Matrix<T extends Numeric> {
     long rows();
     T valueAt(long row, long column);
     T determinant();
+    T trace();
     Matrix<T> transpose();
 }

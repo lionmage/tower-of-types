@@ -35,8 +35,10 @@ import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.Zero;
+import tungsten.types.util.OptionalOperations;
 
 /**
  * Representation of a row vector.  This can also be
@@ -157,7 +159,22 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public Vector<T> crossProduct(Vector<T> other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (other.length() != this.length()) throw new ArithmeticException("Cannot compute cross product for vectors of different dimension.");
+        final Class<? extends Numeric> clazz = other.elementAt(0L).getClass();
+        final Class<? extends Numeric> myclass = elements[0].getClass();
+        if (OptionalOperations.findCommonType(clazz, myclass) == Numeric.class) {
+            throw new UnsupportedOperationException("No types in common between " +
+                    clazz.getTypeName() + " and " + myclass.getTypeName());
+        }
+        if (RealType.class.isAssignableFrom(clazz)) {
+            RealVector realvec = new RealVector((RealType[]) elements, mctx);
+            return (Vector<T>) realvec.crossProduct((Vector<RealType>) other);
+        } else if (ComplexType.class.isAssignableFrom(clazz)) {
+            ComplexVector cplxvec = new ComplexVector((ComplexType[]) elements, mctx);
+            return (Vector<T>) cplxvec.crossProduct((Vector<ComplexType>) other);
+        }
+        Logger.getLogger(RowVector.class.getName()).log(Level.WARNING, "No way to compute cross product for {}", clazz.getTypeName());
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -194,6 +211,11 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public T determinant() {
         throw new ArithmeticException("Cannot compute determinant of a matrix with unequal columns and rows.");
+    }
+    
+    @Override
+    public T trace() {
+        throw new ArithmeticException("Cannot compute trace of a matrix with unequal columns and rows.");
     }
     
     @Override
