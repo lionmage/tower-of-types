@@ -143,7 +143,7 @@ public class IntegerImpl implements IntegerType {
         return new IntegerImpl(sum);
     }
 
-    private long numDigitsCache = -1L;
+    private transient long numDigitsCache = -1L;
     private final Lock numDigitsLock = new ReentrantLock();
 
     /**

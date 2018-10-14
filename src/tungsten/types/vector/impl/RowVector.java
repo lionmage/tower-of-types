@@ -179,12 +179,19 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public Vector<T> normalize() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final Class<? extends Numeric> clazz = elements[0].getClass();
+        try {
+            return this.scale((T) this.magnitude().inverse().coerceTo(clazz));
+        } catch (CoercionException ex) {
+            Logger.getLogger(RowVector.class.getName()).log(Level.SEVERE,
+                    "Unable to normalize vector for type " + clazz.getTypeName(), ex);
+            throw new ArithmeticException("Error computing vector normal.");
+        }
     }
 
     @Override
     public RealType computeAngle(Vector<T> other) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
