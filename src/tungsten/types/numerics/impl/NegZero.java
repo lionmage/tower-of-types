@@ -28,7 +28,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.Numeric;
+import tungsten.types.exceptions.CoercionException;
 
 /**
  * A representation of zero for situations where zero is being asymptotically
@@ -66,4 +69,12 @@ public class NegZero extends Zero {
 
     @Override
     public String toString() { return "\u22120"; }
+
+    @Override
+    public int compareTo(Numeric o) {
+        if (o instanceof NegZero) return 0;
+        // Negative 0 is less than 0
+        if (o instanceof Zero) return -1;
+        return super.compareTo(o);
+    }
 }

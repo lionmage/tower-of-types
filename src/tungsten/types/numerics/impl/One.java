@@ -48,7 +48,7 @@ import tungsten.types.util.OptionalOperations;
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public class One implements Numeric {
+public class One implements Numeric, Comparable<Numeric> {
     private final MathContext mctx;
     
     private One(MathContext mctx) {
@@ -207,4 +207,20 @@ public class One implements Numeric {
     
     @Override
     public String toString() { return "1"; }
+
+    @Override
+    public int compareTo(Numeric o) {
+        if (o instanceof Zero) return 1;
+        if (o instanceof One) return 0;
+        if (o instanceof PosInfinity) return -1;
+        if (o instanceof NegInfinity) return 1;
+        if (o instanceof Comparable) {
+            try {
+                return ((Comparable) this.coerceTo(o.getClass())).compareTo(o);
+            } catch (CoercionException ex) {
+                Logger.getLogger(One.class.getName()).log(Level.SEVERE, "Exception during comparison with " + o, ex);
+            }
+        }
+        throw new IllegalArgumentException("Non-comparable value of type " + o.getClass().getTypeName());
+    }
 }
