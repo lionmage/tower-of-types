@@ -49,9 +49,9 @@ import tungsten.types.util.OptionalOperations;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class Zero implements Numeric {
-    private final MathContext mctx;
+    protected final MathContext mctx;
     
-    private Zero(MathContext mctx) {
+    protected Zero(MathContext mctx) {
         this.mctx = mctx;
     }
     
@@ -187,4 +187,7 @@ public class Zero implements Numeric {
         }
         return false;
     }
+    
+    @Override
+    public String toString() { return "0"; }
 }

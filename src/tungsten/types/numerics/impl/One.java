@@ -204,4 +204,7 @@ public class One implements Numeric {
         }
         return false;
     }
+    
+    @Override
+    public String toString() { return "1"; }
 }
