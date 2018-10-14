@@ -146,7 +146,8 @@ public class Zero implements Numeric {
 
     @Override
     public Numeric inverse() {
-        throw new ArithmeticException("Cannot divide by zero");
+//        throw new ArithmeticException("Cannot divide by zero");
+        return PosInfinity.getInstance(mctx);
     }
 
     @Override
