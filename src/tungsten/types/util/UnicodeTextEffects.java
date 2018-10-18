@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Utility methods for creating Unicode strings that render with
+ * superscript, subscript, overline, etc.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
@@ -123,6 +125,58 @@ public class UnicodeTextEffects {
                 buf.append(subscriptMap.get(c));
             }
         }
+        return buf.toString();
+    }
+    
+    private static final String COMBINING_OVERLINE = "\u0305";
+    
+    public static String overline(String source) {
+        StringBuilder buf = new StringBuilder();
+        
+        for (Character c : source.toCharArray()) {
+            buf.append(c).append(COMBINING_OVERLINE);
+        }
+        return buf.toString();
+    }
+    
+    public static String overline(int n) {
+        StringBuilder buf = new StringBuilder();
+        int digit;
+        int k = Math.abs(n);
+        do {
+            digit = k % 10;
+            k /= 10;
+            
+            buf.insert(0, digit);
+            buf.insert(1, COMBINING_OVERLINE);
+        } while (k != 0);
+        if (n < 0) buf.insert(0, '-');
+        return buf.toString();
+    }
+    
+    // I would have preferred to escape these Unicode characters,
+    // but I've had a terrible time tracking down the code points
+    // because they are scattered across multiple code blocks and
+    // are not located in the superscripts/subscripts block.
+    // I was able to use this tool to generate these strings:
+    // https://lingojam.com/SuperscriptGenerator
+    private static final String[] ordinalSuperscripts =  {
+        "ᵗʰ", // 0th
+        "ˢᵗ", // 1st
+        "ⁿᵈ", // 2nd
+        "ʳᵈ", // 3rd
+        "ᵗʰ", // 4th
+        "ᵗʰ",
+        "ᵗʰ",
+        "ᵗʰ",
+        "ᵗʰ",
+        "ᵗʰ"
+    };
+    
+    public static final String makeOrdinal(int n) {
+        int lastDigit = n % 10;
+        StringBuilder buf = new StringBuilder();
+        buf.append(n).append(ordinalSuperscripts[lastDigit]);
         return buf.toString();
     }
 }
