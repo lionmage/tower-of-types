@@ -34,6 +34,8 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 import tungsten.types.Numeric;
 import tungsten.types.numerics.NumericHierarchy;
+import tungsten.types.numerics.Sign;
+import tungsten.types.numerics.impl.Zero;
 
 /**
  * This is a utility class that uses reflection to safely implement operations
@@ -143,5 +145,31 @@ public class OptionalOperations {
         }
         // fall-through default
         return Numeric.class;
+    }
+    
+    public static Sign sign(Numeric value) {
+        try {
+            Method m = value.getClass().getMethod("sign");
+            return (Sign) m.invoke(value);
+        } catch (NoSuchMethodException ex) {
+            if (value instanceof Comparable) {
+                switch (Integer.signum(((Comparable) value).compareTo(Zero.getInstance(value.getMathContext())))) {
+                    case -1:
+                        return Sign.NEGATIVE;
+                    case 0:
+                        return Sign.ZERO;
+                    case 1:
+                        return Sign.POSITIVE;
+                    default:
+                        throw new IllegalStateException("Signum failed");
+                }
+            } else {
+                throw new IllegalArgumentException("Cannot obtain sign for " + value);
+            }
+        } catch (SecurityException | IllegalAccessException | InvocationTargetException ex) {
+            Logger.getLogger(OptionalOperations.class.getName())
+                    .log(Level.SEVERE, "Unable to compute signum for " + value, ex);
+            throw new IllegalStateException("Failed to obtain sign for " + value, ex);
+        }
     }
 }

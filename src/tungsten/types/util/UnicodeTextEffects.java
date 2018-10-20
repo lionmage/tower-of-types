@@ -25,6 +25,10 @@ package tungsten.types.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import tungsten.types.Numeric;
+import tungsten.types.numerics.ComplexType;
+import tungsten.types.numerics.Sign;
 
 /**
  * Utility methods for creating Unicode strings that render with
@@ -45,9 +49,11 @@ public class UnicodeTextEffects {
     };
     private static final Map<Character, String> superscriptMap;
     private static final Map<Character, String> subscriptMap;
+    private static final Map<Integer, String> radicalMap;
     static {
         superscriptMap = new HashMap<>();
         subscriptMap = new HashMap<>();
+        radicalMap = new TreeMap<>();
         
         superscriptMap.put('-', "\u207B");
         superscriptMap.put('+', "\u207A");
@@ -70,6 +76,13 @@ public class UnicodeTextEffects {
         subscriptMap.put('n', "\u2099");
         subscriptMap.put('p', "\u209A");
         subscriptMap.put('t', "\u209C");
+        
+        radicalMap.put(2, "\u221A");
+        radicalMap.put(3, "\u221B");
+        radicalMap.put(4, "\u221C");
+        for (int i = 5; i < 10; i++) {
+            radicalMap.put(i, superscriptDigits[i] + "\u221A");
+        }
     }
     
     public static String numericSuperscript(int n) {
@@ -154,29 +167,26 @@ public class UnicodeTextEffects {
         return buf.toString();
     }
     
-    // I would have preferred to escape these Unicode characters,
-    // but I've had a terrible time tracking down the code points
-    // because they are scattered across multiple code blocks and
-    // are not located in the superscripts/subscripts block.
-    // I was able to use this tool to generate these strings:
-    // https://lingojam.com/SuperscriptGenerator
-    private static final String[] ordinalSuperscripts =  {
-        "ᵗʰ", // 0th
-        "ˢᵗ", // 1st
-        "ⁿᵈ", // 2nd
-        "ʳᵈ", // 3rd
-        "ᵗʰ", // 4th
-        "ᵗʰ",
-        "ᵗʰ",
-        "ᵗʰ",
-        "ᵗʰ",
-        "ᵗʰ"
-    };
-    
-    public static final String makeOrdinal(int n) {
-        int lastDigit = n % 10;
+    /**
+     * Generates a {@code String} representation of a radical, e.g., a square
+     * root, a cube root, or a root of some other degree.
+     * @param <T> the type of the particular {@link Numeric} instance being rendered
+     * @param radicand the {@link Numeric} value to be rendered inside the radical
+     * @param degree the degree of the root to be rendered
+     * @return a best-effort rendering of the specified radical
+     */
+    public static <T extends Numeric> String radical(T radicand, int degree) {
+        if (degree < 2) {
+            throw new IllegalArgumentException("Cannot render a radical with degree < 2 \u2014 arg was " + degree);
+        }
         StringBuilder buf = new StringBuilder();
-        buf.append(n).append(ordinalSuperscripts[lastDigit]);
+        if (degree >= 10) buf.append(numericSuperscript(degree / 10));
+        buf.append(radicalMap.get(degree % 10));
+        if (radicand instanceof ComplexType || OptionalOperations.sign(radicand) == Sign.NEGATIVE) {
+            buf.append('(').append(radicand).append(')');
+        } else {
+            buf.append(radicand);
+        }
         return buf.toString();
     }
 }
