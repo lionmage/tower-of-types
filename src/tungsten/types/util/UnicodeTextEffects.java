@@ -180,8 +180,12 @@ public class UnicodeTextEffects {
             throw new IllegalArgumentException("Cannot render a radical with degree < 2 \u2014 arg was " + degree);
         }
         StringBuilder buf = new StringBuilder();
-        if (degree >= 10) buf.append(numericSuperscript(degree / 10));
-        buf.append(radicalMap.get(degree % 10));
+        if (degree >= 10) {
+            buf.append(numericSuperscript(degree / 10));
+            buf.append(radicalMap.getOrDefault(degree % 10, superscriptDigits[degree % 10] + "\u221A"));
+        } else {
+            buf.append(radicalMap.get(degree));
+        }
         if (radicand instanceof ComplexType || OptionalOperations.sign(radicand) == Sign.NEGATIVE) {
             buf.append('(').append(radicand).append(')');
         } else {
