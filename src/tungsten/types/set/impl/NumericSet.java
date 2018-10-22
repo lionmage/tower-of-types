@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import tungsten.types.Numeric;
 import tungsten.types.Set;
@@ -53,7 +54,7 @@ public class NumericSet implements Set<Numeric> {
         internal = new LinkedHashSet<>();
     }
     
-    public NumericSet(Collection<Numeric> c) {
+    public NumericSet(Collection<? extends Numeric> c) {
         if (c instanceof java.util.Set) {
             // no need for extra object copying in this case
             internal = (java.util.Set) c;
@@ -186,16 +187,30 @@ public class NumericSet implements Set<Numeric> {
 
             @Override
             public Set<T> union(Set<T> other) {
+                if (other.countable()) {
+                    LinkedHashSet<T> temp = new LinkedHashSet<>(elements);
+                    other.forEach(temp::add);
+                    return (Set<T>) new NumericSet(temp);
+                }
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
             @Override
             public Set<T> intersection(Set<T> other) {
+                if (other.countable()) {
+                    java.util.Set<T> temp = elements.stream().filter(other::contains).collect(Collectors.toSet());
+                    return (Set<T>) new NumericSet(temp);
+                }
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
             @Override
             public Set<T> difference(Set<T> other) {
+                if (other.countable()) {
+                    LinkedHashSet<T> temp = new LinkedHashSet<>(elements);
+                    temp.removeIf(other::contains);
+                    return (Set<T>) new NumericSet(temp);
+                }
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
