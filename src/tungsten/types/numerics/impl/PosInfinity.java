@@ -34,6 +34,7 @@ import tungsten.types.numerics.Sign;
 import tungsten.types.util.OptionalOperations;
 
 /**
+ * A representation of positive infinity.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */

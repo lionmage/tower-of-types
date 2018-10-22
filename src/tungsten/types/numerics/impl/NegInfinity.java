@@ -30,11 +30,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
-import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.util.OptionalOperations;
 
 /**
+ * A representation of negative infinity.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
