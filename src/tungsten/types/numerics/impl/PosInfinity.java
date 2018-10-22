@@ -30,6 +30,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.Sign;
+import tungsten.types.util.OptionalOperations;
 
 /**
  *
@@ -86,21 +88,32 @@ public class PosInfinity implements Numeric, Comparable<Numeric> {
 
     @Override
     public Numeric add(Numeric addend) {
+        if (addend instanceof NegInfinity) return Zero.getInstance(mctx);
         return this;
     }
 
     @Override
     public Numeric subtract(Numeric subtrahend) {
+        if (subtrahend instanceof PosInfinity) return Zero.getInstance(mctx);
         return this;
     }
 
     @Override
     public Numeric multiply(Numeric multiplier) {
+        if (multiplier instanceof NegInfinity) return NegInfinity.getInstance(mctx);
+        if (OptionalOperations.sign(multiplier) == Sign.NEGATIVE) {
+            return NegInfinity.getInstance(mctx);
+        }
         return this;
     }
 
     @Override
     public Numeric divide(Numeric divisor) {
+        if (divisor instanceof NegInfinity) return NegZero.getInstance(mctx);
+        if (divisor instanceof PosInfinity) return Zero.getInstance(mctx);
+        if (OptionalOperations.sign(divisor) == Sign.NEGATIVE) {
+            return NegInfinity.getInstance(mctx);
+        }
         return this;
     }
 
