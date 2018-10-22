@@ -139,6 +139,7 @@ public class NegInfinity implements Numeric, Comparable<Numeric> {
 
     @Override
     public int compareTo(Numeric o) {
+        if (o instanceof NegInfinity) return 0;
         if (o instanceof Comparable) {
             // negative infinity is always less than any other value
             return -1;

@@ -135,6 +135,7 @@ public class PosInfinity implements Numeric, Comparable<Numeric> {
 
     @Override
     public int compareTo(Numeric o) {
+        if (o instanceof PosInfinity) return 0;
         if (o instanceof Comparable) {
             // positive infinity is always greater than any other value
             return 1;
