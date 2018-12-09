@@ -37,6 +37,7 @@ import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.Sign;
 import tungsten.types.util.OptionalOperations;
 
 /**
@@ -214,6 +215,10 @@ public class One implements Numeric, Comparable<Numeric> {
         if (o instanceof One) return 0;
         if (o instanceof PosInfinity) return -1;
         if (o instanceof NegInfinity) return 1;
+        if (o instanceof RealInfinity) {
+            RealInfinity rei = (RealInfinity) o;
+            return rei.sign() == Sign.POSITIVE ? -1 : 1;
+        }
         if (o instanceof Comparable) {
             try {
                 return ((Comparable) this.coerceTo(o.getClass())).compareTo(o);

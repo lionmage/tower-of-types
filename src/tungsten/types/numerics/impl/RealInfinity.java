@@ -50,7 +50,7 @@ import tungsten.types.util.OptionalOperations;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class RealInfinity implements RealType {
-    private static final String ERROR_INVALID_SIGN = "Infinity can only be positive or negative";
+    private static final String ERROR_INVALID_SIGN = "Infinity can only be positive or negative.";
 
     private MathContext mctx;
     private Sign sign;
@@ -147,7 +147,7 @@ public class RealInfinity implements RealType {
                     return NegInfinity.getInstance(mctx);
             }
         }
-        throw new CoercionException("Coercion of " + sign + " Infinity to the requested type is not supported",
+        throw new CoercionException("Coercion of " + sign + " Infinity to the requested type is not supported.",
                 RealInfinity.class, numtype);
     }
 

@@ -37,6 +37,7 @@ import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.Sign;
 import tungsten.types.util.OptionalOperations;
 
 /**
@@ -104,7 +105,7 @@ public class Zero implements Numeric, Comparable<Numeric> {
                 retval = new ComplexRectImpl(obtainRealZero(), obtainRealZero());
                 break;
             default:
-                throw new CoercionException("Cannot coerce zero to expected type", Zero.class, numtype);
+                throw new CoercionException("Cannot coerce zero to expected type.", Zero.class, numtype);
         }
         OptionalOperations.setMathContext(retval, mctx);
         return retval;
@@ -199,6 +200,10 @@ public class Zero implements Numeric, Comparable<Numeric> {
         if (o instanceof One) return -1;
         if (o instanceof PosInfinity) return -1;
         if (o instanceof NegInfinity) return 1;
+        if (o instanceof RealInfinity) {
+            RealInfinity rei = (RealInfinity) o;
+            return rei.sign() == Sign.POSITIVE ? -1 : 1;
+        }
         if (o instanceof Comparable) {
             try {
                 return ((Comparable) this.coerceTo(o.getClass())).compareTo(o);
