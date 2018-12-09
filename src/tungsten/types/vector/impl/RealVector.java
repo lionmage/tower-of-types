@@ -103,7 +103,7 @@ public class RealVector implements Vector<RealType> {
     @Override
     public RealType elementAt(long position) {
         if (position > (long) Integer.MAX_VALUE) {
-            throw new IndexOutOfBoundsException("Index exceeds what this vector implementation supports");
+            throw new IndexOutOfBoundsException("Index exceeds what this Vector implementation supports.");
         }
         return elements.get((int) position);
     }
@@ -111,7 +111,7 @@ public class RealVector implements Vector<RealType> {
     @Override
     public void setElementAt(RealType element, long position) {
         if (position > (long) Integer.MAX_VALUE) {
-            throw new IndexOutOfBoundsException("Index exceeds what this vector implementation supports");
+            throw new IndexOutOfBoundsException("Index exceeds what this Vector implementation supports.");
         }
         elements.set((int) position, element);
     }
@@ -119,7 +119,7 @@ public class RealVector implements Vector<RealType> {
     @Override
     public Vector<RealType> add(Vector<RealType> addend) {
         if (this.length() != addend.length()) {
-            throw new ArithmeticException("Cannot add vectors of different length");
+            throw new ArithmeticException("Cannot add vectors of different length.");
         }
         RealVector result = new RealVector(new ArrayList<>(elements.size()));
         for (long idx = 0L; idx < length(); idx++) {
@@ -133,7 +133,7 @@ public class RealVector implements Vector<RealType> {
     @Override
     public Vector<RealType> subtract(Vector<RealType> subtrahend) {
         if (this.length() != subtrahend.length()) {
-            throw new ArithmeticException("Cannot subtract vectors of different length");
+            throw new ArithmeticException("Cannot subtract vectors of different length.");
         }
         RealVector result = new RealVector(new ArrayList<>(elements.size()));
         for (long idx = 0L; idx < length(); idx++) {
@@ -165,14 +165,14 @@ public class RealVector implements Vector<RealType> {
             return (RealType) sumOfSquares.sqrt().coerceTo(RealType.class);
         } catch (CoercionException ex) {
             Logger.getLogger(RealVector.class.getName()).log(Level.SEVERE, "Failed to coerce sqrt() result", ex);
-            throw new IllegalStateException("Failed coercion of real sqrt()", ex);
+            throw new IllegalStateException("Failed coercion of Real sqrt().", ex);
         }
     }
 
     @Override
     public RealType dotProduct(Vector<RealType> other) {
         if (this.length() != other.length()) {
-            throw new ArithmeticException("Cannot compute dot product for vectors of different length");
+            throw new ArithmeticException("Cannot compute dot product for vectors of different length.");
         }
         BigDecimal accum = BigDecimal.ZERO;
         for (long idx = 0L; idx < this.length(); idx++) {
@@ -271,7 +271,7 @@ public class RealVector implements Vector<RealType> {
             return this.scale(scalefactor);
         } catch (CoercionException ex) {
             Logger.getLogger(RealVector.class.getName()).log(Level.SEVERE, "Coercion failed", ex);
-            throw new IllegalStateException("Could not coerce scale argument to real", ex);
+            throw new IllegalStateException("Could not coerce scale argument to Real.", ex);
         }
     }
     
