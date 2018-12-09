@@ -57,10 +57,13 @@ public class RealInfinity implements RealType {
     private static final Map<MathContext, RealInfinity> posCache = new HashMap<>();
     private static final Map<MathContext, RealInfinity> negCache = new HashMap<>();
     private static final Map<Sign, Map<MathContext, RealInfinity>> cacheMap = new EnumMap<>(Sign.class);
+    private static final Map<Sign, Lock> lockMap = new EnumMap<>(Sign.class);
     
     static {
         cacheMap.put(Sign.POSITIVE, posCache);
         cacheMap.put(Sign.NEGATIVE, negCache);
+        lockMap.put(Sign.POSITIVE, new ReentrantLock());
+        lockMap.put(Sign.NEGATIVE, new ReentrantLock());
     }
     
     protected RealInfinity(Sign sign, MathContext mathContext) {
@@ -71,16 +74,13 @@ public class RealInfinity implements RealType {
         this.mctx = mathContext;
     }
     
-    private static final Lock instanceLock = new ReentrantLock();
-    
     public static RealType getInstance(Sign sign, MathContext mctx) {
         Map<MathContext, RealInfinity> cache = cacheMap.get(sign);
-        instanceLock.lock();
+        lockMap.get(sign).lock();
         try {
-            RealInfinity instance = cache.computeIfAbsent(mctx, ctx -> new RealInfinity(sign, ctx));
-            return instance;
+            return cache.computeIfAbsent(mctx, ctx -> new RealInfinity(sign, ctx));
         } finally {
-            instanceLock.unlock();
+            lockMap.get(sign).unlock();
         }
     }
 
