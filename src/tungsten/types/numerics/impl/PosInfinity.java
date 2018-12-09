@@ -30,6 +30,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
 import tungsten.types.util.OptionalOperations;
 
@@ -69,11 +70,14 @@ public class PosInfinity implements Numeric, Comparable<Numeric> {
 
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
-        return false;
+        return RealType.class.isAssignableFrom(numtype);
     }
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        if (RealType.class.isAssignableFrom(numtype)) {
+            return RealInfinity.getInstance(Sign.POSITIVE, mctx);
+        }
         throw new CoercionException("Can't coerce infinity to any other Numeric type.", this.getClass(), numtype);
     }
 
@@ -137,6 +141,10 @@ public class PosInfinity implements Numeric, Comparable<Numeric> {
     public int compareTo(Numeric o) {
         if (o instanceof PosInfinity) return 0;
         if (o instanceof Comparable) {
+            if (o instanceof RealInfinity) {
+                RealInfinity val = (RealInfinity) o;
+                if (val.sign() == Sign.POSITIVE) return 0;
+            }
             // positive infinity is always greater than any other value
             return 1;
         } else {

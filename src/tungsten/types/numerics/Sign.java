@@ -52,4 +52,16 @@ public enum Sign {
         if (signum < 0) return NEGATIVE;
         return POSITIVE;
     }
+    
+    public Sign negate() {
+        switch (this) {
+            case POSITIVE:
+                return NEGATIVE;
+            case NEGATIVE:
+                return POSITIVE;
+            case ZERO:
+            default:
+                return ZERO;
+        }
+    }
 }
