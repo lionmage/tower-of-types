@@ -25,6 +25,7 @@ package tungsten.types.numerics;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Locale;
 
 /**
  *
@@ -63,5 +64,10 @@ public enum Sign {
             default:
                 return ZERO;
         }
+    }
+    
+    @Override
+    public String toString() {
+        return name().toLowerCase(Locale.ROOT);
     }
 }
