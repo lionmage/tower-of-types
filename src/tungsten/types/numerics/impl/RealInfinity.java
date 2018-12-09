@@ -147,7 +147,7 @@ public class RealInfinity implements RealType {
                     return NegInfinity.getInstance(mctx);
             }
         }
-        throw new CoercionException("Coercion of Infinity to the requested type is not supported",
+        throw new CoercionException("Coercion of " + sign + " Infinity to the requested type is not supported",
                 RealInfinity.class, numtype);
     }
 
