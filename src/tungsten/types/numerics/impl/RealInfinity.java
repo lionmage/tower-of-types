@@ -282,13 +282,8 @@ public class RealInfinity implements RealType {
     
     @Override
     public String toString() {
-        switch (sign) {
-            case POSITIVE:
-                return PosInfinity.getInstance(mctx).toString();
-            case NEGATIVE:
-                return NegInfinity.getInstance(mctx).toString();
-            default:
-                return ERROR_INVALID_SIGN;
-        }
+        StringBuilder buf = new StringBuilder();
+        buf.append(sign.getSymbol()).append("\u221E");
+        return buf.toString();
     }
 }

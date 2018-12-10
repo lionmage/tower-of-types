@@ -45,8 +45,10 @@ import tungsten.types.numerics.Sign;
 import tungsten.types.numerics.impl.ComplexPolarImpl;
 import tungsten.types.numerics.impl.Euler;
 import tungsten.types.numerics.impl.IntegerImpl;
+import tungsten.types.numerics.impl.One;
 import tungsten.types.numerics.impl.Pi;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.numerics.impl.RealInfinity;
 import tungsten.types.numerics.impl.Zero;
 import tungsten.types.set.impl.NumericSet;
 
@@ -186,7 +188,10 @@ public class MathUtils {
                 throw new IllegalStateException(ex);
             }
         }
-        if (x.asBigDecimal().compareTo(BigDecimal.ZERO) <= 0) throw new ArithmeticException("ln is undefined for values <= 0");
+        if (x.asBigDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+            if (x.asBigDecimal().compareTo(BigDecimal.ZERO) == 0) return RealInfinity.getInstance(Sign.NEGATIVE, mctx);
+            throw new ArithmeticException("ln is undefined for values < 0");
+        }
         if (newtonRange.contains(x)) return lnNewton(x, mctx);
         
         if (x.asBigDecimal().compareTo(BigDecimal.TEN) > 0) {
@@ -307,6 +312,15 @@ public class MathUtils {
      * @return the value of base<sup>exponent</sup>
      */
     public static RealType generalizedExponent(RealType base, Numeric exponent, MathContext mctx) {
+        if (exponent instanceof Zero) {
+            try {
+                return (RealType) One.getInstance(mctx).coerceTo(RealType.class);
+            } catch (CoercionException ex) {
+                Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE,
+                        "Could not obtain a Real instance of one.", ex);
+                throw new IllegalStateException(ex);
+            }
+        }
         NumericHierarchy htype = NumericHierarchy.forNumericType(exponent.getClass());
         switch (htype) {
             case INTEGER:

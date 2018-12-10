@@ -32,7 +32,13 @@ import java.util.Locale;
  * @author tarquin
  */
 public enum Sign {
-    NEGATIVE, ZERO, POSITIVE;
+    NEGATIVE("\u2212"), ZERO("0"), POSITIVE("+");
+    
+    private final String symbol;
+    
+    private Sign(String symbol) {
+        this.symbol = symbol;
+    }
     
     public static Sign fromValue(long value) {
         if (value == 0L) return ZERO;
@@ -65,6 +71,8 @@ public enum Sign {
                 return ZERO;
         }
     }
+    
+    public String getSymbol() { return symbol; }
     
     @Override
     public String toString() {
