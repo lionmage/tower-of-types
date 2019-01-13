@@ -39,5 +39,7 @@ public interface RealType extends Numeric, Comparable<RealType> {
     public RealType negate();
     public BigDecimal asBigDecimal();
     public Sign sign();
+    public IntegerType floor();
+    public IntegerType ceil();
     public Set<ComplexType> nthRoots(IntegerType n);
 }

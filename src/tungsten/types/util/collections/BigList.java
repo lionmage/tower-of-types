@@ -28,10 +28,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * This is an analog of {@link java.util.List}, but supports {@code long}
@@ -192,11 +196,7 @@ public class BigList<T> implements Iterable<T> {
     }
     
     public Stream<T> parallelStream() {
-        Stream<T> intermediate = Stream.empty();
-        for (ArrayList<T> list : listOfLists) {
-            intermediate = Stream.concat(intermediate, list.parallelStream());
-        }
-        return intermediate;
+        return StreamSupport.stream(this.spliterator(), true);
     }
     
     public static <E> BigList<E> singleton(E element) {
@@ -211,7 +211,7 @@ public class BigList<T> implements Iterable<T> {
             @Override
             public long indexOf(E e) { return this.contains(e) ? 0L : -1L; }
             @Override
-            public E get(long index) { return index == 0 ? singleElement : null; }
+            public E get(long index) { return index == 0L ? singleElement : null; }
             @Override
             public void set(E obj, long index) { throw new UnsupportedOperationException("Not supported."); }
             @Override
@@ -338,6 +338,82 @@ public class BigList<T> implements Iterable<T> {
                 buf.append(" [nextCalled = ").append(nextCalled);
                 buf.append(", removeCalled = ").append(removeCalled).append(']');
                 return buf.toString();
+            }
+        };
+    }
+    
+    @Override
+    public Spliterator<T> spliterator() {
+        if (listOfLists.isEmpty() ||
+                this.size() == 0L) return Spliterators.emptySpliterator();
+        if (listOfLists.size() == 1) {
+            return listOfLists.get(0).spliterator();
+        }
+
+        return new Spliterator<T>() {
+            private long position;
+            
+            @Override
+            public boolean tryAdvance(Consumer<? super T> action) {
+                if (position < size()) {
+                    action.accept(get(position++));
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void forEachRemaining(Consumer<? super T> action) {
+                int sublist = 0;
+                long index = position;
+                while (index > (long) listOfLists.get(sublist).size()) {
+                    index -= (long) listOfLists.get(sublist++).size();
+                    if (sublist >= listOfLists.size()) return;
+                }
+                
+                final ArrayList startlist = listOfLists.get((int) sublist);
+                startlist.subList((int) index, startlist.size()).forEach(action);
+                for (int i = sublist + 1; i < listOfLists.size(); i++) {
+                    listOfLists.get(i).forEach(action);
+                }
+            }
+
+            @Override
+            public Spliterator<T> trySplit() {
+                int partitionSize = listOfLists.size() / 2;
+                if (partitionSize == 0) return null;
+                
+                int sublist = 0;
+                long index = position;
+                while (index > (long) listOfLists.get(sublist).size()) {
+                    index -= (long) listOfLists.get(sublist++).size();
+                    if (sublist >= listOfLists.size()) return null; // TODO check this assumption/condition
+                }
+                final ArrayList startlist = listOfLists.get((int) sublist);
+                position += (long) startlist.size() - index;
+                if (partitionSize == 1) {
+                    return Spliterators.spliterator(startlist.subList((int) index, startlist.size()),
+                            SIZED | SUBSIZED | ORDERED);
+                } else {
+                    Stream.Builder builder = Stream.builder()
+                            .add(startlist.subList((int) index, startlist.size()).stream());
+                    for (int i = sublist + 1; i < partitionSize; i++) {
+                        position += (long) listOfLists.get(i).size();
+                        builder.add(listOfLists.get(i).stream());
+                    }
+                    // TODO needs testing
+                    return builder.build().flatMap(x -> x).spliterator();
+                }
+            }
+
+            @Override
+            public long estimateSize() {
+                return size() - position;
+            }
+            
+            @Override
+            public int characteristics() {
+                return SIZED | ORDERED;
             }
         };
     }

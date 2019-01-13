@@ -286,4 +286,14 @@ public class RealInfinity implements RealType {
         buf.append(sign.getSymbol()).append("\u221E");
         return buf.toString();
     }
+
+    @Override
+    public IntegerType floor() {
+        throw new ArithmeticException("floor() not supported");
+    }
+
+    @Override
+    public IntegerType ceil() {
+        throw new ArithmeticException("ceil() not supported");
+    }
 }

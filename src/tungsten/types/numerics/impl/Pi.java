@@ -24,6 +24,7 @@
 package tungsten.types.numerics.impl;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.HashMap;
@@ -276,5 +277,15 @@ public class Pi implements RealType {
     @Override
     public MathContext getMathContext() {
         return mctx;
+    }
+
+    @Override
+    public IntegerType floor() {
+        return new IntegerImpl(BigInteger.valueOf(3L));
+    }
+
+    @Override
+    public IntegerType ceil() {
+        return new IntegerImpl(BigInteger.valueOf(4L));
     }
 }

@@ -427,4 +427,15 @@ public class RealImpl implements RealType {
     public MathContext getMathContext() {
         return mctx;
     }
+
+    @Override
+    public IntegerType floor() {
+        return new IntegerImpl(this.asBigDecimal().toBigInteger());
+    }
+
+    @Override
+    public IntegerType ceil() {
+        final BigInteger trunc = this.asBigDecimal().toBigInteger();
+        return new IntegerImpl(this.isIntegralValue() ? trunc : trunc.add(BigInteger.ONE));
+    }
 }

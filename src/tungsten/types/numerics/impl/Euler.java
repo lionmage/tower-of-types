@@ -305,4 +305,14 @@ public class Euler implements RealType {
     public String toString() {
         return "\u212F[" + this.numberOfDigits() + "]";
     }
+
+    @Override
+    public IntegerType floor() {
+        return new IntegerImpl(value.toBigInteger());
+    }
+
+    @Override
+    public IntegerType ceil() {
+        return new IntegerImpl(value.toBigInteger().add(BigInteger.ONE));
+    }
 }

@@ -53,4 +53,6 @@ public interface RationalType extends Numeric, Comparable<RationalType> {
     @Override
     public RationalType sqrt();
     public Sign sign();
+    public IntegerType floor();
+    public IntegerType ceil();
 }

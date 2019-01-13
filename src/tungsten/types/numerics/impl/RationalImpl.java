@@ -349,4 +349,19 @@ public class RationalImpl implements RationalType {
         buf.append(numerator).append('/').append(denominator);
         return buf.toString();
     }
+
+    @Override
+    public IntegerType floor() {
+        return new IntegerImpl(numerator.divide(denominator));
+    }
+
+    @Override
+    public IntegerType ceil() {
+        BigInteger[] result = numerator.divideAndRemainder(denominator);
+        if (result[1].equals(BigInteger.ZERO)) {
+            return new IntegerImpl(result[0]);
+        } else {
+            return new IntegerImpl(result[0].add(BigInteger.ONE));
+        }
+    }
 }
