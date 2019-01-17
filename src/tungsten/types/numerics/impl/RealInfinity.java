@@ -122,7 +122,7 @@ public class RealInfinity implements RealType {
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
         // short circuit if the caller is asking for a Real
-        if (RealType.class.isAssignableFrom(numtype)) return true;
+        if (numtype.isAssignableFrom(RealType.class)) return true;
 
         switch (sign) {
             case POSITIVE:
@@ -137,7 +137,7 @@ public class RealInfinity implements RealType {
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
         // short circuit coercion to self-type
-        if (RealType.class.isAssignableFrom(numtype)) return this;
+        if (numtype.isAssignableFrom(RealType.class)) return this;
         
         if (isCoercibleTo(numtype)) {
             switch (sign) {
