@@ -192,7 +192,7 @@ public class RealInfinity implements RealType {
         if (OptionalOperations.sign(multiplier) != sign) {
             return RealInfinity.getInstance(sign.negate(), mctx);
         }
-        return RealInfinity.getInstance(Sign.POSITIVE, mctx);
+        return this;
     }
 
     @Override
@@ -210,7 +210,7 @@ public class RealInfinity implements RealType {
         if (OptionalOperations.sign(divisor) != sign) {
             return RealInfinity.getInstance(sign.negate(), mctx);
         }
-        return RealInfinity.getInstance(Sign.POSITIVE, mctx);
+        return this;
     }
 
     @Override
