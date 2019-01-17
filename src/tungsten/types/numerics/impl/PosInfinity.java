@@ -155,6 +155,9 @@ public class PosInfinity implements Numeric, Comparable<Numeric> {
     
     @Override
     public boolean equals(Object o) {
+        if (o instanceof RealInfinity) {
+            return ((RealType) o).sign() == Sign.POSITIVE;
+        }
         return o instanceof PosInfinity;
     }
     
