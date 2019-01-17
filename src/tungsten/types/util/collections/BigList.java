@@ -387,7 +387,7 @@ public class BigList<T> implements Iterable<T> {
                 long index = position;
                 while (index > (long) listOfLists.get(sublist).size()) {
                     index -= (long) listOfLists.get(sublist++).size();
-                    if (sublist >= listOfLists.size()) return null; // TODO check this assumption/condition
+                    if (sublist >= listOfLists.size()) return null;
                 }
                 final ArrayList startlist = listOfLists.get((int) sublist);
                 position += (long) startlist.size() - index;

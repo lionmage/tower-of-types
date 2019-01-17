@@ -352,16 +352,35 @@ public class RationalImpl implements RationalType {
 
     @Override
     public IntegerType floor() {
-        return new IntegerImpl(numerator.divide(denominator));
+        switch (this.sign()) {
+            case POSITIVE:
+                return new IntegerImpl(numerator.divide(denominator));
+            case NEGATIVE:
+                BigInteger[] result = numerator.divideAndRemainder(denominator);
+                if (result[1].equals(BigInteger.ZERO)) {
+                    return new IntegerImpl(result[0]);
+                } else {
+                    return new IntegerImpl(result[0].subtract(BigInteger.ONE));
+                }
+            default:
+                return new IntegerImpl(BigInteger.ZERO);
+        }
     }
 
     @Override
     public IntegerType ceil() {
-        BigInteger[] result = numerator.divideAndRemainder(denominator);
-        if (result[1].equals(BigInteger.ZERO)) {
-            return new IntegerImpl(result[0]);
-        } else {
-            return new IntegerImpl(result[0].add(BigInteger.ONE));
+        switch (this.sign()) {
+            case POSITIVE:
+                BigInteger[] result = numerator.divideAndRemainder(denominator);
+                if (result[1].equals(BigInteger.ZERO)) {
+                    return new IntegerImpl(result[0]);
+                } else {
+                    return new IntegerImpl(result[0].add(BigInteger.ONE));
+                }
+            case NEGATIVE:
+                return new IntegerImpl(numerator.divide(denominator));
+            default:
+                return new IntegerImpl(BigInteger.ZERO);
         }
     }
 }

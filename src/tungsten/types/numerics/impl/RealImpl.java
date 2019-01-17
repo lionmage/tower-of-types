@@ -430,12 +430,27 @@ public class RealImpl implements RealType {
 
     @Override
     public IntegerType floor() {
-        return new IntegerImpl(this.asBigDecimal().toBigInteger());
+        final BigInteger trunc = this.asBigDecimal().toBigInteger();
+        switch (this.sign()) {
+            case POSITIVE:
+                return new IntegerImpl(trunc);
+            case NEGATIVE:
+                return new IntegerImpl(this.isIntegralValue() ? trunc : trunc.subtract(BigInteger.ONE));
+            default:
+                return new IntegerImpl(BigInteger.ZERO);
+        }
     }
 
     @Override
     public IntegerType ceil() {
         final BigInteger trunc = this.asBigDecimal().toBigInteger();
-        return new IntegerImpl(this.isIntegralValue() ? trunc : trunc.add(BigInteger.ONE));
+        switch (this.sign()) {
+            case NEGATIVE:
+                return new IntegerImpl(trunc);
+            case POSITIVE:
+                return new IntegerImpl(this.isIntegralValue() ? trunc : trunc.add(BigInteger.ONE));
+            default:
+                return new IntegerImpl(BigInteger.ZERO);
+        }
     }
 }
