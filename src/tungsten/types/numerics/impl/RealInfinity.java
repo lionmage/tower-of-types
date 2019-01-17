@@ -272,6 +272,12 @@ public class RealInfinity implements RealType {
             RealInfinity that = (RealInfinity) o;
             return this.sign == that.sign();
         }
+        if (o instanceof PosInfinity) {
+            return this.sign == Sign.POSITIVE;
+        }
+        if (o instanceof NegInfinity) {
+            return this.sign == Sign.NEGATIVE;
+        }
         return false;
     }
 
