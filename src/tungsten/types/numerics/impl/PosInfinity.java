@@ -70,12 +70,13 @@ public class PosInfinity implements Numeric, Comparable<Numeric> {
 
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
-        return RealType.class.isAssignableFrom(numtype);
+        return numtype.isAssignableFrom(RealInfinity.class);
     }
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
-        if (RealType.class.isAssignableFrom(numtype)) {
+        // works for RealInfinity, RealType, or Numeric
+        if (numtype.isAssignableFrom(RealInfinity.class)) {
             return RealInfinity.getInstance(Sign.POSITIVE, mctx);
         }
         throw new CoercionException("Can't coerce infinity to any other Numeric type.", this.getClass(), numtype);
