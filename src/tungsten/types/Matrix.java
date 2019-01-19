@@ -23,6 +23,10 @@
  */
 package tungsten.types;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import tungsten.types.exceptions.CoercionException;
+
 /**
  * The root type for matrices.
  *
@@ -34,6 +38,65 @@ public interface Matrix<T extends Numeric> {
     long rows();
     T valueAt(long row, long column);
     T determinant();
-    T trace();
-    Matrix<T> transpose();
+    default T trace() {
+        if (this.columns() != this.rows()) {
+            throw new ArithmeticException("Trace is only defined for square matrices.");
+        }
+        Numeric accum = valueAt(0L, 0L);
+        Class<T> clazz = (Class<T>) accum.getClass();
+        for (long index = 1; index < this.columns(); index++) {
+            accum = accum.add(valueAt(index, index));
+        }
+        try {
+            return (T) accum.coerceTo(clazz);
+        } catch (CoercionException ex) {
+            Logger.getLogger(Matrix.class.getName()).log(Level.SEVERE,
+                    "Could not coerce " + accum + " to " + clazz.getTypeName(), ex);
+            throw new ArithmeticException("Type coercion failed.");
+        }
+    }
+    default Matrix<T> transpose() {
+        final long rows = this.columns();
+        final long columns = this.rows();
+        final Matrix<T> source = this;
+        
+        return new Matrix<T>() {
+            @Override
+            public long columns() { return columns; }
+
+            @Override
+            public long rows() { return rows; }
+
+            @Override
+            public T valueAt(long row, long column) {
+                if (row < 0L || row >= rows || column < 0L || column >= columns) {
+                    throw new IndexOutOfBoundsException("row:" + row + ", column:" + column +
+                            " is out of bounds for a " + rows + " by " + columns + " matrix.");
+                }
+                return source.valueAt(column, row);
+            }
+
+            @Override
+            public T determinant() {
+                // the determinant of the transpose is the same as the determinant
+                // of the original matrix
+                return source.determinant();
+            }
+
+            @Override
+            public Matrix<T> add(Matrix<T> addend) {
+                // (A + B)^T = A^T + B^T
+                return source.add(addend.transpose()).transpose();
+            }
+
+            @Override
+            public Matrix<T> multiply(Matrix<T> multiplier) {
+                // (A*B)^T = B^T * A^T
+                return multiplier.transpose().multiply(source).transpose();
+            }
+            
+        };
+    }
+    Matrix<T> add(Matrix<T> addend);
+    Matrix<T> multiply(Matrix<T> multiplier);
 }
