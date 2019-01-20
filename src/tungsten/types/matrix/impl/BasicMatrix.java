@@ -27,12 +27,14 @@ import java.util.ArrayList;
 import java.util.List;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
+import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
 /**
+ * Basic concrete implementation of {@link Matrix}.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
- * @param <T>
+ * @param <T> the numeric type of this matrix
  */
 public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     private List<RowVector<T>> rows = new ArrayList<>();
@@ -40,9 +42,25 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     public BasicMatrix() {
     }
     
+    /**
+     * Construct a matrix from a 2D array.
+     * Note that this constructor assumes the first array index
+     * is the row, and the second array index is the column.
+     * @param source a two-dimensional array
+     */
     public BasicMatrix(T[][] source) {
         for (int i = 0; i < source.length; i++) {
             append(new RowVector<>(source[i]));
+        }
+    }
+    
+    /**
+     * Copy constructor.
+     * @param source the matrix to copy
+     */
+    public BasicMatrix(Matrix<T> source) {
+        for (long row = 0L; row < source.rows(); row++) {
+            append(source.getRow(row));
         }
     }
 
@@ -65,6 +83,11 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             throw new IndexOutOfBoundsException("Row and column indices must be within bounds.");
         }
         return rows.get((int) row).elementAt((int) column);
+    }
+    
+    public void setValueAt(T value, long row, long column) {
+        RowVector<T> currentRow = this.getRow(row);
+        currentRow.setElementAt(value, column);
     }
 
     @Override
@@ -90,6 +113,10 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         return rows.get((int) row);
     }
     
+    /**
+     * Append a row to this matrix.
+     * @param row a row vector representing the new row to append
+     */
     public void append(RowVector<T> row) {
         if (rows.isEmpty() || row.columns() == this.columns()) {
             rows.add(row);
@@ -101,5 +128,18 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     
     public void append(T[] row) {
         append(new RowVector<>(row));
+    }
+    
+    /**
+     * Append a column to this matrix.
+     * @param column a column vector representing the new column to append
+     */
+    public void append(ColumnVector<T> column) {
+        if (column.rows() != this.rows()) {
+            throw new IllegalArgumentException("Column vector has wrong number of elements.");
+        }
+        for (long rowidx = 0; rowidx < this.rows(); rowidx++) {
+            rows.get((int) rowidx).append(column.elementAt(rowidx));
+        }
     }
 }

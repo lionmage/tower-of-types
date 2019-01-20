@@ -81,7 +81,9 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public void append(T element) {
-        throw new UnsupportedOperationException("RowVector is fixed-length.");
+        final int nulength = elements.length + 1;
+        elements = Arrays.copyOf(elements, nulength); // lengthen the array by 1
+        elements[nulength - 1] = element;
     }
 
     @Override
@@ -108,14 +110,14 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     }
 
     @Override
-    public Vector<T> negate() {
+    public RowVector<T> negate() {
         T[] negArray = (T[]) Array.newInstance(elements[0].getClass(), elements.length);
         Arrays.stream(elements).map(x -> x.negate()).toArray(size -> negArray);
         return new RowVector<>(negArray);
     }
 
     @Override
-    public Vector<T> scale(T factor) {
+    public RowVector<T> scale(T factor) {
         final Class<? extends Numeric> clazz = elements[0].getClass();
         T[] scaledArray = (T[]) Array.newInstance(clazz, elements.length);
         try {

@@ -47,7 +47,7 @@ public interface Matrix<T extends Numeric> {
         }
         Numeric accum = valueAt(0L, 0L);
         Class<T> clazz = (Class<T>) accum.getClass();
-        for (long index = 1; index < this.columns(); index++) {
+        for (long index = 1L; index < this.columns(); index++) {
             accum = accum.add(valueAt(index, index));
         }
         try {
@@ -88,6 +88,11 @@ public interface Matrix<T extends Numeric> {
 
             @Override
             public Matrix<T> add(Matrix<T> addend) {
+                // delegate to the add method of the addend if possible
+                // since matrix addition is commutative
+                if (!addend.getClass().isAnonymousClass()) {
+                    return addend.add(this);
+                }
                 // (A + B)^T = A^T + B^T
                 return source.add(addend.transpose()).transpose();
             }
