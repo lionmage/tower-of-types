@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
+import tungsten.types.Vector;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
@@ -97,7 +98,17 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public Matrix<T> add(Matrix<T> addend) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.rows() != addend.rows() || this.columns() != addend.columns()) {
+            throw new ArithmeticException("Addend must match dimensions of matrix.");
+        }
+        Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
+        BasicMatrix<T> result = new BasicMatrix<>();
+        for (long row = 0L; row < rows(); row++) {
+            // casting to Vector<T> to avoid ambiguity over which add() method to use
+            RowVector<T> rowsum = this.getRow(row).add((Vector<T>) addend.getRow(row));
+            result.append(rowsum);
+        }
+        return result;
     }
 
     @Override

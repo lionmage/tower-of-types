@@ -35,6 +35,7 @@ import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.matrix.impl.BasicMatrix;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.Zero;
@@ -87,7 +88,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     }
 
     @Override
-    public Vector<T> add(Vector<T> addend) {
+    public RowVector<T> add(Vector<T> addend) {
         if (addend.length() != this.length()) throw new ArithmeticException("Cannot add vectors of different lengths.");
         if (addend instanceof ColumnVector) throw new ArithmeticException("Cannot add a row vector to a column vector.");
         
@@ -105,7 +106,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     }
 
     @Override
-    public Vector<T> subtract(Vector<T> subtrahend) {
+    public RowVector<T> subtract(Vector<T> subtrahend) {
         return this.add(subtrahend.negate());
     }
 
@@ -148,11 +149,11 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
         if (other.length() != this.length()) throw new ArithmeticException("Cannot compute dot product for vectors of different length.");
         final Class<? extends Numeric> clazz = elements[0].getClass();
         try {
-            T accum = (T) Zero.getInstance(mctx).coerceTo(clazz);
+            Numeric accum = Zero.getInstance(mctx);
             for (long i = 0L; i < this.length(); i++) {
-                accum = (T) accum.add(this.elementAt(i).multiply(other.elementAt(i))).coerceTo(clazz);
+                accum = accum.add(this.elementAt(i).multiply(other.elementAt(i)));
             }
-            return accum;
+            return (T) accum.coerceTo(clazz);
         } catch (CoercionException ex) {
             Logger.getLogger(RowVector.class.getName()).log(Level.SEVERE, "Error computing dot product.", ex);
             throw new ArithmeticException("Error computing dot product");
@@ -267,12 +268,36 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public Matrix<T> add(Matrix<T> addend) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (addend.rows() != rows() || addend.columns() != columns()) {
+            throw new ArithmeticException("Dimension mismatch for single-row matrix.");
+        }
+        Class<T> clazz = (Class<T>) elements[0].getClass();
+        T[] result = (T[]) Array.newInstance(clazz, elements.length);
+        for (long index = 0; index < elements.length; index++) {
+            try {
+                result[(int) index] = (T) elements[(int) index].add(addend.valueAt(0L, index)).coerceTo(clazz);
+            } catch (CoercionException ex) {
+                throw new ArithmeticException("Unable to coerce matrix element to type " +
+                        clazz.getTypeName() + " during matrix addition.");
+            }
+        }
+        return new RowVector(result);
     }
 
     @Override
     public Matrix<T> multiply(Matrix<T> multiplier) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.rows() != multiplier.columns()) {
+            throw new ArithmeticException("Multiplier must have a single column.");
+        }
+        
+        Class<T> clazz = (Class<T>) elements[0].getClass();
+        T[][] temp = (T[][]) Array.newInstance(clazz, 1, 1);
+        
+        // Apparently, the convention here is to compute the dot product of two vectors
+        // and put the result into a 1x1 matrix.
+        temp[0][0] = this.dotProduct(multiplier.getColumn(0L));
+
+        return new BasicMatrix<>(temp);
     }
 
     @Override

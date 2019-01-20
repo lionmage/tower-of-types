@@ -41,6 +41,7 @@ public interface Matrix<T extends Numeric> {
     long rows();
     T valueAt(long row, long column);
     T determinant();
+    
     default T trace() {
         if (this.columns() != this.rows()) {
             throw new ArithmeticException("Trace is only defined for square matrices.");
@@ -58,6 +59,7 @@ public interface Matrix<T extends Numeric> {
             throw new ArithmeticException("Type coercion failed.");
         }
     }
+    
     default Matrix<T> transpose() {
         final long rows = this.columns();
         final long columns = this.rows();
@@ -103,10 +105,16 @@ public interface Matrix<T extends Numeric> {
                 return multiplier.transpose().multiply(source).transpose();
             }
             
+            @Override
+            public Matrix<T> transpose() {
+                return source;
+            }
         };
     }
+    
     Matrix<T> add(Matrix<T> addend);
     Matrix<T> multiply(Matrix<T> multiplier);
+    
     default RowVector<T> getRow(long row) {
         Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
         T[] temp = (T[]) Array.newInstance(clazz, (int) columns());
@@ -115,6 +123,7 @@ public interface Matrix<T extends Numeric> {
         }
         return new RowVector<>(temp);
     }
+    
     default ColumnVector<T> getColumn(long column) {
         Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
         T[] temp = (T[]) Array.newInstance(clazz, (int) rows());

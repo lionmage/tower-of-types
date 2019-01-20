@@ -25,7 +25,6 @@ package tungsten.types.vector.impl;
 
 import java.lang.reflect.Array;
 import java.math.MathContext;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -82,11 +81,13 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public void append(T element) {
-        throw new UnsupportedOperationException("ColumnVector is fixed-length.");
+        final int nulength = elements.length + 1;
+        elements = Arrays.copyOf(elements, nulength); // lengthen the array by 1
+        elements[nulength - 1] = element;
     }
 
     @Override
-    public Vector<T> add(Vector<T> addend) {
+    public ColumnVector<T> add(Vector<T> addend) {
         if (addend.length() != this.length()) throw new ArithmeticException("Cannot add vectors of different lengths.");
         // TODO disallow adding column and row vectors
         
@@ -104,19 +105,19 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     }
 
     @Override
-    public Vector<T> subtract(Vector<T> subtrahend) {
+    public ColumnVector<T> subtract(Vector<T> subtrahend) {
         return this.add(subtrahend.negate());
     }
 
     @Override
-    public Vector<T> negate() {
+    public ColumnVector<T> negate() {
         T[] negArray = (T[]) Array.newInstance(elements[0].getClass(), elements.length);
         Arrays.stream(elements).map(x -> x.negate()).toArray(size -> negArray);
         return new ColumnVector<>(negArray);
     }
 
     @Override
-    public Vector<T> scale(T factor) {
+    public ColumnVector<T> scale(T factor) {
         final Class<? extends Numeric> clazz = elements[0].getClass();
         T[] scaledArray = (T[]) Array.newInstance(clazz, elements.length);
         try {
@@ -138,7 +139,7 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
             return (T) Arrays.stream(elements).reduce(zero, (x, y) -> (T) x.add(y.multiply(y))).sqrt().coerceTo(clazz);
         } catch (CoercionException ex) {
             Logger.getLogger(ColumnVector.class.getName()).log(Level.SEVERE, "Unable to compute magnitude of column vector.", ex);
-            throw new ArithmeticException("Cannot compute magnitude of column vector");
+            throw new ArithmeticException("Cannot compute magnitude of column vector.");
         }
     }
 
@@ -147,14 +148,14 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
         if (other.length() != this.length()) throw new ArithmeticException("Cannot compute dot product for vectors of different length.");
         final Class<? extends Numeric> clazz = elements[0].getClass();
         try {
-            T accum = (T) Zero.getInstance(mctx).coerceTo(clazz);
+            Numeric accum = Zero.getInstance(mctx);
             for (long i = 0L; i < this.length(); i++) {
-                accum = (T) accum.add(this.elementAt(i).multiply(other.elementAt(i))).coerceTo(clazz);
+                accum = accum.add(this.elementAt(i).multiply(other.elementAt(i)));
             }
-            return accum;
+            return (T) accum.coerceTo(clazz);
         } catch (CoercionException ex) {
             Logger.getLogger(ColumnVector.class.getName()).log(Level.SEVERE, "Error computing dot product.", ex);
-            throw new ArithmeticException("Error computing dot product");
+            throw new ArithmeticException("Error computing dot product.");
         }
     }
 
