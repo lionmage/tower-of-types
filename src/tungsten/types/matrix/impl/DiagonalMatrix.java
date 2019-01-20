@@ -40,7 +40,7 @@ import tungsten.types.numerics.impl.Zero;
  * @param <T> the numeric type of the elements of this matrix
  */
 public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
-    private T[] elements;
+    final private T[] elements;
     
     public DiagonalMatrix(T[] elements) {
         this.elements = Arrays.copyOf(elements, elements.length);

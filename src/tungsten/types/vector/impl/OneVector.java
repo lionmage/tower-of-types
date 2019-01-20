@@ -23,43 +23,49 @@
  */
 package tungsten.types.vector.impl;
 
+import ch.obermuhlner.math.big.BigDecimalMath;
+import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
+import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.RealType;
-import tungsten.types.numerics.impl.Zero;
+import tungsten.types.numerics.impl.One;
+import tungsten.types.numerics.impl.RealImpl;
 
 /**
- * An implementation of the zero vector, which has the value of 0
+ * An implementation of the one vector, which has the value of 1
  * for all of its elements.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
-public class ZeroVector implements Vector<Numeric> {
+public class OneVector implements Vector<Numeric> {
     private final long length;
-    private final Numeric zero;
+    private final Numeric one;
     private final MathContext mctx;
     
-    private ZeroVector(long length, MathContext mctx) {
+    private OneVector(long length, MathContext mctx) {
         this.length = length;
         this.mctx = mctx;
-        this.zero = Zero.getInstance(mctx);
+        this.one = One.getInstance(mctx);
     }
     
     private static final Lock instanceLock = new ReentrantLock();
-    private static final Map<Long, ZeroVector> instanceMap = new HashMap<>();
+    private static final Map<Long, OneVector> instanceMap = new HashMap<>();
     
-    public static ZeroVector getInstance(long length, MathContext ctx) {
+    public static OneVector getInstance(long length, MathContext ctx) {
         instanceLock.lock();
         try {
             final Long key = computeKey(length, ctx);
-            ZeroVector instance = instanceMap.get(key);
+            OneVector instance = instanceMap.get(key);
             if (instance == null) {
-                instance = new ZeroVector(length, ctx);
+                instance = new OneVector(length, ctx);
                 instanceMap.put(key, instance);
             }
             return instance;
@@ -73,12 +79,12 @@ public class ZeroVector implements Vector<Numeric> {
     }
     
     /**
-     * Convenience factory method that returns a {@link ZeroVector} with
+     * Convenience factory method that returns a {@link OneVector} with
      * the same length as the supplied vector.
      * @param vector the vector whose length must be matched
-     * @return a zero vector
+     * @return a vector of 1 values
      */
-    public static ZeroVector getInstance(Vector<? extends Numeric> vector) {
+    public static OneVector getInstance(Vector<? extends Numeric> vector) {
         return getInstance(vector.length(), vector.getMathContext());
     }
 
@@ -90,49 +96,71 @@ public class ZeroVector implements Vector<Numeric> {
     @Override
     public Numeric elementAt(long position) {
         if (position >= 0L && position < length) {
-            return zero;
+            return one;
         }
         throw new IndexOutOfBoundsException("Specified index is out of range.");
     }
 
     @Override
     public void setElementAt(Numeric element, long position) {
-        throw new UnsupportedOperationException("Zero vector is immutable.");
+        throw new UnsupportedOperationException("One vector is immutable.");
     }
 
     @Override
     public void append(Numeric element) {
-        throw new UnsupportedOperationException("Zero vector is immutable.");
+        throw new UnsupportedOperationException("One vector is immutable.");
     }
 
     @Override
     public Vector<Numeric> add(Vector<Numeric> addend) {
-        return addend;
+        if (addend.length() != length) throw new IllegalArgumentException("Vectors must be of same length.");
+        Numeric[] results = new Numeric[(int) length];
+        for (int index = 0; index < length; index++) {
+            results[index] = addend.elementAt(index).add(one);
+        }
+        return new RowVector(results);
     }
 
     @Override
     public Vector<Numeric> subtract(Vector<Numeric> subtrahend) {
-        return subtrahend.negate();
+        if (subtrahend.length() != length) throw new IllegalArgumentException("Vectors must be of same length.");
+        Numeric[] results = new Numeric[(int) length];
+        for (int index = 0; index < length; index++) {
+            results[index] = one.subtract(subtrahend.elementAt(index));
+        }
+        return new RowVector(results);
     }
 
     @Override
     public Vector<Numeric> negate() {
-        return this;
+        Numeric[] results = new Numeric[(int) length];
+        for (int index = 0; index < length; index++) {
+            results[index] = one.negate();
+        }
+        return new RowVector(results);
     }
 
     @Override
     public Vector<Numeric> scale(Numeric factor) {
-        return this;
+        Numeric[] results = new Numeric[(int) length];
+        for (int index = 0; index < length; index++) {
+            results[index] = factor;
+        }
+        return new RowVector(results);
     }
 
     @Override
     public Numeric magnitude() {
-        return zero;
+        return new RealImpl(BigDecimal.valueOf(length)).sqrt();
     }
 
     @Override
     public Numeric dotProduct(Vector<Numeric> other) {
-        return zero;
+        Numeric accum = other.elementAt(0L);
+        for (long index = 1L; index < other.length(); index++) {
+            accum = accum.add(other.elementAt(index));
+        }
+        return accum;
     }
 
     @Override
@@ -142,7 +170,13 @@ public class ZeroVector implements Vector<Numeric> {
 
     @Override
     public Vector<Numeric> normalize() {
-        throw new UnsupportedOperationException("Zero vector cannot be normalized.");
+        final Numeric[] results = new Numeric[(int) length];
+        final Numeric value = this.magnitude().inverse();
+        
+        for (int index = 0; index < length; index++) {
+            results[index] = value;
+        }
+        return new RowVector(results);
     }
 
     @Override
@@ -152,7 +186,15 @@ public class ZeroVector implements Vector<Numeric> {
 
     @Override
     public RealType computeAngle(Vector<Numeric> other) {
-        throw new UnsupportedOperationException("Zero vector cannot form an angle with any vector.");
+        Numeric dotprod = this.dotProduct(other);
+        Numeric divisor = this.magnitude().multiply(other.magnitude());
+        try {
+            RealType intermediate = (RealType) dotprod.divide(divisor).coerceTo(RealType.class);
+            return new RealImpl(BigDecimalMath.acos(intermediate.asBigDecimal(), mctx));
+        } catch (CoercionException ex) {
+            Logger.getLogger(OneVector.class.getName()).log(Level.SEVERE, "Failed to coerce result to RealType.", ex);
+            throw new ArithmeticException("Coercion to real value failed.");
+        }
     }
     
     @Override
@@ -161,7 +203,7 @@ public class ZeroVector implements Vector<Numeric> {
             Vector<? extends Numeric> that = (Vector<? extends Numeric>) o;
             if (that.length() != this.length()) return false;
             for (long k = 0L; k < that.length(); k++) {
-                if (!zero.equals(that.elementAt(k))) return false;
+                if (!one.equals(that.elementAt(k))) return false;
             }
             // we must have matched all elements
             return true;

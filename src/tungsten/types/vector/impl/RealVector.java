@@ -35,7 +35,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
-import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.numerics.impl.Zero;
