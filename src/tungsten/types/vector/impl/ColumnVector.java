@@ -25,6 +25,7 @@ package tungsten.types.vector.impl;
 
 import java.lang.reflect.Array;
 import java.math.MathContext;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +36,7 @@ import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.matrix.impl.BasicMatrix;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.Zero;
@@ -260,5 +262,50 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public String toString() {
         return Arrays.stream(elements).map(x -> x.toString()).collect(Collectors.joining(", ", "[ ", " ]"));
+    }
+
+    @Override
+    public Matrix<T> add(Matrix<T> addend) {
+        if (addend.rows() != rows() || addend.columns() != columns()) {
+            throw new ArithmeticException("Dimension mismatch for single-column matrix.");
+        }
+        Class<T> clazz = (Class<T>) elements[0].getClass();
+        T[] result = (T[]) Array.newInstance(clazz, elements.length);
+        for (long index = 0; index < elements.length; index++) {
+            try {
+                result[(int) index] = (T) elements[(int) index].add(addend.valueAt(index, 0L)).coerceTo(clazz);
+            } catch (CoercionException ex) {
+                throw new ArithmeticException("Unable to coerce matrix element to type " +
+                        clazz.getTypeName() + " during matrix addition.");
+            }
+        }
+        return new ColumnVector(result);
+    }
+
+    @Override
+    public Matrix<T> multiply(Matrix<T> multiplier) {
+        if (this.columns() != multiplier.rows()) {
+            throw new ArithmeticException("Multiplier must have a single row.");
+        }
+        
+        Class<T> clazz = (Class<T>) elements[0].getClass();
+        T[][] temp = (T[][]) Array.newInstance(clazz, (int) this.rows(), (int) multiplier.columns());
+
+        try {
+            for (int row = 0; row < rows(); row++) {
+                for (int column = 0; column < multiplier.columns(); column++) {
+                    temp[row][column] = (T) elements[row].multiply(multiplier.valueAt(0L, column)).coerceTo(clazz);
+                }
+            }
+        } catch (CoercionException ce) {
+            throw new ArithmeticException("Type coercion failed during matrix multiply.");
+        }
+        return new BasicMatrix<>(temp);
+    }
+    
+    @Override
+    public ColumnVector<T> getColumn(long column) {
+        if (column != 0L) throw new IndexOutOfBoundsException("Index does not match the single column of this matrix.");
+        return this;
     }
 }

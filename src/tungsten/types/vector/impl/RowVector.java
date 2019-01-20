@@ -262,4 +262,20 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     public String toString() {
         return Arrays.stream(elements).map(x -> x.toString()).collect(Collectors.joining(", ", "[ ", " ]"));
     }
+
+    @Override
+    public Matrix<T> add(Matrix<T> addend) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Matrix<T> multiply(Matrix<T> multiplier) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public RowVector<T> getRow(long row) {
+        if (row != 0L) throw new IndexOutOfBoundsException("Index does not match the single row of this matrix.");
+        return this;
+    }
 }

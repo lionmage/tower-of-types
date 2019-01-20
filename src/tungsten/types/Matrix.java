@@ -23,9 +23,12 @@
  */
 package tungsten.types;
 
+import java.lang.reflect.Array;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.vector.impl.ColumnVector;
+import tungsten.types.vector.impl.RowVector;
 
 /**
  * The root type for matrices.
@@ -99,4 +102,20 @@ public interface Matrix<T extends Numeric> {
     }
     Matrix<T> add(Matrix<T> addend);
     Matrix<T> multiply(Matrix<T> multiplier);
+    default RowVector<T> getRow(long row) {
+        Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
+        T[] temp = (T[]) Array.newInstance(clazz, (int) columns());
+        for (int i = 0; i < columns(); i++) {
+            temp[i] = valueAt(row, i);
+        }
+        return new RowVector<>(temp);
+    }
+    default ColumnVector<T> getColumn(long column) {
+        Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
+        T[] temp = (T[]) Array.newInstance(clazz, (int) rows());
+        for (int j = 0; j < rows(); j++) {
+            temp[j] = valueAt(j, column);
+        }
+        return new ColumnVector<>(temp);
+    }
 }
