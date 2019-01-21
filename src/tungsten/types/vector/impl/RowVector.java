@@ -263,7 +263,8 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     
     @Override
     public String toString() {
-        return Arrays.stream(elements).map(x -> x.toString()).collect(Collectors.joining(", ", "[ ", " ]"));
+        // 202F = Narrow No-Break Space
+        return Arrays.stream(elements).map(x -> x.toString()).collect(Collectors.joining(", ", "[\u202F", "\u202F]"));
     }
 
     @Override

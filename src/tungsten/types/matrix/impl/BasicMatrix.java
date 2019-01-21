@@ -128,7 +128,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
      * Append a row to this matrix.
      * @param row a row vector representing the new row to append
      */
-    public void append(RowVector<T> row) {
+    public final void append(RowVector<T> row) {
         if (rows.isEmpty() || row.columns() == this.columns()) {
             rows.add(row);
         } else {
@@ -137,7 +137,14 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         }
     }
     
-    public void append(T[] row) {
+    /**
+     * Convenience method for internal methods and subclasses to manipulate
+     * this matrix by appending a row.  Useful for when arrays are being
+     * generated in intermediate computational steps, e.g. for speed.
+     * 
+     * @param row an array of type T
+     */
+    protected void append(T[] row) {
         append(new RowVector<>(row));
     }
     
@@ -152,5 +159,17 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         for (long rowidx = 0; rowidx < this.rows(); rowidx++) {
             rows.get((int) rowidx).append(column.elementAt(rowidx));
         }
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        rows.forEach(rowvec -> {
+            // TODO let's pretty up the formatting!  This works for now.
+            // Ideally, I'd like to align each column on the decimal point
+            // (or something clever like that).
+            buf.append(rowvec.toString()).append('\n');
+        });
+        return buf.toString();
     }
 }
