@@ -25,6 +25,7 @@ package tungsten.types.matrix.impl;
 
 import java.math.BigInteger;
 import java.math.MathContext;
+import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.One;
@@ -53,5 +54,11 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     public Numeric trace() {
         // this could be any Numeric subtype, really, but IntegerImpl has less overhead
         return new IntegerImpl(BigInteger.valueOf(elementCount));
+    }
+    
+    @Override
+    public IdentityMatrix inverse() {
+        // the identity matrix is its own inverse
+        return this;
     }
 }

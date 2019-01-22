@@ -23,11 +23,17 @@
  */
 package tungsten.types.matrix.impl;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
+import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.NumericHierarchy;
+import tungsten.types.numerics.impl.Zero;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
@@ -93,7 +99,20 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public T determinant() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (rows() != columns()) {
+            throw new ArithmeticException("Can only compute determinant for a square matrix.");
+        }
+        if (rows() == 1L) { // 1x1 matrix
+            return valueAt(0L, 0L);
+        }
+        if (rows() == 2L) {
+            T a = valueAt(0L, 0L);
+            T b = valueAt(0L, 1L);
+            T c = valueAt(1L, 0L);
+            T d = valueAt(1L, 1L);
+            return (T) a.multiply(d).subtract(c.multiply(b));  // should not require coercion here
+        }
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -171,5 +190,60 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             buf.append(rowvec.toString()).append('\n');
         });
         return buf.toString();
+    }
+
+    @Override
+    public Matrix<? extends Numeric> inverse() {
+        if (rows() != columns()) {
+            throw new ArithmeticException("Cannot invert a non-square matrix.");
+        }
+        final T det = this.determinant();
+        if (det.equals(Zero.getInstance(valueAt(0L, 0L).getMathContext()))) {
+            throw new ArithmeticException("Matrix is singular.");
+        }
+        if (rows() == 1L) {
+            T element = valueAt(0L, 0L);
+            Numeric[][] temp = new Numeric[1][1];
+            temp[0][0] = element.inverse();
+            return new BasicMatrix<>(temp);
+        } else if (rows() == 2L) {
+            final Numeric scale = det.inverse();
+            T a = valueAt(0L, 0L);
+            T b = valueAt(0L, 1L);
+            T c = valueAt(1L, 0L);
+            T d = valueAt(1L, 1L);
+            BasicMatrix<Numeric> result = new BasicMatrix<>();
+            result.append(new RowVector(d, b.negate()).scale(scale));
+            result.append(new RowVector(c.negate(), a).scale(scale));
+            return result;
+        }
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    public <R extends Numeric> Matrix<R> upconvert(Class<R> clazz) {
+        // first, check to make sure we can do this -- ensure R is a wider type than T
+        NumericHierarchy targetType = NumericHierarchy.forNumericType(clazz);
+        NumericHierarchy currentType = NumericHierarchy.forNumericType(valueAt(0L, 0L).getClass());
+        // if our elements are already of the requested type, just cast and return
+        if (currentType == targetType) return (Matrix<R>) this;
+        if (currentType.compareTo(targetType) > 0) {
+            throw new ArithmeticException("Cannot upconvert elements of " + currentType + " to elements of " + targetType);
+        }
+        BasicMatrix<R> result = new BasicMatrix<>();
+        for (long row = 0L; row < rows(); row++) {
+            R[] accum = (R[]) Array.newInstance(clazz, (int) columns());
+            for (long column = 0L; column < columns(); column++) {
+                try {
+                    accum[(int) column] = (R) valueAt(row, column).coerceTo(clazz);
+                } catch (CoercionException ex) {
+                    Logger.getLogger(BasicMatrix.class.getName()).log(Level.SEVERE,
+                            "Coercion failed while upconverting matrix to " + clazz.getTypeName(), ex);
+                    throw new ArithmeticException(String.format("While converting value %s to %s at %d, %d",
+                            valueAt(row, column), clazz.getTypeName(), row, column));
+                }
+            }
+            result.append(new RowVector<>(accum));
+        }
+        return result;
     }
 }

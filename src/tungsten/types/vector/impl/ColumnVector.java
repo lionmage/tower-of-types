@@ -311,4 +311,15 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
         if (column != 0L) throw new IndexOutOfBoundsException("Index does not match the single column of this matrix.");
         return this;
     }
+
+    @Override
+    public Matrix<? extends Numeric> inverse() {
+        if (length() == 1L) {
+            T element = elements[0];
+            Numeric[][] temp = new Numeric[1][1];
+            temp[0][0] = element.inverse();
+            return new BasicMatrix<>(temp);
+        }
+        throw new ArithmeticException("Inverse only applies to square matrices.");
+    }
 }

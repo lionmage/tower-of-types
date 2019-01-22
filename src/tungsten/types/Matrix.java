@@ -41,6 +41,7 @@ public interface Matrix<T extends Numeric> {
     long rows();
     T valueAt(long row, long column);
     T determinant();
+    Matrix<? extends Numeric> inverse();
     
     default T trace() {
         if (this.columns() != this.rows()) {
@@ -108,6 +109,12 @@ public interface Matrix<T extends Numeric> {
             @Override
             public Matrix<T> transpose() {
                 return source;
+            }
+
+            @Override
+            public Matrix<? extends Numeric> inverse() {
+                // the inverse of the transpose is the transpose of the inverse of the original matrix
+                return source.inverse().transpose();
             }
         };
     }

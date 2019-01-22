@@ -141,4 +141,10 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
         }
         return result;
     }
+
+    @Override
+    public DiagonalMatrix inverse() {
+        Numeric[] result = Arrays.stream(elements).map(element -> element.inverse()).toArray(size -> new Numeric[size]);
+        return new DiagonalMatrix(result);
+    }
 }
