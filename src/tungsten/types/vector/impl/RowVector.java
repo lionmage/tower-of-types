@@ -307,10 +307,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public Matrix<? extends Numeric> inverse() {
         if (length() == 1L) {
-            T element = elements[0];
-            Numeric[][] temp = new Numeric[1][1];
-            temp[0][0] = element.inverse();
-            return new BasicMatrix<>(temp);
+            return new SingletonMatrix(elements[0].inverse());
         }
         throw new ArithmeticException("Inverse only applies to square matrices.");
     }
