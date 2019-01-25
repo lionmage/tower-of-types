@@ -36,6 +36,7 @@ import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.matrix.impl.BasicMatrix;
+import tungsten.types.matrix.impl.SingletonMatrix;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.Zero;
@@ -89,7 +90,7 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public ColumnVector<T> add(Vector<T> addend) {
         if (addend.length() != this.length()) throw new ArithmeticException("Cannot add vectors of different lengths.");
-        // TODO disallow adding column and row vectors
+        if (addend instanceof RowVector) throw new ArithmeticException("Cannot add a column vector to a row vector.");
         
         final Class<? extends Numeric> clazz = elements[0].getClass();
         T[] sumArray = (T[]) Array.newInstance(clazz, elements.length);
@@ -301,7 +302,7 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
                 }
             }
         } catch (CoercionException ce) {
-            throw new ArithmeticException("Type coercion failed during matrix multiply.");
+            throw new ArithmeticException("Type coercion failed during matrix multiply: " + ce.getMessage());
         }
         return new BasicMatrix<>(temp);
     }
@@ -315,10 +316,7 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public Matrix<? extends Numeric> inverse() {
         if (length() == 1L) {
-            T element = elements[0];
-            Numeric[][] temp = new Numeric[1][1];
-            temp[0][0] = element.inverse();
-            return new BasicMatrix<>(temp);
+            return new SingletonMatrix(elements[0].inverse());
         }
         throw new ArithmeticException("Inverse only applies to square matrices.");
     }

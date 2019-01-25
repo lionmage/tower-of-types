@@ -120,7 +120,6 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         if (this.rows() != addend.rows() || this.columns() != addend.columns()) {
             throw new ArithmeticException("Addend must match dimensions of matrix.");
         }
-        Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
         BasicMatrix<T> result = new BasicMatrix<>();
         for (long row = 0L; row < rows(); row++) {
             // casting to Vector<T> to avoid ambiguity over which add() method to use
@@ -202,10 +201,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             throw new ArithmeticException("Matrix is singular.");
         }
         if (rows() == 1L) {
-            T element = valueAt(0L, 0L);
-            Numeric[][] temp = new Numeric[1][1];
-            temp[0][0] = element.inverse();
-            return new BasicMatrix<>(temp);
+            return new SingletonMatrix(valueAt(0L, 0L).inverse());
         } else if (rows() == 2L) {
             final Numeric scale = det.inverse();
             T a = valueAt(0L, 0L);

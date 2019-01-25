@@ -36,6 +36,7 @@ import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.matrix.impl.BasicMatrix;
+import tungsten.types.matrix.impl.SingletonMatrix;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.Zero;
@@ -290,15 +291,11 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
         if (this.rows() != multiplier.columns()) {
             throw new ArithmeticException("Multiplier must have a single column.");
         }
-        
-        Class<T> clazz = (Class<T>) elements[0].getClass();
-        T[][] temp = (T[][]) Array.newInstance(clazz, 1, 1);
-        
+
         // Apparently, the convention here is to compute the dot product of two vectors
         // and put the result into a 1x1 matrix.
-        temp[0][0] = this.dotProduct(multiplier.getColumn(0L));
 
-        return new BasicMatrix<>(temp);
+        return new SingletonMatrix(this.dotProduct(multiplier.getColumn(0L)));
     }
 
     @Override
