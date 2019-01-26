@@ -160,6 +160,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     
     /**
      * Append a row to this matrix.
+     * Note that this operation is not thread safe!
      * @param row a row vector representing the new row to append
      */
     public final void append(RowVector<T> row) {
@@ -177,6 +178,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
      * Convenience method for internal methods and subclasses to manipulate
      * this matrix by appending a row.  Useful for when arrays are being
      * generated in intermediate computational steps, e.g. for speed.
+     * This is not a thread safe operation.
      * 
      * @param row an array of type T
      */
@@ -186,6 +188,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     
     /**
      * Append a column to this matrix.
+     * Note that this is not a thread safe operation!
      * @param column a column vector representing the new column to append
      */
     public void append(ColumnVector<T> column) {
@@ -202,12 +205,11 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
+        buf.append("[\n");
         rows.forEach(rowvec -> {
-            // TODO let's pretty up the formatting!  This works for now.
-            // Ideally, I'd like to align each column on the decimal point
-            // (or something clever like that).
-            buf.append(rowvec.toString()).append('\n');
+            buf.append("\u00A0\u00A0").append(rowvec.toString()).append('\n');
         });
+        buf.append("\u00A0]");
         return buf.toString();
     }
 
