@@ -31,10 +31,10 @@ import tungsten.types.exceptions.CoercionException;
 
 
 /**
- * A 1x1 matrix consisting of a single element.
+ * A 1&#215;1 matrix consisting of a single element.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
- * @param <T> the type of this matrix's single element
+ * @param <T> the type of the single element of this matrix
  */
 public class SingletonMatrix<T extends Numeric> implements Matrix<T> {
     private T element;
