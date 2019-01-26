@@ -64,6 +64,10 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         }
     }
     
+    public BasicMatrix(List<RowVector<T>> rows) {
+        this.rows = rows;
+    }
+    
     /**
      * Copy constructor.
      * @param source the matrix to copy
@@ -118,7 +122,24 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             T d = valueAt(1L, 1L);
             return (T) a.multiply(d).subtract(c.multiply(b));  // should not require coercion here
         }
-        throw new UnsupportedOperationException("Not supported yet.");
+        else {
+            Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
+            RowVector<T> firstRow = this.getRow(0L);
+            BasicMatrix<T> intermediate = this.removeRow(0L);
+            Numeric accum = Zero.getInstance(valueAt(0L, 0L).getMathContext());
+            for (long column = 0L; column < columns(); column++) {
+                Numeric coeff = firstRow.elementAt(column);
+                if (column % 2L == 1L) coeff = coeff.negate(); // alternate sign of the coefficient
+                BasicMatrix<T> subMatrix = intermediate.removeColumn(column);
+                accum = accum.add(coeff.multiply(subMatrix.determinant()));
+            }
+            try {
+                return (T) accum.coerceTo(clazz);
+            } catch (CoercionException ex) {
+                Logger.getLogger(BasicMatrix.class.getName()).log(Level.SEVERE, "Coercion failed computing determinant.", ex);
+                throw new ArithmeticException("Coercion failed: " + ex.getMessage());
+            }
+        }
     }
 
     @Override
@@ -263,5 +284,24 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             result.append(new RowVector<>(accum));
         }
         return result;
+    }
+    
+    public BasicMatrix<T> removeRow(long row) {
+        ArrayList<RowVector<T>> result = new ArrayList<>(rows);
+        result.remove((int) row);
+        return new BasicMatrix<>(result);
+    }
+    
+    public BasicMatrix<T> removeColumn(long column) {
+        ArrayList<RowVector<T>> result = new ArrayList<>();
+        for (RowVector<T> row : rows) {
+            RowVector<T> updatedRow = new RowVector<>();
+            for (long c = 0L; c < row.columns(); c++) {
+                if (c == column) continue;
+                updatedRow.append(row.elementAt(c));
+            }
+            result.add(updatedRow);
+        }
+        return new BasicMatrix<>(result);
     }
 }
