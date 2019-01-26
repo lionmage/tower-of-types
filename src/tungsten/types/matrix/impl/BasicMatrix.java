@@ -256,7 +256,14 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             result.append(new RowVector(c.negate(), a).scale(scale));
             return result;
         }
-        throw new UnsupportedOperationException("Not supported yet.");
+        
+        // otherwise recursively compute this using the adjoint
+        final Matrix<T> adjoint = this.adjoint();
+        BasicMatrix<Numeric> byAdjoint = new BasicMatrix<>();
+        for (long row = 0L; row < adjoint.rows(); row++) {
+            byAdjoint.append(((RowVector<Numeric>) adjoint.getRow(row)).scale(det.inverse()));
+        }
+        return byAdjoint;
     }
     
     public <R extends Numeric> Matrix<R> upconvert(Class<R> clazz) {
@@ -303,5 +310,33 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             result.add(updatedRow);
         }
         return new BasicMatrix<>(result);
+    }
+    
+    /**
+     * Return a matrix with row {@code row} and column {@code column}
+     * removed.
+     * 
+     * @param row the row index
+     * @param column the column index
+     * @return the sub-matrix formed by row and column removal
+     */
+    public BasicMatrix<T> minor(long row, long column) {
+        return this.removeRow(row).removeColumn(column);
+    }
+    
+    public BasicMatrix<T> cofactor() {
+        T[][] result = (T[][]) Array.newInstance(rows.get(0).elementAt(0L).getClass(), (int) this.rows(), (int) this.columns());
+        for (long row = 0L; row < rows(); row++) {
+            for (long column = 0L; column < columns(); column++) {
+                T intermediate = minor(row, column).determinant();
+                if ((row + column) % 2L == 1L) intermediate = (T) intermediate.negate();
+                result[(int) row][(int) column] = intermediate;
+            }
+        }
+        return new BasicMatrix<>(result);
+    }
+    
+    public Matrix<T> adjoint() {
+        return cofactor().transpose();
     }
 }
