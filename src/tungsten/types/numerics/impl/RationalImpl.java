@@ -306,6 +306,11 @@ public class RationalImpl implements RationalType {
     
     @Override
     public boolean equals(Object other) {
+        if (other instanceof Zero) {
+            return this.numerator.equals(BigInteger.ZERO);
+        } else if (other instanceof One) {
+            return this.numerator.equals(this.denominator);
+        }
         if (other instanceof RationalType) {
             RationalType that = (RationalType) other;
             if (this.isExact() != that.isExact()) {
