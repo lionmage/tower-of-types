@@ -128,6 +128,42 @@ public class MathUtils {
         return getCacheFor(n.asBigInteger());
     }
     
+    public static RealType computeIntegerExponent(Numeric x, IntegerType n) {
+        final RealType result;
+        final BigInteger exponent = n.asBigInteger();
+        
+        if (exponent.equals(BigInteger.ZERO)) {
+            result = new RealImpl(BigDecimal.ONE);
+            OptionalOperations.setMathContext(result, x.getMathContext());
+        } else {
+            try {
+                result = computeIntegerExponent((RealType) x.coerceTo(RealType.class), exponent.intValueExact());
+            } catch (CoercionException ex) {
+                Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Failed to coerce argument to RealType.", ex);
+                throw new ArithmeticException("Coercion failed: " + ex.getMessage());
+            }
+        }
+        
+        return result;
+    }
+    
+    public static ComplexType computeIntegerExponent(ComplexType x, IntegerType n) {
+        final BigInteger exponent = n.asBigInteger();
+        
+        long count = exponent.longValueExact() - 1L;
+        ComplexType accum = (ComplexType) x;
+        try {
+            while (count > 0) {
+                accum = (ComplexType) accum.multiply(accum).coerceTo(ComplexType.class);
+                count--;
+            }
+        } catch (CoercionException ce) {
+            Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Failed to coerce accumulator to a complex value.", ce);
+            throw new ArithmeticException("Coercion failed: " + ce.getMessage());
+        }
+        return accum;
+    }
+    
     /**
      * Compute x<sup>n</sup>.
      * @param x the value to take the exponent of
