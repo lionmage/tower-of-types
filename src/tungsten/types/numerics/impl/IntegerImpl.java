@@ -413,9 +413,9 @@ public class IntegerImpl implements IntegerType {
     @Override
     public boolean equals(Object other) {
         if (other instanceof Zero) {
-            return this.asBigInteger().equals(BigInteger.ZERO);
+            return this.isExact() && this.asBigInteger().equals(BigInteger.ZERO);
         } else if (other instanceof One) {
-            return this.asBigInteger().equals(BigInteger.ONE);
+            return this.isExact() && this.asBigInteger().equals(BigInteger.ONE);
         }
         if (other instanceof IntegerType) {
             IntegerType that = (IntegerType) other;

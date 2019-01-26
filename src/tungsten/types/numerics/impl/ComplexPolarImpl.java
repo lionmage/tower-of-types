@@ -342,9 +342,10 @@ public class ComplexPolarImpl implements ComplexType {
     @Override
     public boolean equals(Object o) {
         if (o instanceof Zero) {
-            return this.modulus.asBigDecimal().equals(BigDecimal.ZERO);
+            return this.isExact() && this.modulus.asBigDecimal().equals(BigDecimal.ZERO);
         } else if (o instanceof One) {
-            return this.modulus.asBigDecimal().equals(BigDecimal.ONE) &&
+            return this.isExact() &&
+                    this.modulus.asBigDecimal().equals(BigDecimal.ONE) &&
                     this.argument.asBigDecimal().equals(BigDecimal.ZERO);
         }
         if (o instanceof ComplexType) {

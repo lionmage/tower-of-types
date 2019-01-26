@@ -322,10 +322,10 @@ public class ComplexRectImpl implements ComplexType {
     @Override
     public boolean equals(Object o) {
         if (o instanceof Zero) {
-            return this.real.asBigDecimal().equals(BigDecimal.ZERO) &&
+            return exact && this.real.asBigDecimal().equals(BigDecimal.ZERO) &&
                     this.imag.asBigDecimal().equals(BigDecimal.ZERO);
         } else if (o instanceof One) {
-            return this.real.asBigDecimal().equals(BigDecimal.ONE) &&
+            return exact && this.real.asBigDecimal().equals(BigDecimal.ONE) &&
                     this.imag.asBigDecimal().equals(BigDecimal.ZERO);
         }
         if (o instanceof ComplexType) {
