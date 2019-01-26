@@ -25,7 +25,9 @@ package tungsten.types.matrix.impl;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Matrix;
@@ -45,6 +47,7 @@ import tungsten.types.vector.impl.RowVector;
  */
 public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     private List<RowVector<T>> rows = new ArrayList<>();
+    private Map<Long, ColumnVector<T>> columnCache = new HashMap<>();
     
     public BasicMatrix() {
     }
@@ -95,6 +98,9 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     public void setValueAt(T value, long row, long column) {
         RowVector<T> currentRow = this.getRow(row);
         currentRow.setElementAt(value, column);
+        if (columnCache.containsKey(column)) {
+            columnCache.get(column).setElementAt(value, row);
+        }
     }
 
     @Override
@@ -142,6 +148,16 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         return rows.get((int) row);
     }
     
+    @Override
+    public ColumnVector<T> getColumn(long column) {
+        if (columnCache.containsKey(column)) {
+            return columnCache.get(column);
+        }
+        ColumnVector<T> result = Matrix.super.getColumn(column);
+        columnCache.put(column, result);
+        return result;
+    }
+    
     /**
      * Append a row to this matrix.
      * @param row a row vector representing the new row to append
@@ -149,6 +165,8 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     public final void append(RowVector<T> row) {
         if (rows.isEmpty() || row.columns() == this.columns()) {
             rows.add(row);
+            // invalidate the column cache
+            if (!columnCache.isEmpty()) columnCache.clear();
         } else {
             throw new IllegalArgumentException("Expected a row vector with " + this.columns() +
                     " columns, but received one with " + row.columns() + " instead.");
@@ -174,6 +192,8 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         if (column.rows() != this.rows()) {
             throw new IllegalArgumentException("Column vector has wrong number of elements.");
         }
+        columnCache.put(columns(), column);  // cache the column before updating the rows
+
         for (long rowidx = 0; rowidx < this.rows(); rowidx++) {
             rows.get((int) rowidx).append(column.elementAt(rowidx));
         }
