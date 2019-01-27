@@ -25,10 +25,12 @@ package tungsten.types.numerics.impl;
 
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RationalType;
+import tungsten.types.util.UnicodeTextEffects;
 
 /**
  *
@@ -44,15 +46,85 @@ public class RepeatingDecimal extends RationalImpl {
     public RepeatingDecimal(IntegerType numerator, IntegerType denominator, MathContext mctx) {
         super(numerator, denominator);
         super.setMathContext(mctx);
+        characterize();
     }
     
     public RepeatingDecimal(RationalType source, MathContext mctx) {
         super(source.numerator(), source.denominator());
         super.setMathContext(mctx);
+        characterize();
     }
     
+    /**
+     * Gives the length in digits of the repeating sequence of digits
+     * in this decimal value.
+     * @return an {@link Optional} containing the cycle length, or an empty {@link Optional} if no cycle exists
+     */
+    public Optional<IntegerType> cycleLength() {
+        if (decimalPeriod.compareTo(BigInteger.ZERO) > 0) {
+            return Optional.of(new IntegerImpl(decimalPeriod));
+        }
+        return Optional.empty();
+    }
+    
+    /**
+     * Indicates the position after the decimal point where the repeating
+     * cycle of digits begins.  The digit immediately after the decimal
+     * point has a position of 0.
+     * 
+     * @return an {@link Optional} containing the cycle start position, or an empty {@link Optional} if no cycle exists
+     */
+    public Optional<IntegerType> cycleStart() {
+        if (position.compareTo(BigInteger.ZERO) >= 0) {
+            return Optional.of(new IntegerImpl(position));
+        }
+        return Optional.empty();
+    }
+    
+    @Override
+    public String toString() {
+        final int digitsToShow = getMathContext().getPrecision();
+        final IntegerType defaultPos = new IntegerImpl(BigInteger.ZERO);
+        StringBuilder buf = new StringBuilder();
+        
+        final String temp = asBigDecimal().toPlainString();
+        int charCount = temp.indexOf('.') > -1 ? digitsToShow + 1 : digitsToShow;
+        
+        cycleLength().ifPresent(length -> {
+            final int clength = length.asBigInteger().intValueExact();
+            int startPos = cycleStart().orElseThrow(IllegalStateException::new).asBigInteger().intValueExact() + temp.indexOf('.') + 1;
+            buf.append(temp.substring(0, startPos));
+            String cycleDigits = temp.substring(startPos, Math.min(startPos + clength, temp.length()));
+            while (startPos + clength < charCount) {
+                buf.append(UnicodeTextEffects.overline(cycleDigits));
+                startPos += clength;
+            }
+            if (startPos + clength > charCount) {
+                int subLength = charCount - startPos;
+                assert subLength <= clength;
+                // append as many digits as we are allowed, then follow with horizontal ellipsis
+                buf.append(UnicodeTextEffects.overline(cycleDigits.substring(0, subLength))).append(HORIZONTAL_ELLIPSIS);
+            }
+        });
+        
+        // if the buffer is still empty, do the default
+        if (!cycleStart().isPresent()) {
+            if (temp.length() > charCount) {
+                buf.append(temp.substring(0, charCount)).append(HORIZONTAL_ELLIPSIS);
+            }
+            else {
+                buf.append(temp);
+            }
+        }
+        
+        return buf.toString();
+    }
+    
+    private static final String HORIZONTAL_ELLIPSIS = "\u2026";
+    
     private void characterize() {
-        final BigInteger denom = denominator().asBigInteger();
+        final RationalType reduced = this.reduce();
+        final BigInteger denom = reduced.denominator().asBigInteger();
         final BigInteger dmod2 = denom.mod(TWO);
         final BigInteger dmod5 = denom.mod(FIVE);
 

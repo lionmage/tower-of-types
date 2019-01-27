@@ -27,11 +27,18 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.ComplexType;
+import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.impl.Euler;
+import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.numerics.impl.Zero;
+import tungsten.types.util.MathUtils;
 
 /**
  * A compact representation of a diagonal matrix.
@@ -150,5 +157,49 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
         };
         Numeric[] result = Arrays.stream(elements).map(element -> element.inverse()).toArray(size -> new Numeric[size]);
         return new DiagonalMatrix(result);
+    }
+    
+    public Matrix<? extends Numeric> pow(Numeric n) {
+        Numeric[] result;
+        if (elements[0] instanceof RealType) {
+            result = Arrays.stream(elements)
+                    .map(element -> MathUtils.generalizedExponent((RealType) element, n, element.getMathContext()))
+                    .toArray(size -> new Numeric[size]);
+        } else {
+            if (!(n instanceof IntegerType)) {
+                throw new IllegalArgumentException("Currently, non-integer exponents are not supported for non-real types.");
+            }
+            result = Arrays.stream(elements)
+                    .map(element -> MathUtils.computeIntegerExponent(element, (IntegerType) n))
+                    .toArray(size -> new Numeric[size]);
+        }
+        return new DiagonalMatrix<>(result);
+    }
+    
+    public Matrix<? extends Numeric> exp() {
+        final Euler e = Euler.getInstance(elements[0].getMathContext());
+
+        Numeric[] result = Arrays.stream(elements)
+                .map(element -> {
+                    return element instanceof ComplexType ? e.exp((ComplexType) element) : e.exp(limitedUpconvert(element));
+                }).toArray(size -> new Numeric[size]);
+        return new DiagonalMatrix<>(result);
+    }
+    
+    // this method strictly exists to promote lesser types in the hierarchy to real values
+    private RealType limitedUpconvert(Numeric val) {
+        if (val instanceof RealType)  return (RealType) val;
+        try {
+            return (RealType) val.coerceTo(RealType.class);
+        } catch (CoercionException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        // 202F = non-breaking narrow space
+        return Arrays.stream(elements).map(element -> element.toString())
+                .collect(Collectors.joining(", ", "diag(\u202F", "\u202F)"));
     }
 }
