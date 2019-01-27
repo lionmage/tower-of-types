@@ -133,7 +133,7 @@ public class ParametricMatrix<T extends Numeric> implements Matrix<T> {
         final Class<T> clazz = (Class<T>) addend.valueAt(0L, 0L).getClass();
         BasicMatrix<T> result = new BasicMatrix<>();
         for (long row = 0L; row < rows; row++) {
-            T[] accum = (T[]) Array.newInstance(clazz, (int) rows, (int) columns);
+            T[] accum = (T[]) Array.newInstance(clazz, (int) columns);
             for (long column = 0L; column < columns; column++) {
                 accum[(int) column] = (T) generatorFunction.apply(row, column).add(addend.valueAt(row, column));
             }
