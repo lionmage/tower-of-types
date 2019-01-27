@@ -161,7 +161,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         if (this.columns() != multiplier.rows()) {
             throw new ArithmeticException("Multiplier must have the same number of rows as this matrix has columns.");
         }
-        T[][] temp = (T[][]) Array.newInstance(valueAt(0L, 0L).getClass(), (int) this.columns(), (int) multiplier.rows());
+        T[][] temp = (T[][]) Array.newInstance(valueAt(0L, 0L).getClass(), (int) this.rows(), (int) multiplier.columns());
         for (long row = 0L; row < rows(); row++) {
             RowVector<T> rowvec = this.getRow(row);
             for (long column = 0L; column < multiplier.columns(); column++) {
@@ -310,7 +310,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
                             valueAt(row, column), clazz.getTypeName(), row, column));
                 }
             }
-            result.append(new RowVector<>(accum));
+            result.append(accum);
         }
         return result;
     }

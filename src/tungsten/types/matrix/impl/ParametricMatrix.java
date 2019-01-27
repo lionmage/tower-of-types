@@ -149,7 +149,7 @@ public class ParametricMatrix<T extends Numeric> implements Matrix<T> {
         }
         
         final Class<? extends Numeric> clazz = valueAt(0L, 0L).getClass();
-        T[][] temp = (T[][]) Array.newInstance(clazz, (int) this.columns(), (int) multiplier.rows());
+        T[][] temp = (T[][]) Array.newInstance(clazz, (int) this.rows(), (int) multiplier.columns());
         for (long row = 0L; row < rows(); row++) {
             RowVector<T> rowvec = this.getRow(row);  // the default implementation should be performant enough for this
             for (long column = 0L; column < multiplier.columns(); column++) {
