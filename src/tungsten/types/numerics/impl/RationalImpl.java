@@ -64,7 +64,7 @@ public class RationalImpl implements RationalType {
     }
     
     public RationalImpl(String representation) {
-        int position = representation.indexOf('/');
+        final int position = representation.indexOf('/');
         String numStr = representation.substring(0, position);
         String denomStr = representation.substring(position + 1);
         
