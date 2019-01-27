@@ -32,6 +32,7 @@ import tungsten.types.numerics.impl.One;
 import tungsten.types.vector.impl.OneVector;
 
 /**
+ * An Identity matrix (&#x1D7D9;) representation.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
@@ -68,5 +69,10 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     public IdentityMatrix inverse() {
         // the identity matrix is its own inverse
         return this;
+    }
+    
+    @Override
+    public String toString() {
+        return "\uD835\uDFD9";  // surrogate pair for 1D7D9
     }
 }
