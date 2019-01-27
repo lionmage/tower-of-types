@@ -144,13 +144,13 @@ public class ParametricMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public Matrix<T> multiply(Matrix<T> multiplier) {
-        if (this.columns() != multiplier.rows()) {
+        if (columns != multiplier.rows()) {
             throw new ArithmeticException("Multiplier must have the same number of rows as this matrix has columns.");
         }
         
         final Class<? extends Numeric> clazz = valueAt(0L, 0L).getClass();
-        T[][] temp = (T[][]) Array.newInstance(clazz, (int) this.rows(), (int) multiplier.columns());
-        for (long row = 0L; row < rows(); row++) {
+        T[][] temp = (T[][]) Array.newInstance(clazz, (int) rows, (int) multiplier.columns());
+        for (long row = 0L; row < rows; row++) {
             RowVector<T> rowvec = this.getRow(row);  // the default implementation should be performant enough for this
             for (long column = 0L; column < multiplier.columns(); column++) {
                 temp[(int) row][(int) column] = rowvec.dotProduct(multiplier.getColumn(column));
