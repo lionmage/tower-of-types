@@ -230,7 +230,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     }
     
     @Override
-    public Matrix<T> transpose() {
+    public ColumnVector<T> transpose() {
         return new ColumnVector(elements);
     }
     
