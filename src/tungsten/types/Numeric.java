@@ -34,7 +34,12 @@ import tungsten.types.exceptions.CoercionException;
 public interface Numeric {
     public boolean isExact();
     public boolean isCoercibleTo(Class<? extends Numeric> numtype);
-    public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException;
+    default public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        if (numtype == Numeric.class) return this;
+        throw new CoercionException("coerceTo() not implemented for " +
+                numtype.getTypeName() + " in class " + this.getClass().getName(),
+                this.getClass(), numtype);
+    };
     public Numeric magnitude();
     public Numeric negate();
     
