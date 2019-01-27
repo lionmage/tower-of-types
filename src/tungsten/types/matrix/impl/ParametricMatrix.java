@@ -159,6 +159,12 @@ public class ParametricMatrix<T extends Numeric> implements Matrix<T> {
         return new BasicMatrix<>(temp);
     }
     
+    @Override
+    public Matrix<T> transpose() {
+        final Generator<T> transGenerator = new Generator<>((row, column) -> generatorFunction.internal.apply(column, row));
+        return new ParametricMatrix(columns, rows, transGenerator);
+    }
+    
     public <R extends Numeric> Matrix<R> upconvert(Class<R> clazz) {
         // first, check to make sure we can do this -- ensure R is a wider type than T
         NumericHierarchy targetType = NumericHierarchy.forNumericType(clazz);
