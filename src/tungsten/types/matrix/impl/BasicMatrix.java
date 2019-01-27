@@ -59,8 +59,8 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
      * @param source a two-dimensional array
      */
     public BasicMatrix(T[][] source) {
-        for (int i = 0; i < source.length; i++) {
-            append(new RowVector<>(source[i]));
+        for (T[] rowArray : source) {
+            append(new RowVector<>(rowArray));
         }
     }
     
@@ -158,7 +158,17 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public Matrix<T> multiply(Matrix<T> multiplier) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.columns() != multiplier.rows()) {
+            throw new ArithmeticException("Multiplier must have the same number of rows as this matrix has columns.");
+        }
+        T[][] temp = (T[][]) Array.newInstance(valueAt(0L, 0L).getClass(), (int) this.columns(), (int) multiplier.rows());
+        for (long row = 0L; row < rows(); row++) {
+            RowVector<T> rowvec = this.getRow(row);
+            for (long column = 0L; column < multiplier.columns(); column++) {
+                temp[(int) row][(int) column] = rowvec.dotProduct(multiplier.getColumn(column));
+            }
+        }
+        return new BasicMatrix<>(temp);
     }
     
     @Override
@@ -177,6 +187,17 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         ColumnVector<T> result = Matrix.super.getColumn(column);
         columnCache.put(column, result);
         return result;
+    }
+    
+    @Override
+    public Matrix<T> transpose() {
+        T[][] temp = (T[][]) Array.newInstance(valueAt(0L, 0L).getClass(), (int) columns(), (int) rows());
+        for (long row = 0L; row < columns(); row++) {
+            for (long column = 0L; column < rows(); column++) {
+                temp[(int) row][(int) column] = this.valueAt(column, row);
+            }
+        }
+        return new BasicMatrix<>(temp);
     }
     
     /**
@@ -213,6 +234,7 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
      * @param column a column vector representing the new column to append
      */
     public void append(ColumnVector<T> column) {
+        if (rows.isEmpty()) throw new UnsupportedOperationException("Appending a column to an empty BasicMatrix is not supported.");
         if (column.rows() != this.rows()) {
             throw new IllegalArgumentException("Column vector has wrong number of elements.");
         }

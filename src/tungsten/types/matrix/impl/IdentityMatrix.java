@@ -57,6 +57,14 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     }
     
     @Override
+    public Matrix<Numeric> multiply(Matrix<Numeric> multiplier) {
+        if (elementCount != multiplier.rows()) {
+            throw new ArithmeticException("The multiplier must have the same number of rows as this matrix has columns.");
+        }
+        return multiplier;  // IA = A
+    }
+    
+    @Override
     public IdentityMatrix inverse() {
         // the identity matrix is its own inverse
         return this;
