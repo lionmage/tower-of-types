@@ -25,8 +25,6 @@ package tungsten.types.matrix.impl;
 
 import java.lang.reflect.Array;
 import java.util.function.BiFunction;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
@@ -171,10 +169,12 @@ public class ParametricMatrix<T extends Numeric> implements Matrix<T> {
             throw new ArithmeticException("Cannot upconvert elements of " + currentType + " to elements of " + targetType);
         }
         
-        final BiFunction<Long, Long, R> upfunction = generatorFunction.andThen(x -> {
+        // for efficiency, unwrapping the internal function of the generator so we're not range checking twice
+        final BiFunction<Long, Long, R> upfunction = generatorFunction.internal.andThen(x -> {
             try {
                 return (R) x.coerceTo(clazz);
             } catch (CoercionException ex) {
+                // we should never get here
                 throw new IllegalStateException(ex);
             }
         });
