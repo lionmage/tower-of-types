@@ -191,13 +191,11 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     
     @Override
     public Matrix<T> transpose() {
-        T[][] temp = (T[][]) Array.newInstance(valueAt(0L, 0L).getClass(), (int) columns(), (int) rows());
-        for (long row = 0L; row < columns(); row++) {
-            for (long column = 0L; column < rows(); column++) {
-                temp[(int) row][(int) column] = this.valueAt(column, row);
-            }
+        ColumnarMatrix<T> result = new ColumnarMatrix<>();
+        for (RowVector<T> row : rows) {
+            result.append(row.transpose());
         }
-        return new BasicMatrix<>(temp);
+        return result;
     }
     
     /**
