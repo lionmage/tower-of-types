@@ -28,10 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import tungsten.types.Numeric;
-import tungsten.types.exceptions.CoercionException;
 
 /**
  * A representation of zero for situations where zero is being asymptotically

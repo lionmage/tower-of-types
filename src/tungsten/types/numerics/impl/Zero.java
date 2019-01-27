@@ -87,6 +87,7 @@ public class Zero implements Numeric, Comparable<Numeric> {
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        if (numtype == Numeric.class) return this;
         NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
         Numeric retval;
         switch (htype) {

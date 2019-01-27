@@ -135,6 +135,7 @@ public class Pi implements RealType {
 
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
+        if (numtype == Numeric.class) return true;
         NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
         // can be coerced to real or complex
         return htype.compareTo(NumericHierarchy.REAL) >= 0;
@@ -142,6 +143,7 @@ public class Pi implements RealType {
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        if (numtype == Numeric.class) return this;
         NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
         switch (htype) {
             case REAL:

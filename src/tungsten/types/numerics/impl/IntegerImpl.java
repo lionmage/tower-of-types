@@ -265,12 +265,14 @@ public class IntegerImpl implements IntegerType {
 
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
+        if (numtype == Numeric.class) return true;
         NumericHierarchy hval = NumericHierarchy.forNumericType(numtype);
         return hval != null;  // integer can be upconverted to any known type
     }
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        if (numtype == Numeric.class) return this;
         NumericHierarchy hval = NumericHierarchy.forNumericType(numtype);
         switch (hval) {
             case INTEGER:

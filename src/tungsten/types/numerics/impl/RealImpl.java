@@ -155,12 +155,13 @@ public class RealImpl implements RealType {
             case RATIONAL:
                 return !this.isIrrational();
             default:
-                return false;
+                return numtype == Numeric.class;
         }
     }
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        if (numtype == Numeric.class) return this;
         NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
         switch (htype) {
             case REAL:

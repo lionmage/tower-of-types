@@ -136,6 +136,7 @@ public class ComplexPolarImpl implements ComplexType {
 
     @Override
     public boolean isCoercibleTo(Class<? extends Numeric> numtype) {
+        if (numtype == Numeric.class) return true;
         NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
         switch (htype) {
             case COMPLEX:
@@ -177,6 +178,7 @@ public class ComplexPolarImpl implements ComplexType {
 
     @Override
     public Numeric coerceTo(Class<? extends Numeric> numtype) throws CoercionException {
+        if (numtype == Numeric.class) return this;
         NumericHierarchy htype = NumericHierarchy.forNumericType(numtype);
         switch (htype) {
             case COMPLEX:
