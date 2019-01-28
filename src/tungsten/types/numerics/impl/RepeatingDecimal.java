@@ -84,7 +84,6 @@ public class RepeatingDecimal extends RationalImpl {
     @Override
     public String toString() {
         final int digitsToShow = getMathContext().getPrecision();
-        final IntegerType defaultPos = new IntegerImpl(BigInteger.ZERO);
         StringBuilder buf = new StringBuilder();
         
         final String temp = asBigDecimal().toPlainString();
@@ -107,7 +106,7 @@ public class RepeatingDecimal extends RationalImpl {
             }
         });
         
-        // if the buffer is still empty, do the default
+        // in this case, there is no cycle, so just truncate if necessary
         if (!cycleStart().isPresent()) {
             if (temp.length() > charCount) {
                 buf.append(temp.substring(0, charCount)).append(HORIZONTAL_ELLIPSIS);
