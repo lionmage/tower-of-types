@@ -25,6 +25,8 @@ package tungsten.types.numerics.impl;
 
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -81,17 +83,32 @@ public class RepeatingDecimal extends RationalImpl {
         return Optional.empty();
     }
     
+    private static DecimalFormat obtainDecimalFormat() {
+        NumberFormat format = DecimalFormat.getInstance();
+        if (format instanceof DecimalFormat) {
+            return (DecimalFormat) format;
+        } else {
+            Logger.getLogger(RepeatingDecimal.class.getName()).log(Level.WARNING,
+                    "Tried to obtain a {} instance, but received {} instead.",
+                    new Object[] {DecimalFormat.class.getTypeName(), format.getClass().getTypeName()});
+            return new DecimalFormat();
+        }
+    }
+    
+    private static final char DECIMAL_POINT_REPRESENTATION = obtainDecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
+    
     @Override
     public String toString() {
         final int digitsToShow = getMathContext().getPrecision();
         StringBuilder buf = new StringBuilder();
         
         final String temp = asBigDecimal().toPlainString();
-        int charCount = temp.indexOf('.') > -1 ? digitsToShow + 1 : digitsToShow;
+        int charCount = temp.indexOf(DECIMAL_POINT_REPRESENTATION) > -1 ? digitsToShow + 1 : digitsToShow;
         
         cycleLength().ifPresent(length -> {
             final int clength = length.asBigInteger().intValueExact();
-            int startPos = cycleStart().orElseThrow(IllegalStateException::new).asBigInteger().intValueExact() + temp.indexOf('.') + 1;
+            int startPos = cycleStart().orElseThrow(IllegalStateException::new).asBigInteger().intValueExact() +
+                    temp.indexOf(DECIMAL_POINT_REPRESENTATION) + 1;
             buf.append(temp.substring(0, startPos));
             String cycleDigits = temp.substring(startPos, Math.min(startPos + clength, temp.length()));
             while (startPos + clength < charCount) {
