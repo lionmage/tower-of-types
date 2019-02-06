@@ -47,7 +47,8 @@ import tungsten.types.numerics.impl.Zero;
 public class Symbol {
     private final String name;
     private final String representation;
-    private Class<? extends Numeric> valueClass;  // TODO can this be made to handle objects like matrix, vector, function, etc.?
+    private Class<? extends Numeric> valueClass;
+    private Numeric concreteValue;  // TODO can this be made to handle objects like matrix, vector, function, etc.?
     
     private static final ConcurrentMap<String, Symbol> cache = new ConcurrentHashMap<>();
     
@@ -100,8 +101,34 @@ public class Symbol {
         return representation;
     }
     
+    /**
+     * Returns the {@link Class} of the numeric value represented by this
+     * symbol if and only if this symbol represents a constant.
+     * 
+     * @return an {@link Optional} which contains the {@link Class} of a numeric constant, if present
+     */
     public Optional<Class<? extends Numeric>> getValueClass() {
         return Optional.ofNullable(valueClass);
+    }
+    
+    public void setConcreteValue(Numeric value) {
+        if (getValueClass().isPresent()) {
+            throw new UnsupportedOperationException("Symbol " + name + " is a constant.");
+        }
+        if (concreteValue != null) {
+            final Class<? extends Numeric> oldClass = concreteValue.getClass();
+            final Class<? extends Numeric> newClass = value.getClass();
+            if (!oldClass.isAssignableFrom(newClass)) {
+                Logger.getLogger(Symbol.class.getName()).log(Level.WARNING,
+                        "Symbol {} changing type of bound value from {} to {}.",
+                        new Object[] {name, oldClass.getTypeName(), newClass.getTypeName()});
+            }
+        }
+        concreteValue = Objects.requireNonNull(value, "Cannot undefine symbol value.");
+    }
+    
+    public Optional<? extends Numeric> getConcreteValue() {
+        return Optional.ofNullable(concreteValue);
     }
     
     public Optional<? extends Numeric> getValueInstance(MathContext mctx) {
