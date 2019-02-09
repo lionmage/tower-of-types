@@ -36,7 +36,6 @@ import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.Euler;
-import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.numerics.impl.Zero;
 import tungsten.types.util.MathUtils;
 
@@ -55,8 +54,14 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
     
     public DiagonalMatrix(Vector<T> source) {
         Class<T> clazz = (Class<T>) source.elementAt(0L).getClass();
-        elements = (T[]) Array.newInstance(clazz, (int) source.length());
-        for (int i = 0; i < source.length(); i++) {
+        int arrayLength = source.length() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) source.length();
+        if (arrayLength < source.length()) {
+            Logger.getLogger(DiagonalMatrix.class.getName()).log(Level.WARNING,
+                    "Source vector with {} elements will not fit into a Java array; truncating.",
+                    source.length());
+        }
+        elements = (T[]) Array.newInstance(clazz, arrayLength);
+        for (int i = 0; i < arrayLength; i++) {
             elements[i] = source.elementAt((long) i);
         }
     }
@@ -125,7 +130,7 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
             throw new ArithmeticException("Addend must match dimensions of this diagonal matrix.");
         }
         
-        BasicMatrix<T> result = new BasicMatrix(addend);
+        BasicMatrix<T> result = new BasicMatrix<>(addend);
         Class<T> clazz = (Class<T>) elements[0].getClass();
 
         try {
@@ -154,7 +159,7 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
         final Numeric zero = Zero.getInstance(elements[0].getMathContext());
         if (Arrays.stream(elements).anyMatch(element -> element.equals(zero))) {
             throw new ArithmeticException("Diagonal matrices with any 0 elements on the diagonal have no inverse.");
-        };
+        }
         Numeric[] result = Arrays.stream(elements).map(element -> element.inverse()).toArray(size -> new Numeric[size]);
         return new DiagonalMatrix(result);
     }

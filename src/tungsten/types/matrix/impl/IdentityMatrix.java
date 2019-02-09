@@ -29,6 +29,7 @@ import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.One;
+import tungsten.types.numerics.impl.Zero;
 import tungsten.types.vector.impl.OneVector;
 
 /**
@@ -39,12 +40,30 @@ import tungsten.types.vector.impl.OneVector;
 public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     private final MathContext mctx;
     private long elementCount;
+    private final Numeric one;
     
     public IdentityMatrix(long size, MathContext mctx) {
         super(OneVector.getInstance(size, mctx));
         this.mctx = mctx;
         this.elementCount = size;
+        this.one = One.getInstance(mctx);
     }
+    
+    @Override
+    public Numeric valueAt(long row, long column) {
+        if (row < 0L || row >= elementCount || column < 0L || column >= elementCount) {
+            throw new IndexOutOfBoundsException("Row and column indices must be between 0 and " +
+                    (elementCount - 1L) + ", inclusive.");
+        }
+        if (row == column) return One.getInstance(mctx);
+        return Zero.getInstance(mctx);
+    }
+    
+    @Override
+    public long columns() { return elementCount; }
+    
+    @Override
+    public long rows() { return elementCount; }
     
     @Override
     public Numeric determinant() {
@@ -63,6 +82,20 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
             throw new ArithmeticException("The multiplier must have the same number of rows as this matrix has columns.");
         }
         return multiplier;  // IA = A
+    }
+    
+    @Override
+    public Matrix<Numeric> add(Matrix<Numeric> addend) {
+        if (addend.rows() != this.rows() || addend.columns() != this.columns()) {
+            throw new ArithmeticException("Addend must match dimensions of this diagonal matrix.");
+        }
+        
+        BasicMatrix<Numeric> result = new BasicMatrix<>(addend);
+        for (long idx = 0L; idx < elementCount; idx++) {
+            final Numeric sum = addend.valueAt(idx, idx).add(one);
+            result.setValueAt(sum, idx, idx);
+        }
+        return result;
     }
     
     @Override
