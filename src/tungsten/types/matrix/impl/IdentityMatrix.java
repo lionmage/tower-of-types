@@ -67,7 +67,7 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     
     @Override
     public Numeric determinant() {
-        return One.getInstance(mctx);
+        return one;
     }
     
     @Override
