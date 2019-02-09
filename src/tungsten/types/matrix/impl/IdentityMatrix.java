@@ -45,7 +45,7 @@ import tungsten.types.vector.impl.OneVector;
  */
 public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     private final MathContext mctx;
-    private long elementCount;
+    private final long elementCount;
     private final Numeric one;
     
     public IdentityMatrix(long size, MathContext mctx) {
@@ -98,7 +98,8 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
         
         BasicMatrix<Numeric> result = new BasicMatrix<>(addend);
         for (long idx = 0L; idx < elementCount; idx++) {
-            final Numeric sum = addend.valueAt(idx, idx).add(one);
+            // TODO determine which order of addition would be more efficient
+            final Numeric sum = one.add(addend.valueAt(idx, idx));
             result.setValueAt(sum, idx, idx);
         }
         return result;
