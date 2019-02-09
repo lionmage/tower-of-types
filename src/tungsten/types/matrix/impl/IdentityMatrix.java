@@ -34,6 +34,12 @@ import tungsten.types.vector.impl.OneVector;
 
 /**
  * An Identity matrix (&#x1D7D9;) representation.
+ * Note that, for most operations, the limitations of Java
+ * array sizes do not apply; you can have an Identity matrix
+ * with up to {@link Long#MAX_VALUE} columns and rows.
+ * The {@code pow()} and {@code exp()} methods of the parent
+ * class will only operate on a truncated representation
+ * of the Identity matrix in this case.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
