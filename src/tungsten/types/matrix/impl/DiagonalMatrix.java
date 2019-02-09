@@ -120,7 +120,7 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
     }
 
     @Override
-    public Matrix<T> transpose() {
+    public DiagonalMatrix<T> transpose() {
         return this; // diaginal matrices are their own transpose
     }
 
