@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
+import tungsten.types.annotations.Constant;
 
 /**
  * A representation of zero for situations where zero is being asymptotically
@@ -36,6 +37,7 @@ import tungsten.types.Numeric;
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
+@Constant(name = "-zero", representation = "\u22120")
 public class NegZero extends Zero {
     private NegZero(MathContext mctx) {
         super(mctx);

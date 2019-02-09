@@ -31,6 +31,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.Set;
+import tungsten.types.annotations.Constant;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
@@ -41,6 +42,7 @@ import tungsten.types.numerics.RealType;
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
+@Constant(name = "imaginary unit", representation = "\u2148")
 public class ImaginaryUnit implements ComplexType {
     private static final RealType TWO = new RealImpl(BigDecimal.valueOf(2L));
 

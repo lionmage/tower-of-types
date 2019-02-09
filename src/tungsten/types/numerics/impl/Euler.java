@@ -35,6 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
 import tungsten.types.Set;
+import tungsten.types.annotations.Constant;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
@@ -60,6 +61,7 @@ import tungsten.types.util.OptionalOperations;
  * @see <a href="https://www.intmath.com/exponential-logarithmic-functions/calculating-e.php">an article at Interactive Mathematics about ways to calculate &#x212f;</a>
  * @see <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)">the wikipedia article about this constant</a>
  */
+@Constant(name = "euler", representation="\u212F")
 public class Euler implements RealType {
     private final MathContext mctx;
     private BigDecimal value;

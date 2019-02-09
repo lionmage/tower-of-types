@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
+import tungsten.types.annotations.Constant;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.Sign;
@@ -39,6 +40,7 @@ import tungsten.types.util.OptionalOperations;
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
+@Constant(name = "+infinity", representation = "\u221E")
 public class PosInfinity implements Numeric, Comparable<Numeric> {
     private MathContext mctx;
 

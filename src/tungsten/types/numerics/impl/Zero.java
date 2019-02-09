@@ -33,6 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Numeric;
+import tungsten.types.annotations.Constant;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
@@ -49,6 +50,7 @@ import tungsten.types.util.OptionalOperations;
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
+@Constant(name = "zero", representation = "0")
 public class Zero implements Numeric, Comparable<Numeric> {
     protected final MathContext mctx;
     

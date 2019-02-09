@@ -34,6 +34,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Numeric;
 import tungsten.types.Set;
+import tungsten.types.annotations.Constant;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
@@ -66,6 +67,7 @@ import tungsten.types.util.OptionalOperations;
  * @author tarquin
  * @see <a href="https://en.wikipedia.org/wiki/Bailey%E2%80%93Borwein%E2%80%93Plouffe_formula">the Wikipedia article on BBP</a>
  */
+@Constant(name = "pi", representation = "\uD835\uDF0B")
 public class Pi implements RealType {
     private BigDecimal value;
     private final MathContext mctx;

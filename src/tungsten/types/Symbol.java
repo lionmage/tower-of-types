@@ -23,17 +23,26 @@
  */
 package tungsten.types;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfoList;
+import io.github.classgraph.ScanResult;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.MathContext;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tungsten.types.annotations.Constant;
 import tungsten.types.numerics.impl.Euler;
 import tungsten.types.numerics.impl.ImaginaryUnit;
 import tungsten.types.numerics.impl.One;
@@ -51,6 +60,26 @@ public class Symbol {
     private Numeric concreteValue;  // TODO can this be made to handle objects like matrix, vector, function, etc.?
     
     private static final ConcurrentMap<String, Symbol> cache = new ConcurrentHashMap<>();
+    public static final String PKG_SCAN_PROP = "tungsten.scan.external.types";
+    
+    static {
+        final String[] externalTypePackages = System.getProperty(PKG_SCAN_PROP, "").split(",");
+        final String[] packagesToScan = (String[]) Array.newInstance(String.class, externalTypePackages.length + 1);
+        packagesToScan[0] = "tungsten.types.numerics.impl";  // scan our own stuff first
+        System.arraycopy(externalTypePackages, 0, packagesToScan, 1, externalTypePackages.length);
+        ScanResult scanResult = new ClassGraph().enableAllInfo().whitelistPackages(packagesToScan).scan();
+        ClassInfoList classInfoList = scanResult.getClassesWithAnnotation(Constant.class.getName());
+        // start with numerics
+        List<Class<Numeric>> classes = classInfoList.loadClasses(Numeric.class);
+        classes.forEach(clazz -> {
+            Constant annotation = clazz.getAnnotation(Constant.class);
+            Logger.getLogger(Symbol.class.getName()).log(Level.FINE,
+                    "Processing Class {} for symbol {}, represented as {}",
+                    new Object[] {clazz.getSimpleName(), annotation.name(), annotation.representation()});
+            cache.put(annotation.name(),
+                    new Symbol(annotation.name(), annotation.representation(), clazz));
+        });
+    }
     
     public Symbol(String name, String representation) {
         this.name = name;
@@ -69,7 +98,9 @@ public class Symbol {
     }
     
     public Symbol(String name, String representation, Class<? extends Numeric> valueClass) {
-        this(name, representation);
+        // we are not auto-caching in this case
+        this.name = name;
+        this.representation = representation;
         this.valueClass = valueClass;
     }
     
@@ -81,8 +112,12 @@ public class Symbol {
         }
     }
     
-    public static java.util.Set<String> getAllSymbols() {
-        return cache.keySet();
+    public static java.util.Set<String> getAllSymbolNames() {
+        return Collections.unmodifiableSet(cache.keySet());
+    }
+    
+    public static java.util.Set<Symbol> getAllSymbols() {
+        return new HashSet<>(cache.values());
     }
     
     public static Symbol getForName(String name) {
@@ -148,18 +183,6 @@ public class Symbol {
         return Optional.empty();
     }
 
-    private static DecimalFormat obtainDecimalFormat() {
-        NumberFormat format = DecimalFormat.getInstance();
-        if (format instanceof DecimalFormat) {
-            return (DecimalFormat) format;
-        } else {
-            Logger.getLogger(Symbol.class.getName()).log(Level.WARNING,
-                    "Tried to obtain a {} instance, but received {} instead.",
-                    new Object[] {DecimalFormat.class.getTypeName(), format.getClass().getTypeName()});
-            return new DecimalFormat();
-        }
-    }
-    
     @Override
     public int hashCode() {
         int hash = 7;
@@ -188,15 +211,7 @@ public class Symbol {
         return representation;
     }
     
+    // Some pre-defined symbols simply put here to ensure their entries are parked.
     public static final Symbol theta = new Symbol("theta", "\u0398");
     public static final Symbol phi   = new Symbol("phi", "\u03C6");
-    public static final Symbol zero  = new Symbol("zero",
-            String.valueOf(obtainDecimalFormat().getDecimalFormatSymbols().getZeroDigit()),
-            Zero.class);
-    public static final Symbol pi    = new Symbol("pi", "\uD835\uDF0B", Pi.class);
-    public static final Symbol euler = new Symbol("euler", "\u212F", Euler.class);
-    public static final Symbol one   = new Symbol("one",
-            String.valueOf(Character.forDigit(1, 10)), One.class);
-    public static final Symbol imaginary_unit =
-            new Symbol("imaginary unit", "\u2148", ImaginaryUnit.class);
 }

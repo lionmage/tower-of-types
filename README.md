@@ -14,7 +14,8 @@ attempting to avoid that and code to interfaces with the philosophy that interfa
 in utility.
 
 The project currently relies on the big-math library hosted at https://github.com/eobermuhlner/big-math for some
-trigonometric functions.  The Ant build script will automatically retrieve the appropriate Jar files and place them
+trigonometric functions.  It now also relies on ClassGraph hosted at https://github.com/classgraph/classgraph for some
+package scanning functions.  The Ant build script will automatically retrieve the appropriate Jar files and place them
 in a lib directory within the project.  If you load tower-of-types into Netbeans, you will need to do a "Clean and Build"
 at the root project node to obtain these dependencies.  If Netbeans prompts you to fix the dependencies, simply
 cancel the dialog and do the build once to resolve everything.
