@@ -23,6 +23,7 @@
  */
 package tungsten.types.util;
 
+import ch.obermuhlner.math.big.BigDecimalMath;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -31,11 +32,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tungsten.types.Axis;
+import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Range;
 import static tungsten.types.Range.BoundType;
 import tungsten.types.Set;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.matrix.impl.BasicMatrix;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.NumericHierarchy;
@@ -490,15 +494,15 @@ public class MathUtils {
         return MathContext.UNLIMITED;
     }
     
-    public String inScientificNotation(RealType value) {
+    public static String inScientificNotation(RealType value) {
         return convertToScientificNotation(value.asBigDecimal());
     }
     
-    public String inScientificNotation(RationalType value) {
+    public static String inScientificNotation(RationalType value) {
         return convertToScientificNotation(value.asBigDecimal());
     }
     
-    private String convertToScientificNotation(BigDecimal decValue) {
+    private static String convertToScientificNotation(BigDecimal decValue) {
         if (decValue.scale() <= 0) {
             IntegerImpl temp = new IntegerImpl(decValue.toBigIntegerExact());
             return inScientificNotation(temp);
@@ -517,7 +521,7 @@ public class MathUtils {
         return buf.toString();
     }
     
-    public String inScientificNotation(IntegerType value) {
+    public static String inScientificNotation(IntegerType value) {
         long digits = value.numberOfDigits();
         int exponent = (int) (digits - 1L);
         StringBuilder buf = new StringBuilder();
@@ -529,5 +533,72 @@ public class MathUtils {
         buf.append("\u2009\u00D7\u200910").append(UnicodeTextEffects.numericSuperscript(exponent));
         
         return buf.toString();
+    }
+    
+    /**
+     * Generate a matrix of rotation in 2 dimensions.
+     * 
+     * @param theta the angle of rotation in radians around the origin
+     * @return a 2&#215;2 matrix of rotation
+     */
+    public static Matrix<RealType> get2DMatrixOfRotation(RealType theta) {
+        RealType[][] temp = new RealType[2][2];
+        
+        RealType cos = new RealImpl(BigDecimalMath.cos(theta.asBigDecimal(), theta.getMathContext()));
+        RealType sin = new RealImpl(BigDecimalMath.sin(theta.asBigDecimal(), theta.getMathContext()));
+        
+        temp[0][0] = cos;
+        temp[0][1] = sin.negate();
+        temp[1][0] = sin;
+        temp[1][1] = cos;
+        
+        return new BasicMatrix<>(temp);
+    }
+    
+    /**
+     * Generate a matrix of rotation in 3 dimensions.
+     * 
+     * @param theta the angle of rotation in radians
+     * @param axis the major axis around which the rotation is to occur
+     * @return a 3&#215;3 matrix of rotation
+     * @see <a href="https://en.wikipedia.org/wiki/Rotation_matrix">the Wikipedia article on matrices of rotation</a>
+     */
+    public static Matrix<RealType> get3DMatrixOfRotation(RealType theta, Axis axis) {
+        RealType[][] temp = new RealType[3][];
+        
+        RealType one;
+        RealType zero;
+        try {
+            zero = (RealType) Zero.getInstance(theta.getMathContext()).coerceTo(RealType.class);
+            one = (RealType) One.getInstance(theta.getMathContext()).coerceTo(RealType.class);
+        } catch (CoercionException coercionException) {
+            Logger.getLogger(MathUtils.class.getName()).log(Level.SEVERE, "Error obtaining real value for base constant.", coercionException);
+            zero = new RealImpl("0");  // basic default behavior, because we shouldn't fail horribly like this
+            one = new RealImpl("1");
+            // and ensure we set the right MathContext for these values
+            OptionalOperations.setMathContext(one, theta.getMathContext());
+            OptionalOperations.setMathContext(zero, theta.getMathContext());
+        }
+        RealType cos = new RealImpl(BigDecimalMath.cos(theta.asBigDecimal(), theta.getMathContext()));
+        RealType sin = new RealImpl(BigDecimalMath.sin(theta.asBigDecimal(), theta.getMathContext()));
+
+        switch (axis) {
+            case X_AXIS:
+                temp[0] = new RealType[] { one, zero, zero };
+                temp[1] = new RealType[] { zero, cos, sin.negate() };
+                temp[2] = new RealType[] { zero, sin, cos };
+                break;
+            case Y_AXIS:
+                temp[0] = new RealType[] { cos, zero, sin };
+                temp[1] = new RealType[] { zero, one, zero };
+                temp[2] = new RealType[] { sin.negate(), zero, cos };
+                break;
+            case Z_AXIS:
+                temp[0] = new RealType[] { cos, sin.negate(), zero };
+                temp[1] = new RealType[] { sin, cos, zero };
+                temp[2] = new RealType[] { zero, zero, one };
+                break;
+        }
+        return new BasicMatrix<>(temp);
     }
 }
