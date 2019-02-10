@@ -29,6 +29,7 @@ import io.github.classgraph.ScanResult;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.MathContext;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -43,6 +44,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.annotations.Constant;
+import tungsten.types.annotations.ConstantFactory;
 import tungsten.types.numerics.impl.Euler;
 import tungsten.types.numerics.impl.ImaginaryUnit;
 import tungsten.types.numerics.impl.One;
@@ -170,10 +172,24 @@ public class Symbol {
         Optional<Class<? extends Numeric>> clazz = getValueClass();
         if (!clazz.isPresent()) return Optional.empty();
         
-        // I wanted to use Optional.ifPresent() here, but lambdas actually got
-        // in the way.
         try {
-            Method m = clazz.get().getMethod("getInstance", MathContext.class);
+            Optional<Method> annotatedMethod = Arrays.stream(clazz.get().getDeclaredMethods())
+                    .filter(m -> m.isAnnotationPresent(ConstantFactory.class)).findFirst();
+            annotatedMethod.ifPresent(method -> {
+                if (!Modifier.isStatic(method.getModifiers())) {
+                    throw new IllegalStateException("Factory method must be static.");
+                }
+                ConstantFactory factoryAnnotation = method.getAnnotation(ConstantFactory.class);
+                if (!factoryAnnotation.argType().isAssignableFrom(MathContext.class)) {
+                    throw new IllegalArgumentException("Cannot instantiate " + clazz.get().getSimpleName() + " with MathContext.");
+                }
+                if (!Numeric.class.isAssignableFrom(factoryAnnotation.returnType())) {
+                    throw new IllegalStateException("Factory method " + method.getName() +
+                            " returns a concrete type of " + factoryAnnotation.returnType().getSimpleName());
+                }
+            });
+            // if we didn't find an annotated factory method, look for the default getInstance() method
+            Method m = annotatedMethod.isPresent() ? annotatedMethod.get() : clazz.get().getMethod("getInstance", MathContext.class);
             return Optional.of(clazz.get().cast(m.invoke(null, mctx)));  // m is a static method
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException |
                 IllegalArgumentException | InvocationTargetException ex) {
