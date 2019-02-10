@@ -35,7 +35,6 @@ import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
-import tungsten.types.matrix.impl.BasicMatrix;
 import tungsten.types.matrix.impl.SingletonMatrix;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.RealType;
@@ -44,7 +43,7 @@ import tungsten.types.util.OptionalOperations;
 
 /**
  * Representation of a row vector.  This can also be
- * treated as a matrix with N columns and a single row.
+ * treated as a 1&#215;N (single-row) matrix with N columns.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the {@link Numeric} type of this row vector
@@ -55,11 +54,17 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     
     public RowVector(T... elements) {
         this.elements = elements;
+        if (elements.length > 0) {
+            this.mctx = elements[0].getMathContext();
+        }
     }
     
     public RowVector(List<T> elementList) {
         this.elements = (T[]) Array.newInstance(elementList.get(0).getClass(), elementList.size());
         elementList.toArray(elements);
+        if (elementList.size() > 0) {
+            this.mctx = elements[0].getMathContext();
+        }
     }
     
     public void setMathContext(MathContext mctx) {
@@ -148,7 +153,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public T dotProduct(Vector<T> other) {
         if (other.length() != this.length()) throw new ArithmeticException("Cannot compute dot product for vectors of different length.");
-        final Class<? extends Numeric> clazz = elements[0].getClass();
+        final Class<? extends Numeric> clazz = elementAt(0L).getClass();
         try {
             Numeric accum = Zero.getInstance(mctx);
             for (long i = 0L; i < this.length(); i++) {
@@ -183,7 +188,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public Vector<T> normalize() {
-        final Class<? extends Numeric> clazz = elements[0].getClass();
+        final Class<? extends Numeric> clazz = elementAt(0L).getClass();
         try {
             return this.scale((T) this.magnitude().inverse().coerceTo(clazz));
         } catch (CoercionException ex) {
@@ -246,7 +251,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
         } else if (o instanceof Matrix) {
             Matrix<T> that = (Matrix<T>) o;
             if (that.columns() != this.columns() || that.rows() != this.rows()) return false;
-            for (long i = 0L; i < this.rows(); i++) {
+            for (long i = 0L; i < this.columns(); i++) {
                 if (!this.valueAt(0L, i).equals(that.valueAt(0L, i))) return false;
             }
             return true;
@@ -275,7 +280,7 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
         }
         Class<T> clazz = (Class<T>) elements[0].getClass();
         T[] result = (T[]) Array.newInstance(clazz, elements.length);
-        for (long index = 0; index < elements.length; index++) {
+        for (long index = 0L; index < elements.length; index++) {
             try {
                 result[(int) index] = (T) elements[(int) index].add(addend.valueAt(0L, index)).coerceTo(clazz);
             } catch (CoercionException ex) {

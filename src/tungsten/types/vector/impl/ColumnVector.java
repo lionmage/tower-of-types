@@ -43,7 +43,7 @@ import tungsten.types.numerics.impl.Zero;
 import tungsten.types.util.OptionalOperations;
 
 /**
- * A column vector, which is also a Nx1 (single-column) matrix.
+ * A column vector, which is also a N&#215;1 (single-column) matrix.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the {@link Numeric} type for this column vector
@@ -54,11 +54,17 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     
     public ColumnVector(T... elements) {
         this.elements = elements;
+        if (elements.length > 0) {
+            this.mctx = elements[0].getMathContext();
+        }
     }
     
     public ColumnVector(List<T> elementList) {
         this.elements = (T[]) Array.newInstance(elementList.get(0).getClass(), elementList.size());
         elementList.toArray(elements);
+        if (elementList.size() > 0) {
+            this.mctx = elements[0].getMathContext();
+        }
     }
     
     public void setMathContext(MathContext mctx) {
@@ -147,7 +153,7 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public T dotProduct(Vector<T> other) {
         if (other.length() != this.length()) throw new ArithmeticException("Cannot compute dot product for vectors of different length.");
-        final Class<? extends Numeric> clazz = elements[0].getClass();
+        final Class<? extends Numeric> clazz = elementAt(0L).getClass();
         try {
             Numeric accum = Zero.getInstance(mctx);
             for (long i = 0L; i < this.length(); i++) {
@@ -182,11 +188,11 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public Vector<T> normalize() {
-        final Class<? extends Numeric> clazz = elements[0].getClass();
+        final Class<? extends Numeric> clazz = elementAt(0L).getClass();
         try {
             return this.scale((T) this.magnitude().inverse().coerceTo(clazz));
         } catch (CoercionException ex) {
-            Logger.getLogger(RowVector.class.getName()).log(Level.SEVERE,
+            Logger.getLogger(ColumnVector.class.getName()).log(Level.SEVERE,
                     "Unable to normalize vector for type " + clazz.getTypeName(), ex);
             throw new ArithmeticException("Error computing vector normal.");
         }
