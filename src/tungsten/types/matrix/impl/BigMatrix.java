@@ -25,9 +25,15 @@ package tungsten.types.matrix.impl;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.MathContext;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -58,6 +64,9 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     private Class<T> interfaceType;
     private long rows, columns;
     private LRUCache<Long, BigList<T>> cache = new LRUCache<>(DEFAULT_CACHE_SIZE); // might move construction elsewhere
+    private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private File sourceFile;
+    private char delimiter;
     
     public BigMatrix(File sourceFile, char delimiter, Class<T> ofType) {
         if (!IntegerType.class.isAssignableFrom(ofType) && !RealType.class.isAssignableFrom(ofType)) {
@@ -87,6 +96,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find file specified.", ex);
             }
+            this.sourceFile = sourceFile;
+            this.delimiter  = delimiter;
         }
 //        this.interfaceType = (Class<? super T>) IntegerType.class.isAssignableFrom(ofType) ? IntegerType.class : RealType.class;
     }
@@ -115,7 +126,52 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public T valueAt(long row, long column) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        ReadLock readLock = readWriteLock.readLock();
+        try {
+            readLock.lock();
+            BigList<T> rowContents = cache.get(row);
+            if (rowContents != null) {
+                return rowContents.get(column);
+            } else {
+                // read the row from the source file, cache it, and return our result
+                rowContents = readRowFromFile(row);
+                return rowContents.get(column);
+            }
+        } finally {
+            readLock.unlock();
+        }
+    }
+    
+    private BigList<T> readRowFromFile(long row) {
+        WriteLock lock = readWriteLock.writeLock();
+        long rowCount = 0L;
+        try (Scanner fileScanner = new Scanner(sourceFile)) {
+            String line = null;
+            while (rowCount <= row && fileScanner.hasNextLine()) {
+                line = fileScanner.nextLine();
+                if (rowCount < row) rowCount++;
+            }
+            if (rowCount != row) throw new IndexOutOfBoundsException("Requested row " + row +
+                    ", but could only read " + rowCount + " rows from backing file " + sourceFile);
+            Scanner lineScanner = new Scanner(line);
+            lineScanner.useDelimiter(OPT_WHITESPACE + delimiter + OPT_WHITESPACE);
+            BigList<T> result = new BigList<>();
+            while (hasNextValue(lineScanner)) {
+                result.add(readNextValue(lineScanner));
+            }
+            lineScanner.close();
+            if (result.size() < columns) {
+                throw new IllegalStateException("Expected " + columns + " columns, but only read " + result.size());
+            }
+            lock.lock();
+            cache.put(row, result);
+            return result;
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Unable to read " + sourceFile, ex);
+            throw new IllegalStateException(ex);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -125,7 +181,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             BasicMatrix<T> temp = new BasicMatrix<>(this);
             return temp.determinant();
         }
-        // TODO compute the determinant for sizes > 10
+        // TODO compute the determinant for sizes >= 10
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -136,6 +192,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public Matrix<T> add(Matrix<T> addend) {
+//        File backingFile = File.createTempFile("bigMatrix_intermediate", ".matrix");
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -143,15 +200,63 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     public Matrix<T> multiply(Matrix<T> multiplier) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
+    public void writeMatrix(File output) throws IOException {
+        if (!output.exists()) {
+            output.createNewFile();
+        }
+        try (FileWriter writer = new FileWriter(output, false)) {
+            for (long row = 0L; row < rows; row++) {
+                RowVector<T> values = getRow(row);
+                for (long column = 0L; column < columns; column++) {
+                    writer.write(values.elementAt(column).toString());
+                    if (column < columns - 1L) {
+                        writer.write(delimiter);
+                    }
+                }
+                writer.write('\n');
+            }
+        }
+    }
 
     @Override
     public RowVector<T> getRow(long row) {
-        return Matrix.super.getRow(row); //To change body of generated methods, choose Tools | Templates.
+        ReadLock readLock = readWriteLock.readLock();
+        try {
+            readLock.lock();
+            BigList<T> rowContents = cache.get(row);
+            if (rowContents != null) {
+                return new BigRowVector(rowContents);
+            } else {
+                // read the row from the source file, cache it, and return our result
+                rowContents = readRowFromFile(row);
+                return new BigRowVector(rowContents);
+            }
+        } finally {
+            readLock.unlock();
+        }
     }
 
     @Override
     public ColumnVector<T> getColumn(long column) {
-        return Matrix.super.getColumn(column); //To change body of generated methods, choose Tools | Templates.
+        BigColumnVector<T> result = new BigColumnVector();
+        ReadLock readLock = readWriteLock.readLock();
+        for (long row = 0L; row < rows; row++) {
+            try {
+                readLock.lock();
+                BigList<T> rowContents = cache.get(row);
+                if (rowContents != null) {
+                    result.append(rowContents.get(column));
+                } else {
+                    // read the row from the source file, cache it, and return our result
+                    rowContents = readRowFromFile(row);
+                    result.append(rowContents.get(column));
+                }
+            } finally {
+                readLock.unlock();
+            }
+        }
+        return result;
     }
     
     public class BigRowVector<T extends Numeric> extends RowVector<T> {
