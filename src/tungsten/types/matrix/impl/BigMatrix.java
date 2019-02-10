@@ -23,9 +23,11 @@
  */
 package tungsten.types.matrix.impl;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.MathContext;
-import java.util.Arrays;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -33,8 +35,13 @@ import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.impl.IntegerImpl;
+import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.numerics.impl.Zero;
 import tungsten.types.util.collections.BigList;
+import tungsten.types.util.collections.LRUCache;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
@@ -46,15 +53,64 @@ import tungsten.types.vector.impl.RowVector;
  * @param <T> the {@link Numeric} subtype of this matrix; currently only IntegerType and RealType are supported
  */
 public class BigMatrix<T extends Numeric> implements Matrix<T> {
-
+    private static final String OPT_WHITESPACE = "\\s*";
+    private static final int DEFAULT_CACHE_SIZE = 200;
+    private Class<T> interfaceType;
+    private long rows, columns;
+    private LRUCache<Long, BigList<T>> cache = new LRUCache<>(DEFAULT_CACHE_SIZE); // might move construction elsewhere
+    
+    public BigMatrix(File sourceFile, char delimiter, Class<T> ofType) {
+        if (!IntegerType.class.isAssignableFrom(ofType) && !RealType.class.isAssignableFrom(ofType)) {
+            throw new IllegalArgumentException("Currently, BigMatrix does not support type " + ofType.getTypeName());
+        }
+        if (!ofType.isInterface()) {
+            throw new IllegalArgumentException("Supplied type must be an interface type, not a concrete class.");
+        }
+        interfaceType = ofType;
+        if (sourceFile.exists() && sourceFile.canRead()) {
+            final String myPattern = OPT_WHITESPACE + delimiter + OPT_WHITESPACE;
+            try (Scanner fileScanner = new Scanner(sourceFile)) {
+                while (fileScanner.hasNextLine()) {
+                    String line = fileScanner.nextLine();
+                    if (line == null || line.isEmpty()) continue;
+                    
+                    BigList<T> row = new BigList<>();
+                    Scanner lineScanner = new Scanner(line);
+                    lineScanner.useDelimiter(myPattern);
+                    while (hasNextValue(lineScanner)) {
+                        row.add(readNextValue(lineScanner));
+                        if (rows == 0L) columns++;
+                    }
+                    lineScanner.close();
+                    rows++;
+                }
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find file specified.", ex);
+            }
+        }
+//        this.interfaceType = (Class<? super T>) IntegerType.class.isAssignableFrom(ofType) ? IntegerType.class : RealType.class;
+    }
+    
+    private boolean hasNextValue(Scanner s) {
+        return IntegerType.class.isAssignableFrom(interfaceType) ? s.hasNextBigInteger() : s.hasNextBigDecimal();
+    }
+    
+    private T readNextValue(Scanner s) {
+        if (IntegerType.class.isAssignableFrom(interfaceType)) {
+            return (T) new IntegerImpl(s.nextBigInteger());
+        } else {
+            return (T) new RealImpl(s.nextBigDecimal());
+        }
+    }
+    
     @Override
     public long columns() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return columns;
     }
 
     @Override
     public long rows() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return rows;
     }
 
     @Override
@@ -64,6 +120,12 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public T determinant() {
+        if (rows() != columns()) throw new ArithmeticException("Cannot compute determinant of a non-square matrix.");
+        if (rows() < 10L) {
+            BasicMatrix<T> temp = new BasicMatrix<>(this);
+            return temp.determinant();
+        }
+        // TODO compute the determinant for sizes > 10
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
