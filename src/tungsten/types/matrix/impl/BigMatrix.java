@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.math.MathContext;
 import java.util.Objects;
 import java.util.Scanner;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -60,7 +59,7 @@ import tungsten.types.vector.impl.RowVector;
  */
 public class BigMatrix<T extends Numeric> implements Matrix<T> {
     private static final String OPT_WHITESPACE = "\\s*";
-    private static final int DEFAULT_CACHE_SIZE = 200;
+    private static final int DEFAULT_CACHE_SIZE = 50;
     private Class<T> interfaceType;
     private long rows, columns;
     private LRUCache<Long, BigList<T>> cache = new LRUCache<>(DEFAULT_CACHE_SIZE); // might move construction elsewhere
@@ -68,14 +67,23 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     private File sourceFile;
     private char delimiter;
     
+    public BigMatrix(File destFile, long rows, long columns, char delimiter, Class<T> ofType) {
+        if (destFile.exists()) throw new IllegalArgumentException("Cannot write new matrix to an already existing file.");
+        checkInterfaceType(ofType);
+        this.rows = rows;
+        this.columns = columns;
+        this.delimiter = delimiter;
+        try {
+            // create the new file for append purposes
+            if (!destFile.createNewFile()) throw new IllegalStateException("Cannot create empty file " + destFile);
+        } catch (IOException ex) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Matrix file creation failed.", ex);
+            throw new IllegalStateException(ex);
+        }
+    }
+    
     public BigMatrix(File sourceFile, char delimiter, Class<T> ofType) {
-        if (!IntegerType.class.isAssignableFrom(ofType) && !RealType.class.isAssignableFrom(ofType)) {
-            throw new IllegalArgumentException("Currently, BigMatrix does not support type " + ofType.getTypeName());
-        }
-        if (!ofType.isInterface()) {
-            throw new IllegalArgumentException("Supplied type must be an interface type, not a concrete class.");
-        }
-        interfaceType = ofType;
+        checkInterfaceType(ofType);
         if (sourceFile.exists() && sourceFile.canRead()) {
             final String myPattern = OPT_WHITESPACE + delimiter + OPT_WHITESPACE;
             try (Scanner fileScanner = new Scanner(sourceFile)) {
@@ -99,7 +107,16 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             this.sourceFile = sourceFile;
             this.delimiter  = delimiter;
         }
-//        this.interfaceType = (Class<? super T>) IntegerType.class.isAssignableFrom(ofType) ? IntegerType.class : RealType.class;
+    }
+    
+    private void checkInterfaceType(Class<T> ofType) {
+        if (!IntegerType.class.isAssignableFrom(ofType) && !RealType.class.isAssignableFrom(ofType)) {
+            throw new IllegalArgumentException("Currently, BigMatrix does not support type " + ofType.getTypeName());
+        }
+        if (!ofType.isInterface()) {
+            throw new IllegalArgumentException("Supplied type must be an interface type, not a concrete class.");
+        }
+        interfaceType = ofType;
     }
     
     private boolean hasNextValue(Scanner s) {
@@ -142,7 +159,23 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         }
     }
     
-    private BigList<T> readRowFromFile(long row) {
+    public void append(RowVector<T> rowVector) {
+        if (rowVector.length() != columns) {
+            throw new IllegalArgumentException("Supplied row has " + rowVector.length() +
+                    " elements, but this matrix has " + columns + " columns.");
+        }
+        try {
+            if (rowVector instanceof BigRowVector) {
+                writeRowIncremental((BigRowVector<T>) rowVector);
+            } else {
+                writeRowIncremental(new BigRowVector<>(rowVector));
+            }
+        } catch (IOException ioe) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Failed to write row.", ioe);
+        }
+    }
+    
+    private BigList<T> readRowFromFile(long row, boolean cacheRow) {
         WriteLock lock = readWriteLock.writeLock();
         long rowCount = 0L;
         try (Scanner fileScanner = new Scanner(sourceFile)) {
@@ -163,15 +196,21 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             if (result.size() < columns) {
                 throw new IllegalStateException("Expected " + columns + " columns, but only read " + result.size());
             }
-            lock.lock();
-            cache.put(row, result);
+            if (cacheRow) {
+                lock.lock();
+                cache.put(row, result);
+            }
             return result;
         } catch (FileNotFoundException ex) {
             Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Unable to read " + sourceFile, ex);
             throw new IllegalStateException(ex);
         } finally {
-            lock.unlock();
+            if (lock.isHeldByCurrentThread()) lock.unlock();
         }
+    }
+    
+    private BigList<T> readRowFromFile(long row) {
+        return readRowFromFile(row, true);
     }
 
     @Override
@@ -218,6 +257,21 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             }
         }
     }
+    
+    private void writeRowIncremental(BigRowVector<T> rowVector) throws IOException {
+        if (!sourceFile.exists()) {
+            sourceFile.createNewFile();
+        }
+        try (FileWriter writer = new FileWriter(sourceFile, true)) {
+            for (long column = 0L; column < columns; column++) {
+                writer.write(rowVector.elementAt(column).toString());
+                if (column < columns - 1L) {
+                    writer.write(delimiter);
+                }
+            }
+            writer.write('\n');
+        }
+    }
 
     @Override
     public RowVector<T> getRow(long row) {
@@ -248,8 +302,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                 if (rowContents != null) {
                     result.append(rowContents.get(column));
                 } else {
-                    // read the row from the source file, cache it, and return our result
-                    rowContents = readRowFromFile(row);
+                    rowContents = readRowFromFile(row, false);  // do not thrash the cache
                     result.append(rowContents.get(column));
                 }
             } finally {
@@ -265,6 +318,14 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         protected BigRowVector(BigList<T> source) {
             elements = source;
             setMathContext(source.get(0L).getMathContext());
+        }
+        
+        protected BigRowVector(RowVector<T> source) {
+            elements = new BigList<>();
+            for (long index = 0L; index < source.length(); index++) {
+                elements.add(source.elementAt(index));
+            }
+            setMathContext(source.elementAt(0L).getMathContext());
         }
         
         protected BigRowVector() {
