@@ -80,6 +80,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Matrix file creation failed.", ex);
             throw new IllegalStateException(ex);
         }
+        this.sourceFile = destFile;
     }
     
     public BigMatrix(File sourceFile, char delimiter, Class<T> ofType) {
@@ -103,6 +104,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                 }
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find file specified.", ex);
+                throw new IllegalStateException(ex);
             }
             this.sourceFile = sourceFile;
             this.delimiter  = delimiter;
@@ -231,13 +233,45 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public Matrix<T> add(Matrix<T> addend) {
-//        File backingFile = File.createTempFile("bigMatrix_intermediate", ".matrix");
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (addend.rows() != rows || addend.columns() != columns) {
+            throw new ArithmeticException("Matrix dimensions must match.");
+        }
+        try {
+            File backingFile = File.createTempFile("bigMatrix_sum_temp", ".matrix");
+            BigMatrix<T> result = new BigMatrix(backingFile, rows, columns, delimiter, interfaceType);
+            for (long row = 0L; row < rows; row++) {
+                RowVector<T> ours = this.getRow(row);
+                RowVector<T> theirs = addend.getRow(row);
+                result.append(ours.add((Vector<T>) theirs));
+            }
+            return result;
+        } catch (IOException ex) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Failed to create backing store for result.", ex);
+        }
+        throw new IllegalStateException("Unable to persist sum.");
     }
 
     @Override
     public Matrix<T> multiply(Matrix<T> multiplier) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.columns() != multiplier.rows()) {
+            throw new ArithmeticException("Multiplier must have the same number of rows as this matrix has columns.");
+        }
+        try {
+            File backingFile = File.createTempFile("bigMatrix_prod_temp", ".matrix");
+            BigMatrix<T> result = new BigMatrix(backingFile, this.rows(), multiplier.columns(), delimiter, interfaceType);
+            for (long row = 0L; row < rows(); row++) {
+                BigList<T> accum = new BigList<>();
+                RowVector<T> rowvec = this.getRow(row);
+                for (long column = 0L; column < multiplier.columns(); column++) {
+                    accum.add(rowvec.dotProduct(multiplier.getColumn(column)));
+                }
+                result.append(new BigRowVector(accum));
+            }
+            return result;
+        } catch (IOException ioe) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Failed to create backing store for result.", ioe);
+        }
+        throw new IllegalStateException("Unable to persist product.");
     }
     
     public void writeMatrix(File output) throws IOException {
