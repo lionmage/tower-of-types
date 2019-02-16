@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.math.MathContext;
 import java.util.Objects;
 import java.util.Scanner;
@@ -59,10 +60,12 @@ import tungsten.types.vector.impl.RowVector;
  */
 public class BigMatrix<T extends Numeric> implements Matrix<T> {
     private static final String OPT_WHITESPACE = "\\s*";
-    private static final int DEFAULT_CACHE_SIZE = 50;
+    private static final int DEFAULT_ROW_CACHE_SIZE = 5;
+    private static final int DEFAULT_OFFSET_CACHE_SIZE = 10000;
     private Class<T> interfaceType;
     private long rows, columns;
-    private LRUCache<Long, BigList<T>> cache = new LRUCache<>(DEFAULT_CACHE_SIZE); // might move construction elsewhere
+    private LRUCache<Long, BigList<T>> rowCache = new LRUCache<>(DEFAULT_ROW_CACHE_SIZE); // might move construction elsewhere
+    private LRUCache<Long, Long> offsetCache = new LRUCache<>(DEFAULT_OFFSET_CACHE_SIZE);
     private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private File sourceFile;
     private char delimiter;
@@ -85,25 +88,35 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     
     public BigMatrix(File sourceFile, char delimiter, Class<T> ofType) {
         checkInterfaceType(ofType);
+        long startingRowOffset = 0L;  // in case we have to put in some metadata on the first line of the matrix
         if (sourceFile.exists() && sourceFile.canRead()) {
             final String myPattern = OPT_WHITESPACE + delimiter + OPT_WHITESPACE;
-            try (Scanner fileScanner = new Scanner(sourceFile)) {
-                while (fileScanner.hasNextLine()) {
-                    String line = fileScanner.nextLine();
+            try (RandomAccessFile source = new RandomAccessFile(sourceFile, "r")) {
+                String line = null;
+                offsetCache.put(0L, startingRowOffset);
+                while ((line = source.readLine()) != null) {
                     if (line == null || line.isEmpty()) continue;
                     
-                    BigList<T> row = new BigList<>();
-                    Scanner lineScanner = new Scanner(line);
-                    lineScanner.useDelimiter(myPattern);
-                    while (hasNextValue(lineScanner)) {
-                        row.add(readNextValue(lineScanner));
-                        if (rows == 0L) columns++;
+                    if (rows == 0L) {
+                        // read the first row and count the columns
+                        BigList<T> row = new BigList<>();
+                        try (Scanner lineScanner = new Scanner(line)) {
+                            lineScanner.useDelimiter(myPattern);
+                            while (hasNextValue(lineScanner)) {
+                                row.add(readNextValue(lineScanner));
+                                columns++;
+                            }
+                        }
+                        // now that we have a row, we should cache it
+                        rowCache.put(rows, row);
                     }
-                    lineScanner.close();
-                    rows++;
+                    offsetCache.put(++rows, source.getFilePointer());
                 }
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find file specified.", ex);
+                throw new IllegalStateException(ex);
+            } catch (IOException ex) {
+                Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Error reading from " + sourceFile.getName(), ex);
                 throw new IllegalStateException(ex);
             }
             this.sourceFile = sourceFile;
@@ -148,7 +161,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         ReadLock readLock = readWriteLock.readLock();
         try {
             readLock.lock();
-            BigList<T> rowContents = cache.get(row);
+            BigList<T> rowContents = rowCache.get(row);
             if (rowContents != null) {
                 return rowContents.get(column);
             } else {
@@ -179,32 +192,41 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     
     private BigList<T> readRowFromFile(long row, boolean cacheRow) {
         WriteLock lock = readWriteLock.writeLock();
-        long rowCount = 0L;
-        try (Scanner fileScanner = new Scanner(sourceFile)) {
+        long startingRowOffset = 0L;  // in case we have to put in some metadata on the first line of the matrix
+        try (RandomAccessFile source = new RandomAccessFile(sourceFile, "r")) {
+            final long highestCachedRow = offsetCache.keySet().stream().filter(r -> r <= row).max((x, y) -> x.compareTo(y)).orElse(0L);
+            long offset = offsetCache.getOrDefault(highestCachedRow, startingRowOffset);
+            source.seek(offset);
+            long rowCount = highestCachedRow;
             String line = null;
-            while (rowCount <= row && fileScanner.hasNextLine()) {
-                line = fileScanner.nextLine();
+            while (rowCount <= row && (line = source.readLine()) != null) {
+                // if we've just read the row right before the one we want,
+                // we are exactly at the beginning of the row we want
+                if (rowCount == row - 1L) offsetCache.put(row, source.getFilePointer());
                 if (rowCount < row) rowCount++;
             }
             if (rowCount != row) throw new IndexOutOfBoundsException("Requested row " + row +
                     ", but could only read " + rowCount + " rows from backing file " + sourceFile);
-            Scanner lineScanner = new Scanner(line);
-            lineScanner.useDelimiter(OPT_WHITESPACE + delimiter + OPT_WHITESPACE);
             BigList<T> result = new BigList<>();
-            while (hasNextValue(lineScanner)) {
-                result.add(readNextValue(lineScanner));
+            try (Scanner lineScanner = new Scanner(line)) {
+                lineScanner.useDelimiter(OPT_WHITESPACE + delimiter + OPT_WHITESPACE);
+                while (hasNextValue(lineScanner)) {
+                    result.add(readNextValue(lineScanner));
+                }
             }
-            lineScanner.close();
             if (result.size() < columns) {
                 throw new IllegalStateException("Expected " + columns + " columns, but only read " + result.size());
             }
             if (cacheRow) {
                 lock.lock();
-                cache.put(row, result);
+                rowCache.put(row, result);
             }
             return result;
         } catch (FileNotFoundException ex) {
             Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Unable to read " + sourceFile, ex);
+            throw new IllegalStateException(ex);
+        } catch (IOException ex) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Error while reading " + sourceFile.getName(), ex);
             throw new IllegalStateException(ex);
         } finally {
             if (lock.isHeldByCurrentThread()) lock.unlock();
@@ -312,7 +334,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         ReadLock readLock = readWriteLock.readLock();
         try {
             readLock.lock();
-            BigList<T> rowContents = cache.get(row);
+            BigList<T> rowContents = rowCache.get(row);
             if (rowContents != null) {
                 return new BigRowVector(rowContents);
             } else {
@@ -332,7 +354,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         for (long row = 0L; row < rows; row++) {
             try {
                 readLock.lock();
-                BigList<T> rowContents = cache.get(row);
+                BigList<T> rowContents = rowCache.get(row);
                 if (rowContents != null) {
                     result.append(rowContents.get(column));
                 } else {

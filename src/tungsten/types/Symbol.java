@@ -58,10 +58,11 @@ import tungsten.types.numerics.impl.Zero;
 public class Symbol {
     private final String name;
     private final String representation;
+    private Scope scope;
     private Class<? extends Numeric> valueClass;
     private Numeric concreteValue;  // TODO can this be made to handle objects like matrix, vector, function, etc.?
     
-    private static final ConcurrentMap<String, Symbol> cache = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, Symbol> GLOBAL = new ConcurrentHashMap<>();
     public static final String PKG_SCAN_PROP = "tungsten.scan.external.types";
     
     static {
@@ -78,7 +79,7 @@ public class Symbol {
             Logger.getLogger(Symbol.class.getName()).log(Level.FINE,
                     "Processing Class {} for symbol {}, represented as {}",
                     new Object[] {clazz.getSimpleName(), annotation.name(), annotation.representation()});
-            cache.put(annotation.name(),
+            GLOBAL.put(annotation.name(),
                     new Symbol(annotation.name(), annotation.representation(), clazz));
         });
     }
@@ -106,8 +107,26 @@ public class Symbol {
         this.valueClass = valueClass;
     }
     
+    public Symbol(String name, String representation, Scope scope) {
+        this.scope = scope;
+        this.name  = name;
+        this.representation = representation;
+    }
+    
+    public Symbol(String name, Numeric value, Scope scope) {
+        this.scope = scope;
+        this.name  = name;
+        this.representation = name;
+        this.concreteValue = value;
+    }
+    
+    public Symbol(String name, String representation, Numeric value, Scope scope) {
+        this(name, representation, scope);
+        this.concreteValue = value;
+    }
+    
     private void cacheThis(String key) {
-        Symbol old = cache.put(key, this);
+        Symbol old = GLOBAL.put(key, this);
         if (old != null) {
             Logger.getLogger(Symbol.class.getName()).log(Level.WARNING,
                     "Symbol named {} redefined from {} to {}", new Object[] {key, old, this});
@@ -115,19 +134,19 @@ public class Symbol {
     }
     
     public static java.util.Set<String> getAllSymbolNames() {
-        return Collections.unmodifiableSet(cache.keySet());
+        return Collections.unmodifiableSet(GLOBAL.keySet());
     }
     
     public static java.util.Set<Symbol> getAllSymbols() {
-        return new HashSet<>(cache.values());
+        return new HashSet<>(GLOBAL.values());
     }
     
     public static Symbol getForName(String name) {
-        return cache.get(name);
+        return GLOBAL.get(name);
     }
     
     public static Symbol getOrCreate(String name, String representation) {
-        return cache.getOrDefault(name, new Symbol(name, representation));
+        return GLOBAL.getOrDefault(name, new Symbol(name, representation));
     }
 
     public String getName() {
@@ -181,7 +200,7 @@ public class Symbol {
                 }
                 ConstantFactory factoryAnnotation = method.getAnnotation(ConstantFactory.class);
                 if (!factoryAnnotation.argType().isAssignableFrom(MathContext.class)) {
-                    throw new IllegalArgumentException("Cannot instantiate " + clazz.get().getSimpleName() + " with MathContext.");
+                    throw new IllegalArgumentException("Cannot instantiate " + clazz.get().getSimpleName() + " with given MathContext.");
                 }
                 if (!Numeric.class.isAssignableFrom(factoryAnnotation.returnType())) {
                     throw new IllegalStateException("Factory method " + method.getName() +
@@ -197,6 +216,10 @@ public class Symbol {
                     "Unable to obtain an instance of " + clazz.get().getTypeName(), ex);
         }
         return Optional.empty();
+    }
+    
+    public Optional<Scope> getScope() {
+        return Optional.ofNullable(scope);
     }
 
     @Override
@@ -226,8 +249,4 @@ public class Symbol {
     public String toString() {
         return representation;
     }
-    
-    // Some pre-defined symbols simply put here to ensure their entries are parked.
-    public static final Symbol theta = new Symbol("theta", "\u0398");
-    public static final Symbol phi   = new Symbol("phi", "\u03C6");
 }
