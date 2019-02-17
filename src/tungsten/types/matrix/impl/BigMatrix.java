@@ -146,6 +146,15 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         }
     }
     
+    private void skipNextValue(Scanner s) {
+        // just read and quietly consume the values
+        if (IntegerType.class.isAssignableFrom(interfaceType)) {
+            s.nextBigInteger();
+        } else {
+            s.nextBigDecimal();
+        }
+    }
+    
     @Override
     public long columns() {
         return columns;
@@ -351,19 +360,36 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     public ColumnVector<T> getColumn(long column) {
         BigColumnVector<T> result = new BigColumnVector();
         ReadLock readLock = readWriteLock.readLock();
-        for (long row = 0L; row < rows; row++) {
-            try {
-                readLock.lock();
+        long startingRowOffset = 0L; // for if we need to put metadata at the start of the file
+        try (RandomAccessFile raf = new RandomAccessFile(sourceFile, "r")) {
+            raf.seek(startingRowOffset);
+            readLock.lock();
+            for (long row = 0L; row < rows; row++) {
                 BigList<T> rowContents = rowCache.get(row);
                 if (rowContents != null) {
                     result.append(rowContents.get(column));
+                    // seek to the next row
+                    if (offsetCache.containsKey(row + 1L)) {
+                        raf.seek(offsetCache.get(row + 1L));
+                    } else {
+                        while (raf.read() != '\n'); // consume to the end of line without reading into a String
+                    }
                 } else {
-                    rowContents = readRowFromFile(row, false);  // do not thrash the cache
-                    result.append(rowContents.get(column));
+                    try (Scanner s = new Scanner(raf.readLine())) {
+                        for (long idx = 0L; idx < column; idx++) skipNextValue(s);
+                        result.append(readNextValue(s));
+                    }
                 }
-            } finally {
-                readLock.unlock();
             }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE,
+                    "File " + sourceFile.getName() + " cannot be read during getColumn() operation; column value = " + column, ex);
+            throw new IllegalStateException(ex);
+        } catch (IOException ioe) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Exception while reading matrix values from file.", ioe);
+            throw new IllegalStateException(ioe);
+        } finally {
+            readLock.unlock();
         }
         return result;
     }
