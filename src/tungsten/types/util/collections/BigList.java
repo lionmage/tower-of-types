@@ -26,6 +26,8 @@ package tungsten.types.util.collections;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -120,7 +122,21 @@ public class BigList<T> implements Iterable<T> {
         listOfLists.get(arraycount).set((int) index, obj);
     }
     
-    private Stream<T> reverseStream() {
+    public List<T> head(long elements) {
+        if (elements < 0L) throw new IllegalArgumentException("Number of elements to take must be positive.");
+        final LinkedList<T> result = new LinkedList<>();
+        stream().limit(elements).forEachOrdered(result::addLast);
+        return result;
+    }
+    
+    public List<T> tail(long elements) {
+        if (elements < 0L) throw new IllegalArgumentException("Number of elements to take must be positive.");
+        final LinkedList<T> result = new LinkedList<>();
+        reverseStream().limit(elements).forEachOrdered(result::addFirst);
+        return result;
+    }
+    
+    public Stream<T> reverseStream() {
         Stream.Builder<Stream<T>> builder = Stream.builder();
         for (int idx = listOfLists.size() - 1; idx >= 0; idx--) {
             final ArrayList<T> innerList = listOfLists.get(idx);

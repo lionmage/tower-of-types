@@ -29,6 +29,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -37,6 +39,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
@@ -530,8 +533,13 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
         @Override
         public String toString() {
+            // Since this is potentially a huge vector, only display the first and last 3 elements.
+            List<String> values = new ArrayList<>();
+            elements.head(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
+            values.add("\u2009\u2026\u2009");  // horizontal ellipsis sandwiched between thin-space
+            elements.tail(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
             // 202F = Narrow No-Break Space
-            return elements.stream().map(x -> x.toString()).collect(Collectors.joining(", ", "[\u202F", "\u202F]"));
+            return values.stream().collect(Collectors.joining(", ", "[\u202F", "\u202F]ᵀ"));
         }
     }
     
@@ -660,8 +668,13 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
         @Override
         public String toString() {
+            // Since this is potentially a huge vector, only display the first and last 3 elements.
+            List<String> values = new ArrayList<>();
+            elements.head(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
+            values.add("\u2009\u2026\u2009");  // horizontal ellipsis sandwiched between thin-space
+            elements.tail(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
             // 202F = Narrow No-Break Space
-            return elements.stream().map(x -> x.toString()).collect(Collectors.joining(", ", "[\u202F", "\u202F]ᵀ"));
+            return values.stream().collect(Collectors.joining(", ", "[\u202F", "\u202F]ᵀ"));
         }
     }
 }
