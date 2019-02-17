@@ -26,6 +26,7 @@ package tungsten.types.util.collections;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Spliterator;
@@ -94,6 +95,10 @@ public class BigList<T> implements Iterable<T> {
     }
     
     public T get(long index) {
+        if (index < 0L) {
+            return reverseStream().skip(Math.abs(index + 1)).findFirst().orElseThrow(IndexOutOfBoundsException::new );
+        }
+        
         int arraycount = 0;
         while (index > listOfLists.get(arraycount).size()) {
             index -= listOfLists.get(arraycount).size();
@@ -103,12 +108,39 @@ public class BigList<T> implements Iterable<T> {
     }
     
     public void set(T obj, long index) {
+        if (index < 0L) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+        
         int arraycount = 0;
         while (index > capacityOrSize(arraycount)) {
             index -= capacityOrSize(arraycount);
             arraycount++;
         }
         listOfLists.get(arraycount).set((int) index, obj);
+    }
+    
+    private Stream<T> reverseStream() {
+        Stream.Builder<Stream<T>> builder = Stream.builder();
+        for (int idx = listOfLists.size() - 1; idx >= 0; idx--) {
+            final ArrayList<T> innerList = listOfLists.get(idx);
+            
+            ListIterator<T> iter = innerList.listIterator(innerList.size());
+            Iterator<T> rev = new Iterator<T>() {
+                @Override
+                public boolean hasNext() {
+                    return iter.hasPrevious();
+                }
+
+                @Override
+                public T next() {
+                    return iter.previous();
+                }
+            };
+            final int characteristics = Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;
+            builder.accept(StreamSupport.stream(Spliterators.spliterator(rev, size(), characteristics), false));
+        }
+        return builder.build().flatMap(x -> x);
     }
     
     private int capacityOrSize(int arrayidx) {
