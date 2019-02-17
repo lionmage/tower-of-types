@@ -113,6 +113,7 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     
     @Override
     public String toString() {
-        return "\uD835\uDFD9";  // surrogate pair for 1D7D9
+        // return the symbol for identity matrix with the size (diagonal element count)
+        return "\uD835\uDFD9[" + elementCount + "]";  // surrogate pair for 1D7D9
     }
 }

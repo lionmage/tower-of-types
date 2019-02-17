@@ -84,6 +84,12 @@ public class Symbol {
         });
     }
     
+    /**
+     * Create a new {@link Symbol} in the global scope.
+     * This object has no assigned value.
+     * @param name
+     * @param representation 
+     */
     public Symbol(String name, String representation) {
         this.name = name;
         this.representation = representation;
@@ -95,11 +101,15 @@ public class Symbol {
      * @param name 
      */
     public Symbol(String name) {
-        this.name = name;
-        this.representation = name;
-        cacheThis(name);
+        this(name, name);
     }
     
+    /**
+     * Create a {@link Symbol} that represents a constant.
+     * @param name
+     * @param representation
+     * @param valueClass 
+     */
     public Symbol(String name, String representation, Class<? extends Numeric> valueClass) {
         // we are not auto-caching in this case
         this.name = name;
@@ -107,12 +117,26 @@ public class Symbol {
         this.valueClass = valueClass;
     }
     
+    /**
+     * Create a {@link Symbol} in a given {@link Scope}.
+     * @param name
+     * @param representation
+     * @param scope 
+     */
     public Symbol(String name, String representation, Scope scope) {
         this.scope = scope;
         this.name  = name;
         this.representation = representation;
     }
     
+    /**
+     * Convenience constructor for creating a {@link Symbol} that has
+     * the same name and representation, with a given initial value
+     * and a {@link Scope}.
+     * @param name
+     * @param value
+     * @param scope 
+     */
     public Symbol(String name, Numeric value, Scope scope) {
         this.scope = scope;
         this.name  = name;
@@ -120,6 +144,14 @@ public class Symbol {
         this.concreteValue = value;
     }
     
+    /**
+     * Full-freight constructor.
+     * 
+     * @param name
+     * @param representation
+     * @param value
+     * @param scope 
+     */
     public Symbol(String name, String representation, Numeric value, Scope scope) {
         this(name, representation, scope);
         this.concreteValue = value;
@@ -133,18 +165,40 @@ public class Symbol {
         }
     }
     
+    /**
+     * Get the bound names for all {@link Symbol}s.
+     * @return an unmodifiable {@link Set} view of the names of currently bound symbols
+     */
     public static java.util.Set<String> getAllSymbolNames() {
         return Collections.unmodifiableSet(GLOBAL.keySet());
     }
     
+    /**
+     * Get all globally bound symbols.
+     * @return a {@link Set} of all globally bound symbols.
+     */
     public static java.util.Set<Symbol> getAllSymbols() {
         return new HashSet<>(GLOBAL.values());
     }
     
+    /**
+     * Obtain a {@link Symbol} bound in the global context.
+     * 
+     * @param name
+     * @return a {@link Symbol} bound to the given name, or {@code null} if no such symbol exists
+     */
     public static Symbol getForName(String name) {
         return GLOBAL.get(name);
     }
     
+    /**
+     * Get a {@link Symbol} bound to the given name, or a brand new
+     * {@link Symbol} if none exists.
+     * 
+     * @param name
+     * @param representation
+     * @return an existing {@link Symbol} or brand new {@link Symbol} bound to the given name
+     */
     public static Symbol getOrCreate(String name, String representation) {
         return GLOBAL.getOrDefault(name, new Symbol(name, representation));
     }
@@ -218,6 +272,14 @@ public class Symbol {
         return Optional.empty();
     }
     
+    /**
+     * Obtain the {@link Scope} for this {@link Symbol}.
+     * If the returned {@link Optional} is empty, this symbol belongs
+     * to the global scope.
+     * 
+     * @return an {@link Optional<Scope>} representing the scope of this symbol
+     *   definition, or {@link Optional#EMPTY} if globally scoped
+     */
     public Optional<Scope> getScope() {
         return Optional.ofNullable(scope);
     }
