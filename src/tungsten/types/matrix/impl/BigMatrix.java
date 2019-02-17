@@ -358,6 +358,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public ColumnVector<T> getColumn(long column) {
+        if (column < 0L || column >= columns) throw new IndexOutOfBoundsException("Column index " + column + " is outside range 0 - " + columns);
         BigColumnVector<T> result = new BigColumnVector();
         ReadLock readLock = readWriteLock.readLock();
         long startingRowOffset = 0L; // for if we need to put metadata at the start of the file
