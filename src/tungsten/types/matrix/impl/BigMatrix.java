@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +63,7 @@ import tungsten.types.vector.impl.RowVector;
  * @param <T> the {@link Numeric} subtype of this matrix; currently only IntegerType and RealType are supported
  */
 public class BigMatrix<T extends Numeric> implements Matrix<T> {
+    public static final String FILE_EXTENSION = ".matrix";
     private static final String OPT_WHITESPACE = "\\s*";
     private static final int DEFAULT_ROW_CACHE_SIZE = 5;
     private static final int DEFAULT_OFFSET_CACHE_SIZE = 10000;
@@ -271,7 +273,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             throw new ArithmeticException("Matrix dimensions must match.");
         }
         try {
-            File backingFile = File.createTempFile("bigMatrix_sum_temp", ".matrix");
+            final File backingFile = File.createTempFile("bigMatrix_sum_temp", FILE_EXTENSION);
+            backingFile.deleteOnExit();
             BigMatrix<T> result = new BigMatrix(backingFile, rows, columns, delimiter, interfaceType);
             for (long row = 0L; row < rows; row++) {
                 RowVector<T> ours = this.getRow(row);
@@ -291,7 +294,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             throw new ArithmeticException("Multiplier must have the same number of rows as this matrix has columns.");
         }
         try {
-            File backingFile = File.createTempFile("bigMatrix_prod_temp", ".matrix");
+            final File backingFile = File.createTempFile("bigMatrix_prod_temp", FILE_EXTENSION);
+            backingFile.deleteOnExit();
             BigMatrix<T> result = new BigMatrix(backingFile, this.rows(), multiplier.columns(), delimiter, interfaceType);
             for (long row = 0L; row < rows(); row++) {
                 BigList<T> accum = new BigList<>();
@@ -316,7 +320,13 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             for (long row = 0L; row < rows; row++) {
                 RowVector<T> values = getRow(row);
                 for (long column = 0L; column < columns; column++) {
-                    writer.write(values.elementAt(column).toString());
+                    // shouldn't use toString() directly on RealType because
+                    // some values (e.g., pi) have a non-numeric representation
+                    if (IntegerType.class.isAssignableFrom(interfaceType)) {
+                        writer.write(((IntegerType) values.elementAt(column)).asBigInteger().toString());
+                    } else {
+                        writer.write(((RealType) values.elementAt(column)).asBigDecimal().toString());
+                    }
                     if (column < columns - 1L) {
                         writer.write(delimiter);
                     }
@@ -332,7 +342,11 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         }
         try (FileWriter writer = new FileWriter(sourceFile, true)) {
             for (long column = 0L; column < columns; column++) {
-                writer.write(rowVector.elementAt(column).toString());
+                if (IntegerType.class.isAssignableFrom(interfaceType)) {
+                    writer.write(((IntegerType) rowVector.elementAt(column)).asBigInteger().toString());
+                } else {
+                    writer.write(((RealType) rowVector.elementAt(column)).asBigDecimal().toString());
+                }
                 if (column < columns - 1L) {
                     writer.write(delimiter);
                 }
