@@ -226,11 +226,13 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public T determinant() {
+        if (length() == 1L) return elementAt(0L);
         throw new ArithmeticException("Cannot compute determinant of a matrix with unequal columns and rows.");
     }
     
     @Override
     public T trace() {
+        if (length() == 1L) return elementAt(0L);
         throw new ArithmeticException("Cannot compute trace of a matrix with unequal columns and rows.");
     }
     

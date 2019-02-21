@@ -65,6 +65,7 @@ import tungsten.types.vector.impl.RowVector;
 public class BigMatrix<T extends Numeric> implements Matrix<T> {
     public static final String FILE_EXTENSION = ".matrix";
     private static final String OPT_WHITESPACE = "\\s*";
+    private static final String HORIZONTAL_ELLIPSIS = "\u2026\u2009";  // horizontal ellipsis followed by thin-space
     private static final int DEFAULT_ROW_CACHE_SIZE = 5;
     private static final int DEFAULT_OFFSET_CACHE_SIZE = 10000;
     private Class<T> interfaceType;
@@ -254,17 +255,17 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     @Override
     public T determinant() {
         if (rows() != columns()) throw new ArithmeticException("Cannot compute determinant of a non-square matrix.");
-        if (rows() < 10L) {
+        if (rows() <= 10L) {
             BasicMatrix<T> temp = new BasicMatrix<>(this);
             return temp.determinant();
         }
-        // TODO compute the determinant for sizes >= 10
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // TODO compute the determinant for sizes > 10
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public Matrix<? extends Numeric> inverse() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -357,6 +358,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public RowVector<T> getRow(long row) {
+        if (row < 0L || row >= rows) throw new IndexOutOfBoundsException("Row index " + row + " is outside range 0 - " + rows);
         ReadLock readLock = readWriteLock.readLock();
         try {
             readLock.lock();
@@ -550,7 +552,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             // Since this is potentially a huge vector, only display the first and last 3 elements.
             List<String> values = new ArrayList<>();
             elements.head(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
-            values.add("\u2009\u2026\u2009");  // horizontal ellipsis sandwiched between thin-space
+            values.add(HORIZONTAL_ELLIPSIS);
             elements.tail(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
             // 202F = Narrow No-Break Space
             return values.stream().collect(Collectors.joining(", ", "[\u202F", "\u202F]ᵀ"));
@@ -622,8 +624,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                 return (T) elements.stream().reduce(zero, (x, y) -> (T) x.add(y.multiply(y))).sqrt().coerceTo(clazz);
             } catch (CoercionException ex) {
                 Logger.getLogger(BigMatrix.BigRowVector.class.getName())
-                        .log(Level.SEVERE, "Unable to compute magnitude of row vector.", ex);
-                throw new ArithmeticException("Cannot compute magnitude of row vector.");
+                        .log(Level.SEVERE, "Unable to compute magnitude of column vector.", ex);
+                throw new ArithmeticException("Cannot compute magnitude of column vector.");
             }
         }
 
@@ -685,7 +687,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             // Since this is potentially a huge vector, only display the first and last 3 elements.
             List<String> values = new ArrayList<>();
             elements.head(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
-            values.add("\u2009\u2026\u2009");  // horizontal ellipsis sandwiched between thin-space
+            values.add(HORIZONTAL_ELLIPSIS);
             elements.tail(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
             // 202F = Narrow No-Break Space
             return values.stream().collect(Collectors.joining(", ", "[\u202F", "\u202F]ᵀ"));

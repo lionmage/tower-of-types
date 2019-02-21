@@ -182,7 +182,7 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
             ComplexVector cplxvec = new ComplexVector((ComplexType[]) elements, mctx);
             return (Vector<T>) cplxvec.crossProduct((Vector<ComplexType>) other);
         }
-        Logger.getLogger(RowVector.class.getName()).log(Level.WARNING, "No way to compute cross product for {}", clazz.getTypeName());
+        Logger.getLogger(ColumnVector.class.getName()).log(Level.WARNING, "No way to compute cross product for {}", clazz.getTypeName());
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -226,11 +226,13 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
 
     @Override
     public T determinant() {
+        if (length() == 1L) return elementAt(0L);
         throw new ArithmeticException("Cannot compute determinant of a matrix with unequal columns and rows.");
     }
     
     @Override
     public T trace() {
+        if (length() == 1L) return elementAt(0L);
         throw new ArithmeticException("Cannot compute trace of a matrix with unequal columns and rows.");
     }
     
