@@ -283,6 +283,13 @@ public class Symbol {
     public Optional<Scope> getScope() {
         return Optional.ofNullable(scope);
     }
+    
+    protected void updateScope(Scope newScope) {
+        if (scope != null) {
+            throw new IllegalStateException("Scope cannot be reassigned.");
+        }
+        scope = newScope;
+    }
 
     @Override
     public int hashCode() {

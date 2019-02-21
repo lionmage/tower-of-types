@@ -32,6 +32,10 @@ import java.util.logging.Logger;
 import tungsten.types.annotations.Constant;
 
 /**
+ * A basic encapsulation of scope, which in this context means binding of
+ * symbols to values, etc.  A scope may or may not have a parent scope, and
+ * may have children.  If there is no parent scope, then this scope is rooted
+ * in the global namespace; that global namespace is handled by {@link Symbol}.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
@@ -61,7 +65,25 @@ public class Scope {
     }
     
     public Symbol getOrCreate(String name, String representation) {
-        return locallyDefined.getOrDefault(name, new Symbol(name, representation));
+        return locallyDefined.getOrDefault(name, new Symbol(name, representation, this));
+    }
+    
+    public Optional<Symbol> unbind(String name) {
+        return Optional.ofNullable(locallyDefined.remove(name));
+    }
+    
+    public void rebind(Symbol binding) {
+        Symbol previous = locallyDefined.put(binding.getName(), binding);
+        if (previous == null) {
+            Logger.getLogger(Scope.class.getName()).log(Level.WARNING,
+                    "Symbol {} was rebound, but had no previous binding", binding.getName());
+        } else {
+            if (!previous.getRepresentation().equals(binding.getRepresentation())) {
+                Logger.getLogger(Scope.class.getName()).log(Level.SEVERE,
+                        "Symbol {} rebound with new representation; old = {}, current = {}",
+                        new Object[] { binding.getName(), previous.getRepresentation(), binding.getRepresentation() });
+            }
+        }
     }
 
     public void cacheValue(String name, Numeric value) {
@@ -84,20 +106,34 @@ public class Scope {
         locallyDefined.put(name, symbol);
     }
     
-    public void cacheSymbol(Symbol symbol) {
+    /**
+     * Cache a {@link Symbol} explicitly. If the symbol has already been
+     * associated with a different scope, the operation will fail without
+     * throwing an exception.
+     * 
+     * @param symbol the symbol to cache
+     * @return true if successful, false otherwise
+     */
+    public boolean cacheSymbol(Symbol symbol) {
         checkIfAlreadyCached(symbol.getName());
-        locallyDefined.put(symbol.getName(), symbol);
+        if (!symbol.getScope().isPresent()) {
+            symbol.updateScope(this);
+            locallyDefined.put(symbol.getName(), symbol);
+            return true;
+        } else {
+            return false;
+        }
     }
     
     public Optional<? extends Numeric> updateValue(Symbol symbol, Numeric newValue) {
         final String name = symbol.getName();
         if (!locallyDefined.containsKey(name)) {
             Logger.getLogger(Scope.class.getName()).log(Level.INFO,
-                    "Symbol {} is being re-defined in this scope from an ancestor scope.", name);
+                    "Symbol {} is being redefined in this scope from an ancestor scope.", name);
             if (Symbol.getForName(name) != null &&
                     Symbol.getForName(name).getValueClass()
                             .map(clazz -> clazz.isAnnotationPresent(Constant.class)).orElse(false)) {
-                throw new IllegalArgumentException("Cannot redefine a constant value in any scope");
+                throw new IllegalArgumentException("Cannot redefine a constant value in any scope.");
             }
         }
         
@@ -116,6 +152,16 @@ public class Scope {
         return oldValue;
     }
     
+    /**
+     * Update the concrete value bound to a symbol. This method returns
+     * the previously bound value.  Note that if the symbol was bound in a
+     * parent {@link Scope}, this operation will rebind the symbol in the
+     * current {@link Scope}, thus masking the binding in the parent scope.
+     * 
+     * @param name the unique name of the symbol to be rebound
+     * @param newValue the new value to bind to the named symbol
+     * @return the previously bound value of the named symbol
+     */
     public Optional<? extends Numeric> updateValue(String name, Numeric newValue) {
         Optional<Symbol> old = getForName(name);
         if (old.isPresent()) {
