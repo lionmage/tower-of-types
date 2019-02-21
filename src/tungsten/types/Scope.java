@@ -49,7 +49,7 @@ public class Scope {
     
     public Optional<Symbol> getForName(String name) {
         return Optional.ofNullable(locallyDefined.getOrDefault(name,
-                getParentScope().map(scope -> scope.getForName(name).orElse(Symbol.getForName(name))).get()));
+                getParentScope().map(scope -> scope.getForName(name).orElse(Symbol.getForName(name))).orElse(null)));
     }
     
     public java.util.Set<String> getAllSymbolNames() {

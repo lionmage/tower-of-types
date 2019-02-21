@@ -569,6 +569,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         protected BigColumnVector() {
             elements = new BigList<>();
         }
+        
         @Override
         public T elementAt(long index) {
             return elements.get(index);
