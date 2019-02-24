@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
@@ -327,5 +328,9 @@ public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
             return new SingletonMatrix(elements[0].inverse());
         }
         throw new ArithmeticException("Inverse only applies to square matrices.");
+    }
+    
+    public Stream<T> stream() {
+        return Arrays.stream(elements);
     }
 }

@@ -674,6 +674,11 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             }
             return result;
         }
+        
+        @Override
+        public Stream<T> stream() {
+            return elements.stream();
+        }
 
         @Override
         public int hashCode() {

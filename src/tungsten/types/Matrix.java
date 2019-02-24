@@ -27,6 +27,11 @@ import java.lang.reflect.Array;
 import java.math.MathContext;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -77,11 +82,34 @@ public interface Matrix<T extends Numeric> {
     }
     
     default boolean isTriangular() {
-        Predicate<Matrix<T>> isLower = (Matrix<T> t) -> t.isLowerTriangular();
-        Predicate<Matrix<T>> isUpper = (Matrix<T> t) -> t.isUpperTriangular();
-        return Arrays.asList(isLower, isUpper).parallelStream()
-                .<Boolean> map(p -> p.test(this))
-                .anyMatch(x -> x.booleanValue());
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
+        Callable<Boolean> isLower = this::isLowerTriangular;
+        Callable<Boolean> isUpper = this::isUpperTriangular;
+        Future<Boolean> lowResult = executor.submit(isLower);
+        Future<Boolean> upResult = executor.submit(isUpper);
+        try {
+            while (!lowResult.isDone() && !upResult.isDone()) {
+                Thread.sleep(150L);
+                if (lowResult.isDone() && lowResult.get()) return true;
+                if (upResult.isDone() && upResult.get()) return true;
+            }
+        } catch (InterruptedException ie) {
+            // log a warning, but let this method return false for now
+            Logger.getLogger(Matrix.class.getName()).log(Level.WARNING, "isTriangular() calculation was interrupted", ie);
+        } catch (ExecutionException exEx) {
+            Logger.getLogger(Matrix.class.getName()).log(Level.SEVERE, "Execution of one or both triangularity tests failed.", exEx);
+            throw new IllegalStateException(exEx);
+        } finally {
+            executor.shutdownNow();
+        }
+        return false;
+        // the parallel stream version below is not guaranteed to run in parallel,
+        // which sort of defeats the purpose since we have two roughly equal workloads...
+//        Predicate<Matrix<T>> isLower = (Matrix<T> t) -> t.isLowerTriangular();
+//        Predicate<Matrix<T>> isUpper = (Matrix<T> t) -> t.isUpperTriangular();
+//        return Arrays.asList(isLower, isUpper).parallelStream()
+//                .<Boolean> map(p -> p.test(this))
+//                .anyMatch(x -> x.booleanValue());
         // the naive version below might be easier to read and understand,
         // but for big matrices, you really want to do these checks in parallel
         // if you possibly can

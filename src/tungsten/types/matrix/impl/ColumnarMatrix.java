@@ -24,6 +24,7 @@
 package tungsten.types.matrix.impl;
 
 import java.lang.reflect.Array;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -295,5 +296,31 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
     
     public Matrix<T> adjoint() {
         return cofactor().transpose();
+    }
+    
+    @Override
+    public boolean isUpperTriangular() {
+        final MathContext mctx = valueAt(0L, 0L).getMathContext();
+        final Numeric zero = Zero.getInstance(mctx);
+        long skipRows = 1L;
+        boolean hasNonZero = false;
+        for (ColumnVector column : columns.subList(0, columns.size() - 1)) {
+            hasNonZero = column.stream().skip(skipRows++).anyMatch(x -> !x.equals(zero));
+            if (hasNonZero) break;
+        }
+        return !hasNonZero;
+    }
+    
+    @Override
+    public boolean isLowerTriangular() {
+        final MathContext mctx = valueAt(0L, 0L).getMathContext();
+        final Numeric zero = Zero.getInstance(mctx);
+        long endRow = 1L;
+        boolean hasNonZero = false;
+        for (ColumnVector column : columns.subList(1, columns.size())) {
+            hasNonZero = column.stream().limit(endRow++).anyMatch(x -> !x.equals(zero));
+            if (hasNonZero) break;
+        }
+        return !hasNonZero;
     }
 }
