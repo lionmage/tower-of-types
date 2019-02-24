@@ -191,6 +191,15 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
         return new DiagonalMatrix<>(result);
     }
     
+    @Override
+    public boolean isUpperTriangular() { return true; }
+    
+    @Override
+    public boolean isLowerTriangular() { return true; }
+    
+    @Override
+    public boolean isTriangular() { return true; }
+    
     // this method strictly exists to promote lesser types in the hierarchy to real values
     private RealType limitedUpconvert(Numeric val) {
         if (val instanceof RealType)  return (RealType) val;

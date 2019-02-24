@@ -24,9 +24,14 @@
 package tungsten.types;
 
 import java.lang.reflect.Array;
+import java.math.MathContext;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.impl.Zero;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
@@ -42,6 +47,46 @@ public interface Matrix<T extends Numeric> {
     T valueAt(long row, long column);
     T determinant();
     Matrix<? extends Numeric> inverse();
+    
+    default boolean isUpperTriangular() {
+        if (columns() != rows()) return false;
+        if (rows() == 1L) return false;  // singleton matrix can't really be either upper or lower triangular
+        final MathContext mctx = valueAt(0L, 0L).getMathContext();
+        final Numeric zero = Zero.getInstance(mctx);
+        
+        for (long row = 1L; row < rows(); row++) {
+            for (long column = 0L; column < columns() - row; column++) {
+                if (!valueAt(row, column).equals(zero)) return false;
+            }
+        }
+        return true;
+    }
+    
+    default boolean isLowerTriangular() {
+        if (columns() != rows()) return false;
+        if (rows() == 1L) return false;  // singleton matrix can't really be either upper or lower triangular
+        final MathContext mctx = valueAt(0L, 0L).getMathContext();
+        final Numeric zero = Zero.getInstance(mctx);
+        
+        for (long row = 0L; row < rows() - 1L; row++) {
+            for (long column = row + 1L; column < columns(); column++) {
+                if (!valueAt(row, column).equals(zero)) return false;
+            }
+        }
+        return true;
+    }
+    
+    default boolean isTriangular() {
+        Predicate<Matrix<T>> isLower = (Matrix<T> t) -> t.isLowerTriangular();
+        Predicate<Matrix<T>> isUpper = (Matrix<T> t) -> t.isUpperTriangular();
+        return Arrays.asList(isLower, isUpper).parallelStream()
+                .<Boolean> map(p -> p.test(this))
+                .anyMatch(x -> x.booleanValue());
+        // the naive version below might be easier to read and understand,
+        // but for big matrices, you really want to do these checks in parallel
+        // if you possibly can
+//        return isLowerTriangular() || isUpperTriangular();
+    }
     
     default T trace() {
         if (this.columns() != this.rows()) {
