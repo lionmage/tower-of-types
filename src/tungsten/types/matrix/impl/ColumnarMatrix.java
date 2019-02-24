@@ -100,24 +100,33 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
             T d = valueAt(1L, 1L);
             return (T) a.multiply(d).subtract(c.multiply(b));  // should not require coercion here
         }
-        else {
-            // A column-friendly version of the recursive algorithm.
-            Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
-            ColumnVector<T> firstColumn = columns.get(0);
-            ColumnarMatrix<T> intermediate = this.removeColumn(0L);
-            Numeric accum = Zero.getInstance(valueAt(0L, 0L).getMathContext());
-            for (long row = 0L; row < rows(); row++) {
-                Numeric coeff = firstColumn.elementAt(row);
-                if (row % 2L == 1L) coeff = coeff.negate(); // alternate sign of the coefficient
-                ColumnarMatrix<T> subMatrix = intermediate.removeRow(row);
-                accum = accum.add(coeff.multiply(subMatrix.determinant()));
-            }
-            try {
+        
+        final Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
+        try {
+            // do not mess with the short circuit evaluation!
+            if (columns() > 4L && isTriangular()) {
+                Numeric accum = valueAt(0L, 0L);
+                for (long index = 1L; index < rows(); index++) {
+                    accum = accum.multiply(valueAt(index, index));
+                }
                 return (T) accum.coerceTo(clazz);
-            } catch (CoercionException ex) {
-                Logger.getLogger(BasicMatrix.class.getName()).log(Level.SEVERE, "Coercion failed computing determinant.", ex);
-                throw new ArithmeticException("Coercion failed: " + ex.getMessage());
             }
+            else {
+                // A column-friendly version of the recursive algorithm.
+                ColumnVector<T> firstColumn = columns.get(0);
+                ColumnarMatrix<T> intermediate = this.removeColumn(0L);
+                Numeric accum = Zero.getInstance(valueAt(0L, 0L).getMathContext());
+                for (long row = 0L; row < rows(); row++) {
+                    Numeric coeff = firstColumn.elementAt(row);
+                    if (row % 2L == 1L) coeff = coeff.negate(); // alternate sign of the coefficient
+                    ColumnarMatrix<T> subMatrix = intermediate.removeRow(row);
+                    accum = accum.add(coeff.multiply(subMatrix.determinant()));
+                }
+                return (T) accum.coerceTo(clazz);
+            }
+        } catch (CoercionException ex) {
+            Logger.getLogger(ColumnarMatrix.class.getName()).log(Level.SEVERE, "Coercion failed computing determinant.", ex);
+            throw new ArithmeticException("Coercion failed: " + ex.getMessage());
         }
     }
 

@@ -47,7 +47,7 @@ import tungsten.types.vector.impl.RowVector;
  */
 public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     private List<RowVector<T>> rows = new ArrayList<>();
-    private Map<Long, ColumnVector<T>> columnCache = new HashMap<>();
+    private final Map<Long, ColumnVector<T>> columnCache = new HashMap<>();
     
     public BasicMatrix() {
     }
@@ -122,23 +122,34 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
             T d = valueAt(1L, 1L);
             return (T) a.multiply(d).subtract(c.multiply(b));  // should not require coercion here
         }
-        else {
-            Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
-            RowVector<T> firstRow = this.getRow(0L);
-            BasicMatrix<T> intermediate = this.removeRow(0L);
-            Numeric accum = Zero.getInstance(valueAt(0L, 0L).getMathContext());
-            for (long column = 0L; column < columns(); column++) {
-                Numeric coeff = firstRow.elementAt(column);
-                if (column % 2L == 1L) coeff = coeff.negate(); // alternate sign of the coefficient
-                BasicMatrix<T> subMatrix = intermediate.removeColumn(column);
-                accum = accum.add(coeff.multiply(subMatrix.determinant()));
-            }
-            try {
+        
+        final Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
+        try {
+            if (rows() > 4L && isTriangular()) {
+                // the above relies on short-circuit evaluation so that we
+                // only check for triangularity for > 4x4 matrices
+                // this little check could save us a lot of calculations
+                Numeric accum = valueAt(0L, 0L);
+                for (long index = 1L; index < rows(); index++) {
+                    accum = accum.multiply(valueAt(index, index));
+                }
                 return (T) accum.coerceTo(clazz);
-            } catch (CoercionException ex) {
-                Logger.getLogger(BasicMatrix.class.getName()).log(Level.SEVERE, "Coercion failed computing determinant.", ex);
-                throw new ArithmeticException("Coercion failed: " + ex.getMessage());
             }
+            else {
+                RowVector<T> firstRow = this.getRow(0L);
+                BasicMatrix<T> intermediate = this.removeRow(0L);
+                Numeric accum = Zero.getInstance(valueAt(0L, 0L).getMathContext());
+                for (long column = 0L; column < columns(); column++) {
+                    Numeric coeff = firstRow.elementAt(column);
+                    if (column % 2L == 1L) coeff = coeff.negate(); // alternate sign of the coefficient
+                    BasicMatrix<T> subMatrix = intermediate.removeColumn(column);
+                    accum = accum.add(coeff.multiply(subMatrix.determinant()));
+                }
+                return (T) accum.coerceTo(clazz);
+            }
+        } catch (CoercionException ex) {
+            Logger.getLogger(BasicMatrix.class.getName()).log(Level.SEVERE, "Coercion failed computing determinant.", ex);
+            throw new ArithmeticException("Coercion failed: " + ex.getMessage());
         }
     }
 
