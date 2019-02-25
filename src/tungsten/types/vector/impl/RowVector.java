@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
@@ -239,6 +240,10 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     @Override
     public ColumnVector<T> transpose() {
         return new ColumnVector(elements);
+    }
+    
+    public Stream<T> stream() {
+        return Arrays.stream(elements);
     }
     
     @Override

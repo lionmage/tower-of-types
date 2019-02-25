@@ -540,6 +540,11 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         }
 
         @Override
+        public Stream<T> stream() {
+            return elements.stream();
+        }
+
+        @Override
         public int hashCode() {
             int hash = 7;
             hash = 53 * hash + elements.hashCode();

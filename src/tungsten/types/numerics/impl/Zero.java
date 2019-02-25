@@ -193,6 +193,9 @@ public class Zero implements Numeric, Comparable<Numeric> {
     }
     
     @Override
+    public int hashCode() { return 0; }
+    
+    @Override
     public String toString() { return "0"; }
 
     @Override
