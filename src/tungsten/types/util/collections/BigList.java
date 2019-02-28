@@ -23,6 +23,7 @@
  */
 package tungsten.types.util.collections;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -237,11 +238,16 @@ public class BigList<T> implements Iterable<T> {
     }
     
     public Stream<T> stream() {
-        Stream.Builder<T> builder = Stream.builder();
-        for (ArrayList<T> list : listOfLists) {
-            list.forEach(builder::accept);
+        if (isEmpty()) return Stream.empty();
+        if (listOfLists.size() == 1) {
+            return listOfLists.get(0).stream();
         }
-        return builder.build();
+        if (listOfLists.size() == 2) {
+            return Stream.concat(listOfLists.get(0).stream(), listOfLists.get(1).stream());
+        }
+        Stream<T>[] substreams = listOfLists.stream().map(ArrayList::stream).toArray(size -> (Stream<T>[]) Array.newInstance(Stream.class, size));
+        Stream<Stream<T>> intermediate = Stream.of(substreams);
+        return intermediate.flatMap(s -> s);
     }
     
     public Stream<T> parallelStream() {
