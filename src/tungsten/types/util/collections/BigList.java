@@ -111,7 +111,8 @@ public class BigList<T> implements Iterable<T> {
     
     public void set(T obj, long index) {
         if (index < 0L) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            long translatedIndex = size() + index; // negative index is offset from end, -1 is last element
+            set(obj, translatedIndex);
         }
         
         int arraycount = 0;
@@ -236,11 +237,11 @@ public class BigList<T> implements Iterable<T> {
     }
     
     public Stream<T> stream() {
-        Stream<T> intermediate = Stream.empty();
+        Stream.Builder<T> builder = Stream.builder();
         for (ArrayList<T> list : listOfLists) {
-            intermediate = Stream.concat(intermediate, list.stream());
+            list.forEach(builder::accept);
         }
-        return intermediate;
+        return builder.build();
     }
     
     public Stream<T> parallelStream() {

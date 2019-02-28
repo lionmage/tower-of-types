@@ -94,27 +94,45 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     public void removeRow(long row) {
-        if (row < 0L || row >= rows()) throw new IndexOutOfBoundsException("Row index " + row + " out of bounds");
+        if (row < 0L || row >= internalRows()) throw new IndexOutOfBoundsException("Row index " + row + " out of bounds");
         if (row == 0L) {
-            startRow++; // this is cheaper than tracking a removed row, but is irreversible
+            AtomicLong removedCount = new AtomicLong();
+            // this is cheaper than tracking a removed row, but is irreversible
+            while (removedRows.contains(++startRow)) { // incrementally move the start bound inward
+                removedRows.remove(startRow); // eat up any adjacent rows that were marked as removed
+                removedCount.incrementAndGet();
+            }
+            // shift all indices
+            removedRows.replaceAll(val -> val - removedCount.longValue());
             return;
-        } else if (row == rows() - 1L) {
-            endRow--;
+        } else if (row == internalRows() - 1L) {
+            while (removedRows.contains(--endRow)) {
+                removedRows.remove(endRow);
+            }
             return;
         }
-        removedRows.add(row);
+        if (!removedRows.contains(row)) removedRows.add(row);
     }
     
     public void removeColumm(long column) {
-        if (column < 0L || column >= columns()) throw new IndexOutOfBoundsException("Row index " + column + " out of bounds");
+        if (column < 0L || column >= internalColumns()) throw new IndexOutOfBoundsException("Column index " + column + " out of bounds");
         if (column == 0L) {
-            startRow++; // this is cheaper than tracking a removed column, but is irreversible
+            AtomicLong removedCount = new AtomicLong();
+            // this is cheaper than tracking a removed row, but is irreversible
+            while (removedColumns.contains(++startColumn)) { // incrementally move the start bound inward
+                removedColumns.remove(startColumn); // eat up any adjacent rows that were marked as removed
+                removedCount.incrementAndGet();
+            }
+            // shift all indices
+            removedColumns.replaceAll(val -> val - removedCount.longValue());
             return;
-        } else if (column == columns() - 1L) {
-            endRow--;
+        } else if (column == internalColumns() - 1L) {
+            while (removedColumns.contains(--endColumn)) {
+                removedColumns.remove(endColumn);
+            }
             return;
         }
-        removedColumns.add(column);
+        if (!removedColumns.contains(column)) removedColumns.add(column);
     }
     
     private long computeRowIndex(long row) {
