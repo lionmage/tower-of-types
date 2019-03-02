@@ -343,7 +343,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
                         this.getRemovedRowIndices().equals(other.getRemovedRowIndices()) &&
                         this.getRemovedColumnIndices().equals(other.getRemovedColumnIndices());
             } else {
-                Matrix.super.equals(o);
+                return Matrix.super.equals(o);
             }
         }
         return false;
