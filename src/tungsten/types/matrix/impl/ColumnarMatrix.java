@@ -26,6 +26,7 @@ package tungsten.types.matrix.impl;
 import java.lang.reflect.Array;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,6 +62,10 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
         for (int column = 0; column < source[0].length; column++) {
             append(extractColumn(source, column));
         }
+    }
+    
+    public ColumnarMatrix(List<ColumnVector<T>> source) {
+        source.forEach(this::append);
     }
     
     private ColumnVector<T> extractColumn(T[][] source, int column) {
@@ -296,6 +301,35 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
     
     public Matrix<T> adjoint() {
         return cofactor().transpose();
+    }
+    
+    public Matrix<T> exchangeColumns(long column1, long column2) {
+        if (column1 < 0L || column1 >= columns()) throw new IndexOutOfBoundsException("column1 must be within bounds 0 - " + (columns() - 1L));
+        if (column2 < 0L || column2 >= columns()) throw new IndexOutOfBoundsException("column2 must be within bounds 0 - " + (columns() - 1L));
+        if (column1 == column2) return this; // NO-OP
+        
+        ArrayList<ColumnVector<T>> columns2 = new ArrayList<>(this.columns);
+        Collections.swap(columns2, (int) column1, (int) column2);
+        return new ColumnarMatrix<>(columns2);
+    }
+    
+    public Matrix<T> exchangeRows(long row1, long row2) {
+        if (row1 < 0L || row1 >= rows()) throw new IndexOutOfBoundsException("row1 must be within bounds 0 - " + (rows() - 1L));
+        if (row2 < 0L || row2 >= rows()) throw new IndexOutOfBoundsException("column2 must be within bounds 0 - " + (rows() - 1L));
+        if (row1 == row2) return this; // NO-OP
+        
+        final ArrayList<ColumnVector<T>> result = new ArrayList<>();
+        this.columns.forEach(colVec -> {
+            ArrayList<T> column = new ArrayList<>((int) colVec.length());
+            for (long row = 0L; row < rows(); row++) {
+                if (row == row1) column.add(colVec.elementAt(row2));
+                else if (row == row2) column.add(colVec.elementAt(row1));
+                else column.add(colVec.elementAt(row));
+            }
+            result.add(new ColumnVector<>(column));
+        });
+        
+        return new ColumnarMatrix<>(result);
     }
     
     @Override

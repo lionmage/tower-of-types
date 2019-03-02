@@ -25,6 +25,7 @@ package tungsten.types.matrix.impl;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -369,5 +370,34 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
     
     public Matrix<T> adjoint() {
         return cofactor().transpose();
+    }
+    
+    public Matrix<T> exchangeRows(long row1, long row2) {
+        if (row1 < 0L || row1 >= rows()) throw new IndexOutOfBoundsException("row1 must be within bounds 0 - " + (rows() - 1L));
+        if (row2 < 0L || row2 >= rows()) throw new IndexOutOfBoundsException("row2 must be within bounds 0 - " + (rows() - 1L));
+        if (row1 == row2) return this; // NO-OP
+        
+        ArrayList<RowVector<T>> rows2 = new ArrayList<>(this.rows);
+        Collections.swap(rows2, (int) row1, (int) row2);
+        return new BasicMatrix<>(rows2);
+    }
+    
+    public Matrix<T> exchangeColumns(long column1, long column2) {
+        if (column1 < 0L || column1 >= columns()) throw new IndexOutOfBoundsException("column1 must be within bounds 0 - " + (columns() - 1L));
+        if (column2 < 0L || column2 >= columns()) throw new IndexOutOfBoundsException("column2 must be within bounds 0 - " + (columns() - 1L));
+        if (column1 == column2) return this; // NO-OP
+        
+        final ArrayList<RowVector<T>> result = new ArrayList<>();
+        this.rows.forEach(rowVec -> {
+            ArrayList<T> row = new ArrayList<>((int) rowVec.length());
+            for (long column = 0L; column < columns(); column++) {
+                if (column == column1) row.add(rowVec.elementAt(column2));
+                else if (column == column2) row.add(rowVec.elementAt(column1));
+                else row.add(rowVec.elementAt(column));
+            }
+            result.add(new RowVector<>(row));
+        });
+        
+        return new BasicMatrix<>(result);
     }
 }
