@@ -187,7 +187,19 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
             }
             return (T) accum;
         }
-        return new BasicMatrix<>(this).determinant();
+        
+        RowVector<T> firstRow = this.getRow(0L);
+        SubMatrix<T> intermediate = this.duplicate();
+        intermediate.removeRow(0L);
+        Numeric accum = Zero.getInstance(valueAt(0L, 0L).getMathContext());
+        for (long column = 0L; column < columns(); column++) {
+            Numeric coeff = firstRow.elementAt(column);
+            if (column % 2L == 1L) coeff = coeff.negate(); // alternate sign of the coefficient
+            SubMatrix<T> sub = intermediate.duplicate();
+            sub.removeColumm(column);
+            accum = accum.add(coeff.multiply(sub.determinant()));
+        }
+        return (T) accum;
     }
 
     @Override
