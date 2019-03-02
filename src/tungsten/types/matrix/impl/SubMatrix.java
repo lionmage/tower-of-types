@@ -335,7 +335,8 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         if (o instanceof Matrix) {
             if (o instanceof SubMatrix) {
                 SubMatrix<?> other = (SubMatrix<?>) o;
-                if (other != original) return false;
+                // test for referential equality for speed
+                if (other.original != this.original) return false;
                 return this.startRow == other.startRow &&
                         this.endRow  == other.endRow &&
                         this.startColumn == other.startColumn &&
