@@ -26,14 +26,25 @@ package tungsten.types.matrix.impl;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
@@ -251,7 +262,46 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public Matrix<? extends Numeric> inverse() {
-        return new BasicMatrix<>(this).inverse();
+        final Numeric zero = Zero.getInstance(valueAt(0L, 0L).getMathContext());
+        final T det = this.determinant();
+        if (det.equals(zero)) throw new ArithmeticException("This submatrix is singular.");
+        
+        final Numeric scale = det.inverse();
+        List<FutureTask<T>> subtasks = new LinkedList<>();
+        BasicMatrix<Numeric> result = new BasicMatrix<>();
+        ExecutorService executor = Executors.newCachedThreadPool();
+        for (long row = 0L; row < rows(); row++) {
+            for (long column = 0L; column < columns(); column++) {
+                FutureTask<T> task = computeCofactor(row, column);
+                subtasks.add(task);
+                executor.submit(task);
+            }
+            // copy the results into a row vector
+            RowVector<Numeric> rowVec = new RowVector<>(subtasks.stream().map(task -> {
+                try {
+                    return task.get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    Logger.getLogger(SubMatrix.class.getName()).log(Level.SEVERE, "Cofactor computation interrupted.", ex);
+                    throw new IllegalStateException(ex);
+                }
+            }).collect(Collectors.toList()));
+            result.append(rowVec.scale(scale));
+            // and clear out the subtasks list for the next row
+            subtasks.clear();
+        }
+        executor.shutdownNow();
+        return result.transpose();  // adjoint scaled by 1/det
+    }
+    
+    private FutureTask<T> computeCofactor(long row, long column) {
+        SubMatrix<T> sub = this.duplicate();
+        sub.removeRow(row);
+        sub.removeColumm(column);
+        return new FutureTask<>(() -> {
+            T intermediate = sub.determinant();
+            if ((row + column) % 2L == 1L) intermediate = (T) intermediate.negate();
+            return intermediate;
+        });
     }
 
     @Override
