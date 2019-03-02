@@ -85,18 +85,18 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         return internalRows() - removedRows.size();
     }
     
-    private long internalRows() {
+    protected long internalRows() {
         return endRow - startRow + 1L;
     }
     
-    private long internalColumns() {
+    protected long internalColumns() {
         return endColumn - startColumn + 1L;
     }
     
     public void removeRow(long row) {
         if (row < 0L || row >= internalRows()) throw new IndexOutOfBoundsException("Row index " + row + " out of bounds");
         if (row == 0L) {
-            AtomicLong removedCount = new AtomicLong();
+            AtomicLong removedCount = new AtomicLong(1L);
             // this is cheaper than tracking a removed row, but is irreversible
             while (removedRows.contains(++startRow)) { // incrementally move the start bound inward
                 removedRows.remove(startRow); // eat up any adjacent rows that were marked as removed
@@ -117,7 +117,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     public void removeColumm(long column) {
         if (column < 0L || column >= internalColumns()) throw new IndexOutOfBoundsException("Column index " + column + " out of bounds");
         if (column == 0L) {
-            AtomicLong removedCount = new AtomicLong();
+            AtomicLong removedCount = new AtomicLong(1L);
             // this is cheaper than tracking a removed row, but is irreversible
             while (removedColumns.contains(++startColumn)) { // incrementally move the start bound inward
                 removedColumns.remove(startColumn); // eat up any adjacent rows that were marked as removed
@@ -221,6 +221,13 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         }
         return new BasicMatrix<>(temp);
     }
+    
+    public SubMatrix<T> duplicate() {
+        SubMatrix<T> dup = new SubMatrix<>(original, startRow, startColumn, endRow, endColumn);
+        dup.removedRows.addAll(this.removedRows);
+        dup.removedColumns.addAll(this.removedColumns);
+        return dup;
+    }
 
     @Override
     public RowVector<T> getRow(long row) {
@@ -246,11 +253,19 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         }
     }
     
-    public SortedSet<Long> getRemovedRowIndices() {
+    protected SortedSet<Long> getRemovedRowIndices() {
         return new TreeSet<>(removedRows);
     }
     
-    public SortedSet<Long> getRemovedColumnIndices() {
+    protected SortedSet<Long> getRemovedColumnIndices() {
         return new TreeSet<>(removedColumns);
+    }
+    
+    protected void clearRemovedRows() {
+        removedRows.clear();
+    }
+    
+    protected void clearRemovedColumns() {
+        removedColumns.clear();
     }
 }

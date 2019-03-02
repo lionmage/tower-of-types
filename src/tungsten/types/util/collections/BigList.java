@@ -99,7 +99,7 @@ public class BigList<T> implements Iterable<T> {
     
     public T get(long index) {
         if (index < 0L) {
-            return reverseStream().skip(Math.abs(index + 1)).findFirst().orElseThrow(IndexOutOfBoundsException::new );
+            return reverseStream().skip(Math.abs(index + 1L)).findFirst().orElseThrow(IndexOutOfBoundsException::new );
         }
         
         int arraycount = 0;
@@ -246,7 +246,7 @@ public class BigList<T> implements Iterable<T> {
             return Stream.concat(listOfLists.get(0).stream(), listOfLists.get(1).stream());
         }
         Stream<T>[] substreams = listOfLists.stream().map(ArrayList::stream).toArray(size -> (Stream<T>[]) Array.newInstance(Stream.class, size));
-        Stream<Stream<T>> intermediate = Stream.of(substreams);
+        final Stream<Stream<T>> intermediate = Stream.of(substreams);
         return intermediate.flatMap(s -> s);
     }
     
