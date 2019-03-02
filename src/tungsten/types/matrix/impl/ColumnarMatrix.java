@@ -315,7 +315,7 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
     
     public Matrix<T> exchangeRows(long row1, long row2) {
         if (row1 < 0L || row1 >= rows()) throw new IndexOutOfBoundsException("row1 must be within bounds 0 - " + (rows() - 1L));
-        if (row2 < 0L || row2 >= rows()) throw new IndexOutOfBoundsException("column2 must be within bounds 0 - " + (rows() - 1L));
+        if (row2 < 0L || row2 >= rows()) throw new IndexOutOfBoundsException("row2 must be within bounds 0 - " + (rows() - 1L));
         if (row1 == row2) return this; // NO-OP
         
         final ArrayList<ColumnVector<T>> result = new ArrayList<>();
