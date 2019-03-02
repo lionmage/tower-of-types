@@ -31,6 +31,8 @@ import java.util.ListIterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
@@ -50,6 +52,10 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     private long startColumn, endColumn;
     private final List<Long> removedRows = new ArrayList<>();
     private final List<Long> removedColumns = new ArrayList<>();
+    private Boolean upperTriangular;
+    private Boolean lowerTriangular;
+    private final Lock ltLock = new ReentrantLock();
+    private final Lock utLock = new ReentrantLock();
     
     public SubMatrix(Matrix<T> original) {
         this.original = original;
@@ -85,6 +91,31 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         return internalRows() - removedRows.size();
     }
     
+    @Override
+    public boolean isUpperTriangular() {
+        utLock.lock();
+        try {
+            if (upperTriangular != null) return upperTriangular.booleanValue();
+            // cache this for posterity
+            upperTriangular = Matrix.super.isUpperTriangular();
+            return upperTriangular;
+        } finally {
+            utLock.unlock();
+        }
+    }
+    
+    @Override
+    public boolean isLowerTriangular() {
+        ltLock.lock();
+        try {
+            if (lowerTriangular != null) return lowerTriangular.booleanValue();
+            lowerTriangular = Matrix.super.isLowerTriangular();
+            return lowerTriangular;
+        } finally {
+            ltLock.unlock();
+        }
+    }
+    
     protected long internalRows() {
         return endRow - startRow + 1L;
     }
@@ -95,6 +126,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     
     public void removeRow(long row) {
         if (row < 0L || row >= internalRows()) throw new IndexOutOfBoundsException("Row index " + row + " out of bounds");
+        geometryChanged();
         if (row == 0L) {
             AtomicLong removedCount = new AtomicLong(1L);
             // this is cheaper than tracking a removed row, but is irreversible
@@ -116,6 +148,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     
     public void removeColumm(long column) {
         if (column < 0L || column >= internalColumns()) throw new IndexOutOfBoundsException("Column index " + column + " out of bounds");
+        geometryChanged();
         if (column == 0L) {
             AtomicLong removedCount = new AtomicLong(1L);
             // this is cheaper than tracking a removed row, but is irreversible
@@ -133,6 +166,18 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
             return;
         }
         if (!removedColumns.contains(column)) removedColumns.add(column);
+    }
+    
+    private void geometryChanged() {
+        ltLock.lock();
+        utLock.lock();
+        try {
+            lowerTriangular = null;
+            upperTriangular = null;
+        } finally {
+            ltLock.unlock();
+            utLock.unlock();
+        }
     }
     
     private long computeRowIndex(long row) {
@@ -274,10 +319,12 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     protected void clearRemovedRows() {
+        geometryChanged();
         removedRows.clear();
     }
     
     protected void clearRemovedColumns() {
+        geometryChanged();
         removedColumns.clear();
     }
 }
