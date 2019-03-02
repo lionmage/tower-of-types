@@ -52,6 +52,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     private long startColumn, endColumn;
     private final List<Long> removedRows = new ArrayList<>();
     private final List<Long> removedColumns = new ArrayList<>();
+    // cache of tests for upper/lower triangularity
     private Boolean upperTriangular;
     private Boolean lowerTriangular;
     private final Lock ltLock = new ReentrantLock();
@@ -72,8 +73,8 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         if (column1 < 0L || column1 >= original.columns() || column2 < 0L || column2 >= original.columns()) {
             throw new IllegalArgumentException("Column indices must be within range.");
         }
-        if (row1 > row2) throw new IllegalArgumentException("row1 must be <= row2");
-        if (column1 > column2) throw new IllegalArgumentException("column1 must be <= column2");
+        if (row1 > row2) throw new IllegalArgumentException("row1 must be \u2264 row2");
+        if (column1 > column2) throw new IllegalArgumentException("column1 must be \u2264 column2");
         this.original = original;
         this.startRow = row1;
         this.endRow   = row2;
@@ -98,7 +99,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
             if (upperTriangular != null) return upperTriangular.booleanValue();
             // cache this for posterity
             upperTriangular = Matrix.super.isUpperTriangular();
-            return upperTriangular;
+            return upperTriangular.booleanValue();
         } finally {
             utLock.unlock();
         }
@@ -110,7 +111,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         try {
             if (lowerTriangular != null) return lowerTriangular.booleanValue();
             lowerTriangular = Matrix.super.isLowerTriangular();
-            return lowerTriangular;
+            return lowerTriangular.booleanValue();
         } finally {
             ltLock.unlock();
         }
