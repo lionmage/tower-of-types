@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
@@ -327,5 +328,36 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     protected void clearRemovedColumns() {
         geometryChanged();
         removedColumns.clear();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            if (o instanceof SubMatrix) {
+                SubMatrix<?> other = (SubMatrix<?>) o;
+                if (other != original) return false;
+                return this.startRow == other.startRow &&
+                        this.endRow  == other.endRow &&
+                        this.startColumn == other.startColumn &&
+                        this.endColumn   == other.endColumn &&
+                        this.getRemovedRowIndices().equals(other.getRemovedRowIndices()) &&
+                        this.getRemovedColumnIndices().equals(other.getRemovedColumnIndices());
+            } else {
+                Matrix.super.equals(o);
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 29 * hash + (int) (this.startRow ^ (this.startRow >>> 32));
+        hash = 29 * hash + (int) (this.endRow ^ (this.endRow >>> 32));
+        hash = 29 * hash + (int) (this.startColumn ^ (this.startColumn >>> 32));
+        hash = 29 * hash + (int) (this.endColumn ^ (this.endColumn >>> 32));
+        hash = 29 * hash + Objects.hashCode(this.removedRows);
+        hash = 29 * hash + Objects.hashCode(this.removedColumns);
+        return hash;
     }
 }
