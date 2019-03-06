@@ -28,7 +28,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -311,6 +310,23 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Failed to create backing store for result.", ioe);
         }
         throw new IllegalStateException("Unable to persist product.");
+    }
+    
+    @Override
+    public Matrix<T> scale(T scaleFactor) {
+        try {
+            final File backingFile = File.createTempFile("bigMatrix_scale_temp", FILE_EXTENSION);
+            backingFile.deleteOnExit();
+            BigMatrix<T> result = new BigMatrix(backingFile, this.rows(), this.columns(), delimiter, interfaceType);
+            for (long row = 0L; row < rows(); row++) {
+                RowVector<T> rowvec = this.getRow(row).scale(scaleFactor);
+                result.append(rowvec);
+            }
+            return result;
+        } catch (IOException ioe) {
+            Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Failed to create backing store for result.", ioe);
+        }
+        throw new IllegalStateException("Unable to persist scaled matrix.");
     }
     
     public void writeMatrix(File output) throws IOException {

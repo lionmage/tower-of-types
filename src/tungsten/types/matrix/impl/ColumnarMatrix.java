@@ -357,4 +357,11 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
         }
         return !hasNonZero;
     }
+
+    @Override
+    public Matrix<T> scale(T scaleFactor) {
+        ColumnarMatrix<T> scaled = new ColumnarMatrix<>();
+        columns.stream().map(colVec -> colVec.scale(scaleFactor)).forEach(scaled::append);
+        return scaled;
+    }
 }

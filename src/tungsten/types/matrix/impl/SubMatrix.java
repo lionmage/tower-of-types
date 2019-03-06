@@ -418,4 +418,12 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         hash = 29 * hash + Objects.hashCode(this.removedColumns);
         return hash;
     }
+
+    @Override
+    public Matrix<T> scale(T scaleFactor) {
+        SubMatrix<T> scaled = new SubMatrix<>(original.scale(scaleFactor), startRow, startColumn, endRow, endColumn);
+        scaled.removedRows.addAll(this.removedRows);
+        scaled.removedColumns.addAll(this.removedColumns);
+        return scaled;
+    }
 }

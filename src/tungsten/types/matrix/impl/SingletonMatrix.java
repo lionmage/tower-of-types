@@ -104,6 +104,11 @@ public class SingletonMatrix<T extends Numeric> implements Matrix<T> {
             throw new ArithmeticException("Coercion failure: " + ex.getMessage());
         }
     }
+
+    @Override
+    public SingletonMatrix<T> scale(T scaleFactor) {
+        return new SingletonMatrix<>((T) element.multiply(scaleFactor));
+    }
     
     @Override
     public String toString() {

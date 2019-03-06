@@ -24,6 +24,8 @@
 package tungsten.types;
 
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -33,6 +35,8 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.Zero;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
@@ -186,11 +190,26 @@ public interface Matrix<T extends Numeric> {
                 // the inverse of the transpose is the transpose of the inverse of the original matrix
                 return source.inverse().transpose();
             }
+            
+            @Override
+            public Matrix<T> scale(T scaleFactor) {
+                return source.scale(scaleFactor).transpose();
+            }
         };
     }
     
     Matrix<T> add(Matrix<T> addend);
     Matrix<T> multiply(Matrix<T> multiplier);
+    Matrix<T> scale(T scaleFactor);
+    default Matrix<T> subtract(Matrix<T> subtrahend) {
+        final Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
+        try {
+            final T negOne = (T) new IntegerImpl(BigInteger.valueOf(-1L)).coerceTo(clazz);
+            return this.add(subtrahend.scale(negOne));
+        } catch (CoercionException ce) {
+            throw new IllegalStateException(ce);
+        }
+    }
     
     default RowVector<T> getRow(long row) {
         Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();

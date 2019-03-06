@@ -160,6 +160,14 @@ public class ParametricMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     @Override
+    public Matrix<T> scale(T scaleFactor) {
+        final BiFunction<Long, Long, T> scaleFunction = generatorFunction.internal.andThen(x -> {
+            return (T) x.multiply(scaleFactor);
+        });
+        return new ParametricMatrix<>(rows, columns, scaleFunction);
+    }
+    
+    @Override
     public Matrix<T> transpose() {
         final Generator<T> transGenerator = new Generator<>((row, column) -> generatorFunction.internal.apply(column, row));
         return new ParametricMatrix(columns, rows, transGenerator);

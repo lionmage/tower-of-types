@@ -216,4 +216,12 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
         return Arrays.stream(elements).map(element -> element.toString())
                 .collect(Collectors.joining(", ", "diag(\u202F", "\u202F)"));
     }
+
+    @Override
+    public DiagonalMatrix<T> scale(T scaleFactor) {
+        final Class<T> clazz = (Class<T>) elements[0].getClass();
+        T[] scaled = Arrays.stream(elements).map(element -> element.multiply(scaleFactor))
+                .map(clazz::cast).toArray(size -> (T[]) Array.newInstance(clazz, size));
+        return new DiagonalMatrix<>(scaled);
+    }
 }
