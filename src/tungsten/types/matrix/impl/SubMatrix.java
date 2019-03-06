@@ -26,7 +26,9 @@ package tungsten.types.matrix.impl;
 import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -36,7 +38,10 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -321,7 +326,10 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         }
         if (isDimensionPowerOf2(this.rows()) && isDimensionPowerOf2(multiplier.columns())
                 && this.rows() == multiplier.columns()) {
-            // TODO do the recursive multiplication algorithm using fork-join
+            if (rows() == 1L) return new SingletonMatrix<>((T) this.valueAt(0L, 0L).multiply(multiplier.valueAt(0L, 0L)));
+            ForkJoinPool commonPool = ForkJoinPool.commonPool();
+            MatMultRecursiveTask task = new MatMultRecursiveTask(this, multiplier);
+            return commonPool.invoke(task);
         }
         
         T[][] temp = (T[][]) Array.newInstance(valueAt(0L, 0L).getClass(), (int) this.rows(), (int) multiplier.columns());
@@ -337,6 +345,69 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     private boolean isDimensionPowerOf2(long dimension) {
         return BigInteger.valueOf(dimension).bitCount() == 1;
     }
+    
+    private class MatMultRecursiveTask extends RecursiveTask<Matrix<T>> {
+        private Matrix<T> A, B;
+        long size;
+        
+        private MatMultRecursiveTask(Matrix<T> A, Matrix<T> B) {
+            this.A = A;
+            this.B = B;
+            assert A.rows() == B.rows() && A.columns() == B.columns()
+                    && A.rows() == A.columns();
+            size = A.rows();
+        }
+
+        @Override
+        protected Matrix<T> compute() {
+            if (size == 1L) {
+                return new SingletonMatrix<>((T) A.valueAt(0L, 0L).multiply(B.valueAt(0L, 0L)));
+            }
+            
+            List<MatMultRecursiveTask> tasks = createSubTasks();
+            ForkJoinTask.invokeAll(tasks);
+            
+            Iterator<MatMultRecursiveTask> iter = tasks.iterator();
+            
+            // note that these results rely on the subcalculations being added to the tasklist in a specific order
+            Matrix<T> C00 = iter.next().join().add(iter.next().join());
+            Matrix<T> C01 = iter.next().join().add(iter.next().join());
+            Matrix<T> C10 = iter.next().join().add(iter.next().join());
+            Matrix<T> C11 = iter.next().join().add(iter.next().join());
+            
+            return new AggregateMatrix<>(new Matrix[][] {{C00, C01}, {C10, C11}});
+        }
+        
+        private List<MatMultRecursiveTask> createSubTasks() {
+            long n = size >> 1L;
+            
+            SubMatrix<T> A00 = new SubMatrix(A, 0L, 0L, n - 1, n - 1);
+            SubMatrix<T> A01 = new SubMatrix(A, 0L, n, n - 1, size - 1L);
+            SubMatrix<T> A10 = new SubMatrix(A, n, 0L, size - 1L, n - 1L);
+            SubMatrix<T> A11 = new SubMatrix(A, n, n, size - 1L, size - 1L);
+            
+            SubMatrix<T> B00 = new SubMatrix(B, 0L, 0L, n - 1, n - 1);
+            SubMatrix<T> B01 = new SubMatrix(B, 0L, n, n - 1, size - 1L);
+            SubMatrix<T> B10 = new SubMatrix(B, n, 0L, size - 1L, n - 1L);
+            SubMatrix<T> B11 = new SubMatrix(B, n, n, size - 1L, size - 1L);
+
+            return Arrays.asList(
+                    new MatMultRecursiveTask(A00, B00),
+                    new MatMultRecursiveTask(A01, B10),
+                    
+                    new MatMultRecursiveTask(A00, B01),
+                    new MatMultRecursiveTask(A01, B11),
+                    
+                    new MatMultRecursiveTask(A10, B00),
+                    new MatMultRecursiveTask(A11, B10),
+                    
+                    new MatMultRecursiveTask(A10, B01),
+                    new MatMultRecursiveTask(A11, B11)
+            );
+        }
+    }
+    
+//    private Matrix<T> forkJoinMultiply(Matrix<T> )
     
     public SubMatrix<T> duplicate() {
         SubMatrix<T> dup = new SubMatrix<>(original, startRow, startColumn, endRow, endColumn);
