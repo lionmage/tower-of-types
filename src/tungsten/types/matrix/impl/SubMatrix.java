@@ -24,6 +24,7 @@
 package tungsten.types.matrix.impl;
 
 import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -35,10 +36,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -321,6 +319,11 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         if (this.columns() != multiplier.rows()) {
             throw new ArithmeticException("Multiplier must have the same number of rows as this matrix has columns.");
         }
+        if (isDimensionPowerOf2(this.rows()) && isDimensionPowerOf2(multiplier.columns())
+                && this.rows() == multiplier.columns()) {
+            // TODO do the recursive multiplication algorithm using fork-join
+        }
+        
         T[][] temp = (T[][]) Array.newInstance(valueAt(0L, 0L).getClass(), (int) this.rows(), (int) multiplier.columns());
         for (long row = 0L; row < rows(); row++) {
             RowVector<T> rowvec = this.getRow(row);
@@ -329,6 +332,10 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
             }
         }
         return new BasicMatrix<>(temp);
+    }
+    
+    private boolean isDimensionPowerOf2(long dimension) {
+        return BigInteger.valueOf(dimension).bitCount() == 1;
     }
     
     public SubMatrix<T> duplicate() {

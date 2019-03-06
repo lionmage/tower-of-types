@@ -67,6 +67,10 @@ public interface IntegerType extends Numeric, Comparable<IntegerType> {
     @Override
     public IntegerType sqrt();
     
+    public default boolean isPowerOf2() {
+        return sign() != Sign.NEGATIVE && asBigInteger().bitCount() == 1;
+    }
+    
     public BigInteger asBigInteger();
     public Sign sign();
 }
