@@ -25,6 +25,7 @@ package tungsten.types.matrix.impl;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -33,6 +34,8 @@ import java.util.logging.Logger;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
@@ -168,7 +171,8 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
             
             // A and D must be square to be invertible
             if (A.rows() == A.columns() && D.rows() == D.columns()) {
-                final Numeric negone = new RealImpl(BigDecimal.ONE);
+                final Numeric negone = IntegerType.class.isAssignableFrom(clazz) ? 
+                        new IntegerImpl(BigInteger.valueOf(-1L)) : new RealImpl(BigDecimal.valueOf(-1L));
                 Matrix<Numeric> Di = (Matrix<Numeric>) D.inverse();
                 Matrix<Numeric> BDi = B.multiply(Di);
                 Matrix<Numeric> BDiC = BDi.multiply(C);
@@ -194,7 +198,7 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
         // first check a sub-case where we're adding to another AggregateMatrix
         // and its sub-matrices have the same dimensions
         if (addend instanceof AggregateMatrix) {
-            AggregateMatrix<T> coercedAddend = (AggregateMatrix<T>) addend;
+            final AggregateMatrix<T> coercedAddend = (AggregateMatrix<T>) addend;
             if (checkSubmatrixDimensions(coercedAddend)) {
                 Matrix<T>[][] result = (Matrix<T>[][]) Array.newInstance(clazz, subMatrices.length, subMatrices[0].length);
                 for (int tileRow = 0; tileRow < subMatrices.length; tileRow++) {
@@ -229,7 +233,7 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
         if (this.columns() != multiplier.rows()) {
             throw new ArithmeticException("Multiplier must have the same number of rows as this matrix has columns.");
         }
-        return new SubMatrix(this).multiply(multiplier);
+        return new SubMatrix<>(this).multiply(multiplier);
     }
 
     @Override

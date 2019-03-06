@@ -201,6 +201,7 @@ public interface Matrix<T extends Numeric> {
     Matrix<T> add(Matrix<T> addend);
     Matrix<T> multiply(Matrix<T> multiplier);
     Matrix<T> scale(T scaleFactor);
+
     default Matrix<T> subtract(Matrix<T> subtrahend) {
         final Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
         try {
