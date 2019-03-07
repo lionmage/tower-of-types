@@ -27,6 +27,9 @@ import java.math.BigDecimal;
 import tungsten.types.Numeric;
 
 /**
+ * General interface for types representing rational values of the form
+ * p/q, where p and q are integral values, q &ne; 0, and in general normalized
+ * so that q &gt; 0.
  *
  * @author tarquin
  */

@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import tungsten.types.Numeric;
 
 /**
+ * General interface for types representing integral values.
  *
  * @author tarquin
  */

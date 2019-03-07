@@ -28,6 +28,7 @@ import tungsten.types.Numeric;
 import tungsten.types.Set;
 
 /**
+ * General interface for types representing real values.
  *
  * @author tarquin
  */
