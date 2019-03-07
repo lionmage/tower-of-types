@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
+import tungsten.types.annotations.Columnar;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.NumericHierarchy;
 import tungsten.types.numerics.impl.Zero;
@@ -47,6 +48,7 @@ import tungsten.types.vector.impl.RowVector;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the {@link Numeric} type for the elements of this matrix
  */
+@Columnar
 public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
     private final List<ColumnVector<T>> columns = new ArrayList<>();
     

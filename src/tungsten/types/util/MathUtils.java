@@ -38,6 +38,8 @@ import tungsten.types.Numeric;
 import tungsten.types.Range;
 import static tungsten.types.Range.BoundType;
 import tungsten.types.Set;
+import tungsten.types.Vector;
+import tungsten.types.annotations.Columnar;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.matrix.impl.BasicMatrix;
 import tungsten.types.numerics.ComplexType;
@@ -579,6 +581,7 @@ public class MathUtils {
             OptionalOperations.setMathContext(one, theta.getMathContext());
             OptionalOperations.setMathContext(zero, theta.getMathContext());
         }
+        
         RealType cos = new RealImpl(BigDecimalMath.cos(theta.asBigDecimal(), theta.getMathContext()));
         RealType sin = new RealImpl(BigDecimalMath.sin(theta.asBigDecimal(), theta.getMathContext()));
 
@@ -600,5 +603,40 @@ public class MathUtils {
                 break;
         }
         return new BasicMatrix<>(temp);
+    }
+    
+    private static final Range<RealType> epsilonRange = new Range<>(new RealImpl("0"), new RealImpl("1"), BoundType.EXCLUSIVE);
+    
+    public static boolean areEqualWithin(RealType A, RealType B, RealType epsilon) {
+        if (epsilon.sign() != Sign.POSITIVE || !epsilonRange.contains(epsilon)) {
+            throw new IllegalArgumentException("Argument epsilon must be a small positive value.");
+        }
+        
+        final RealType difference = (RealType) A.subtract(B).magnitude();
+        return difference.compareTo(epsilon) < 0;
+    }
+    
+    public static boolean areEqualWithin(Vector<RealType> A, Vector<RealType> B, RealType epsilon) {
+        if (A.length() != B.length()) return false;
+        for (long index = 0L; index < A.length(); index++) {
+            if (!areEqualWithin(A.elementAt(index), B.elementAt(index), epsilon)) return false;
+        }
+        return true;
+    }
+    
+    public static boolean areEqualWithin(Matrix<RealType> A, Matrix<RealType> B, RealType epsilon) {
+        if (A.rows() != B.rows() || A.columns() != B.columns()) return false;
+        if (A.getClass().isAnnotationPresent(Columnar.class) && B.getClass().isAnnotationPresent(Columnar.class)) {
+            for (long column = 0L; column < A.columns(); column++) {
+                if (!areEqualWithin((Vector<RealType>) A.getColumn(column),
+                        (Vector<RealType>) B.getColumn(column), epsilon)) return false;
+            }
+            return true;
+        } else {
+            for (long row = 0L; row < A.rows(); row++) {
+                if (!areEqualWithin((Vector<RealType>) A.getRow(row), (Vector<RealType>) B.getRow(row), epsilon)) return false;
+            }
+            return true;
+        }
     }
 }
