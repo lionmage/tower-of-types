@@ -35,12 +35,18 @@ import tungsten.types.numerics.RationalType;
 import tungsten.types.util.UnicodeTextEffects;
 
 /**
+ * A representation of a repeating decimal value.
+ * Internally, this is just a {@link RationalType} with some
+ * extra methods to disclose the unique properties of
+ * this value.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class RepeatingDecimal extends RationalImpl {
-    private static BigInteger TWO  = BigInteger.valueOf(2L);
-    private static BigInteger FIVE = BigInteger.valueOf(5L);
+    private static final BigInteger TWO  = BigInteger.valueOf(2L);
+    private static final BigInteger FIVE = BigInteger.valueOf(5L);
+    private static final String HORIZONTAL_ELLIPSIS = "\u2026";
+    private static final char DECIMAL_POINT_REPRESENTATION = obtainDecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
     
     private BigInteger position;  // the position after the decimal point where repetition begins
     private BigInteger decimalPeriod;  // the length of the repetition
@@ -60,6 +66,7 @@ public class RepeatingDecimal extends RationalImpl {
     /**
      * Gives the length in digits of the repeating sequence of digits
      * in this decimal value.
+     * 
      * @return an {@link Optional} containing the cycle length, or an empty {@link Optional} if no cycle exists
      */
     public Optional<IntegerType> cycleLength() {
@@ -94,8 +101,6 @@ public class RepeatingDecimal extends RationalImpl {
             return new DecimalFormat();
         }
     }
-    
-    private static final char DECIMAL_POINT_REPRESENTATION = obtainDecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
     
     @Override
     public String toString() {
@@ -135,8 +140,6 @@ public class RepeatingDecimal extends RationalImpl {
         
         return buf.toString();
     }
-    
-    private static final String HORIZONTAL_ELLIPSIS = "\u2026";
     
     private void characterize() {
         final RationalType reduced = this.reduce();
