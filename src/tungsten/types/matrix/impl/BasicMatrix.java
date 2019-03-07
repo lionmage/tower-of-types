@@ -378,9 +378,9 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         if (row2 < 0L || row2 >= rows()) throw new IndexOutOfBoundsException("row2 must be within bounds 0 - " + (rows() - 1L));
         if (row1 == row2) return this; // NO-OP
         
-        ArrayList<RowVector<T>> rows2 = new ArrayList<>(this.rows);
-        Collections.swap(rows2, (int) row1, (int) row2);
-        return new BasicMatrix<>(rows2);
+        final ArrayList<RowVector<T>> result = new ArrayList<>(this.rows);
+        Collections.swap(result, (int) row1, (int) row2);
+        return new BasicMatrix<>(result);
     }
     
     public Matrix<T> exchangeColumns(long column1, long column2) {
