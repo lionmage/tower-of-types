@@ -200,7 +200,7 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
         if (addend instanceof AggregateMatrix) {
             final AggregateMatrix<T> coercedAddend = (AggregateMatrix<T>) addend;
             if (checkSubmatrixDimensions(coercedAddend)) {
-                Matrix<T>[][] result = (Matrix<T>[][]) Array.newInstance(clazz, subMatrices.length, subMatrices[0].length);
+                Matrix<T>[][] result = (Matrix<T>[][]) Array.newInstance(Matrix.class, subMatrices.length, subMatrices[0].length);
                 for (int tileRow = 0; tileRow < subMatrices.length; tileRow++) {
                     for (int tileColumn = 0; tileColumn < subMatrices[tileRow].length; tileColumn++) {
                         result[tileRow][tileColumn] = subMatrices[tileRow][tileColumn].add(coercedAddend.subMatrices[tileRow][tileColumn]);
@@ -265,5 +265,53 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
             }
         }
         return new AggregateMatrix(result);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            if (o instanceof AggregateMatrix) {
+                AggregateMatrix<? extends Numeric> that = (AggregateMatrix<Numeric>) o;
+                if (subMatrices.length == that.subMatrices.length &&
+                        subMatrices[0].length == that.subMatrices[0].length) {
+                    for (int tileRow = 0; tileRow < subMatrices.length; tileRow++) {
+                        for (int tileColumn = 0; tileColumn < subMatrices[tileRow].length; tileColumn++) {
+                            if (!subMatrices[tileRow][tileColumn].equals(that.subMatrices[tileRow][tileColumn])) return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+            
+            // else do it the old fashioned way
+            Matrix<? extends Numeric> that = (Matrix<Numeric>) o;
+            if (rows() != that.rows()) return false;
+            for (long row = 0L; row < rows(); row++) {
+                if (!getRow(row).equals(that.getRow(row))) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 53 * hash + (int) (this.columns ^ (this.columns >>> 32));
+        hash = 53 * hash + (int) (this.rows ^ (this.rows >>> 32));
+        hash = 53 * hash + Arrays.deepHashCode(this.subMatrices);
+        return hash;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("[\n");
+        for (long row = 0L; row < rows(); row++) {
+            RowVector<T> rowvec = getRow(row);
+            buf.append("\u00A0\u00A0").append(rowvec.toString()).append('\n');
+        }
+        buf.append("\u00A0]");
+        return buf.toString();
     }
 }

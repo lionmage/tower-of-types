@@ -23,6 +23,7 @@
  */
 package tungsten.types.matrix.impl;
 
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Matrix;
@@ -108,6 +109,23 @@ public class SingletonMatrix<T extends Numeric> implements Matrix<T> {
     @Override
     public SingletonMatrix<T> scale(T scaleFactor) {
         return new SingletonMatrix<>((T) element.multiply(scaleFactor));
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            Matrix<? extends Numeric> that = (Matrix<Numeric>) o;
+            if (that.rows() != 1L || that.columns() != 1L) return false;
+            return element.equals(that.valueAt(0L, 0L));
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 13 * hash + Objects.hashCode(this.element);
+        return hash;
     }
     
     @Override

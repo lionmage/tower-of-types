@@ -25,6 +25,7 @@ package tungsten.types.matrix.impl;
 
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.Objects;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.numerics.impl.IntegerImpl;
@@ -109,6 +110,23 @@ public class IdentityMatrix extends DiagonalMatrix<Numeric> {
     public IdentityMatrix inverse() {
         // the identity matrix is its own inverse
         return this;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof IdentityMatrix) {
+            IdentityMatrix that = (IdentityMatrix) o;
+            return this.elementCount == that.elementCount;
+        }
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 31 * hash + Objects.hashCode(this.mctx);
+        hash = 31 * hash + (int) (this.elementCount ^ (this.elementCount >>> 32));
+        return hash;
     }
     
     @Override

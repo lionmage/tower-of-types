@@ -224,4 +224,29 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
                 .map(clazz::cast).toArray(size -> (T[]) Array.newInstance(clazz, size));
         return new DiagonalMatrix<>(scaled);
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            if (o instanceof DiagonalMatrix) {
+                DiagonalMatrix<? extends Numeric> that = (DiagonalMatrix<Numeric>) o;
+                return Arrays.equals(this.elements, that.elements);
+            }
+
+            Matrix<? extends Numeric> that = (Matrix<Numeric>) o;
+            if (rows() != that.rows()) return false;
+            for (long row = 0L; row < rows(); row++) {
+                if (!getRow(row).equals(that.getRow(row))) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 97 * hash + Arrays.deepHashCode(this.elements);
+        return hash;
+    }
 }

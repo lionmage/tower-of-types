@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Matrix;
@@ -407,5 +408,25 @@ public class BasicMatrix<T extends Numeric> implements Matrix<T> {
         
         rows.stream().map(rowVec -> rowVec.scale(scaleFactor)).forEach(scaled::append);
         return scaled;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            Matrix<? extends Numeric> that = (Matrix<Numeric>) o;
+            if (rows() != that.rows()) return false;
+            for (long row = 0L; row < rows(); row++) {
+                if (!getRow(row).equals(that.getRow(row))) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 71 * hash + Objects.hashCode(this.rows);
+        return hash;
     }
 }

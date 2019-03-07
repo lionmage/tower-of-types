@@ -430,6 +430,30 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         return result;
     }
     
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            Matrix<? extends Numeric> that = (Matrix<Numeric>) o;
+            if (rows() != that.rows()) return false;
+            for (long row = 0L; row < rows(); row++) {
+                if (!getRow(row).equals(that.getRow(row))) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 53 * hash + Objects.hashCode(this.interfaceType);
+        hash = 53 * hash + (int) (this.rows ^ (this.rows >>> 32));
+        hash = 53 * hash + (int) (this.columns ^ (this.columns >>> 32));
+        hash = 53 * hash + Objects.hashCode(this.sourceFile);
+        hash = 53 * hash + this.delimiter;
+        return hash;
+    }
+    
     public class BigRowVector<T extends Numeric> extends RowVector<T> {
         private BigList<T> elements;
         

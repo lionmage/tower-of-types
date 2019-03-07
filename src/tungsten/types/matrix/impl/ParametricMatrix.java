@@ -24,6 +24,7 @@
 package tungsten.types.matrix.impl;
 
 import java.lang.reflect.Array;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
@@ -193,6 +194,30 @@ public class ParametricMatrix<T extends Numeric> implements Matrix<T> {
             }
         });
         return new ParametricMatrix<>(rows, columns, upfunction);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            Matrix<? extends Numeric> that = (Matrix<Numeric>) o;
+            if (this.rows() != that.rows() || this.columns() != that.columns()) return false;
+            for (long row = 0L; row < rows(); row++) {
+                for (long column = 0L; column < columns(); column++) {
+                    if (!valueAt(row, column).equals(that.valueAt(row, column))) return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 29 * hash + (int) (this.rows ^ (this.rows >>> 32));
+        hash = 29 * hash + (int) (this.columns ^ (this.columns >>> 32));
+        hash = 29 * hash + Objects.hashCode(this.generatorFunction);
+        return hash;
     }
     
     public class Generator<T> implements BiFunction<Long, Long, T> {

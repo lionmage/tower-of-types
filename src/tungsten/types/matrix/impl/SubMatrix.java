@@ -472,7 +472,12 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
                         this.getRemovedRowIndices().equals(other.getRemovedRowIndices()) &&
                         this.getRemovedColumnIndices().equals(other.getRemovedColumnIndices());
             } else {
-                return Matrix.super.equals(o);
+                Matrix<? extends Numeric> other = (Matrix<Numeric>) o;
+                if (rows() != other.rows()) return false;
+                for (long row = 0L; row < rows(); row++) {
+                    if (!getRow(row).equals(other.getRow(row))) return false;
+                }
+                return true;
             }
         }
         return false;

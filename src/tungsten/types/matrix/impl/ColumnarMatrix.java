@@ -28,6 +28,7 @@ import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.Matrix;
@@ -363,5 +364,25 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
         ColumnarMatrix<T> scaled = new ColumnarMatrix<>();
         columns.stream().map(colVec -> colVec.scale(scaleFactor)).forEach(scaled::append);
         return scaled;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Matrix) {
+            Matrix<? extends Numeric> that = (Matrix<Numeric>) o;
+            if (columns() != that.columns()) return false;
+            for (long column = 0L; column < columns(); column++) {
+                if (!getColumn(column).equals(that.getColumn(column))) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 97 * hash + Objects.hashCode(this.columns);
+        return hash;
     }
 }
