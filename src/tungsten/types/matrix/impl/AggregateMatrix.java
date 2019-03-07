@@ -163,7 +163,7 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
     /**
      * Compute the inverse of this matrix, if one exists.
      * This implementation checks to see if this matrix is composed
-     * of a 4&times;4 tile of sub-matrices, and if so, computes the
+     * of a 2&times;2 tile of sub-matrices, and if so, computes the
      * inverse blockwise.
      * 
      * @return the inverse of this matrix
