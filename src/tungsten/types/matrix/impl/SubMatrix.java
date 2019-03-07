@@ -56,7 +56,9 @@ import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
 /**
- * This class provides a limited view into the supplied {@link Matrix}.
+ * This class provides a restricted, read-only view into the supplied {@link Matrix}.
+ * It is a lightweight façade and is especially suitable for use with large
+ * matrices that may not be backed by rapid storage (i.e., may not reside in memory).
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the {@link Numeric} subtype for the elements of this matrix
@@ -319,6 +321,17 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         return sum;
     }
 
+    /**
+     * Multiply this matrix by {@code multiplier}. This implementation is
+     * optimized for the case where both matrices are square and have the same
+     * dimensions, and those dimensions are of
+     * the form 2<sup>n</sup>&times;2<sup>n</sup>.  Note that this behavior
+     * may result in slower behavior for smaller matrices, but should improve
+     * as matrix dimensions increase due to parallel computation gains.
+     * 
+     * @param multiplier
+     * @return 
+     */
     @Override
     public Matrix<T> multiply(Matrix<T> multiplier) {
         if (this.columns() != multiplier.rows()) {

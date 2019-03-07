@@ -160,6 +160,16 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
         }
     }
 
+    /**
+     * Compute the inverse of this matrix, if one exists.
+     * This implementation checks to see if this matrix is composed
+     * of a 4&times;4 tile of sub-matrices, and if so, computes the
+     * inverse blockwise.
+     * 
+     * @return the inverse of this matrix
+     * @throws ArithmeticException if any square sub-matrix is not invertible
+     * @see <a href="https://en.wikipedia.org/wiki/Block_matrix#Block_matrix_inversion">the Wikipedia article on block matrices</a>
+     */
     @Override
     public Matrix<? extends Numeric> inverse() {
         if (subMatrices.length == 2 && subMatrices[0].length == 2) {

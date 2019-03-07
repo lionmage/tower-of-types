@@ -23,7 +23,9 @@
  */
 package tungsten.types.matrix.impl;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.Random;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -34,7 +36,10 @@ import static org.junit.Assert.*;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.IntegerImpl;
+import tungsten.types.numerics.impl.RationalImpl;
+import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
@@ -45,6 +50,8 @@ import tungsten.types.vector.impl.RowVector;
 public class SubMatrixTest {
     private Matrix<IntegerType> A;
     private Matrix<IntegerType> B;
+    private Matrix<IntegerType> A1, B1;
+    private Matrix<RealType> Ar, Br;
     
     public SubMatrixTest() {
     }
@@ -61,6 +68,12 @@ public class SubMatrixTest {
     public void setUp() {
         A = new BasicMatrix<>(generateRandomSquareMatrix(4));
         B = new BasicMatrix<>(generateRandomSquareMatrix(4));
+        
+        A1 = new BasicMatrix<>(generateRandomSquareMatrix(16));
+        B1 = new BasicMatrix<>(generateRandomSquareMatrix(16));
+        
+        Ar = new BasicMatrix<>(generateRandomSquareRealMatrix(16));
+        Br = new BasicMatrix<>(generateRandomSquareRealMatrix(16));
     }
     
     private IntegerType[][] generateRandomSquareMatrix(int size) {
@@ -75,10 +88,30 @@ public class SubMatrixTest {
         return result;
     }
     
+    private RealType[][] generateRandomSquareRealMatrix(int size) {
+        RealType[][] result = new RealType[size][size];
+        Random rand = new Random();
+        MathContext mctx = MathContext.DECIMAL64;
+        for (RealType[] row : result) {
+            for (int idx = 0; idx < size; idx++) {
+                final BigInteger randNum = BigInteger.valueOf(rand.nextLong() % 157L);
+                final BigInteger randDenom = BigInteger.valueOf(rand.nextInt(99) + 1L); // value between 1 and 100
+                RationalImpl randVal = new RationalImpl(randNum, randDenom);
+                randVal.setMathContext(mctx);
+                final RealImpl realVal = new RealImpl(randVal.asBigDecimal());
+                realVal.setMathContext(mctx);
+                row[idx] = realVal;
+            }
+        }
+        return result;
+    }
+    
     @After
     public void tearDown() {
         A = null;
         B = null;
+        A1 = null;  B1 = null;
+        Ar = null;  Br = null;
     }
 
     /**
@@ -225,12 +258,42 @@ public class SubMatrixTest {
      * Test of multiply method, of class SubMatrix.
      */
     @Test
-    public void testMultiply() {
-        System.out.println("multiply");
+    public void testMultiplyInteger() {
+        System.out.println("multiply for integers");
         SubMatrix<IntegerType> instance = new SubMatrix<>(A);
         Matrix<IntegerType> expResult = A.multiply(B);
         Matrix<IntegerType> result = instance.multiply(B);
         assertEquals(expResult, result);
+        
+        // now let's try it with a matrix that's 4x bigger in both dimensions
+        instance = new SubMatrix<>(A1);
+        long regStart = System.currentTimeMillis();
+        expResult = A1.multiply(B1);
+        long regDuration = System.currentTimeMillis() - regStart;
+        long divStart = System.currentTimeMillis();
+        result = instance.multiply(B1);
+        long divDuration = System.currentTimeMillis() - divStart;
+        assertEquals(expResult, result);
+        
+        System.out.println("Classic matrix multiply took " + regDuration + "ms.");
+        System.out.println("Divide-and-conquer matrix multiply took " + divDuration + "ms.");
+    }
+    
+    @Test
+    public void testMultiplyReal() {
+        System.out.println("multiply for reals");
+        // TODO need to fix this test case -- having problems with low order digits
+        // probably need to fix some rounding somewhere...
+        SubMatrix<RealType> realInstance = new SubMatrix<>(Ar);
+        long regRealStart = System.currentTimeMillis();
+        Matrix<RealType> expRealResult = Ar.multiply(Br);
+        long regRealDuration = System.currentTimeMillis() - regRealStart;
+        long divRealStart = System.currentTimeMillis();
+        Matrix<RealType> realResult = realInstance.multiply(Br);
+        long divRealDuration = System.currentTimeMillis() - divRealStart;
+        assertEquals(expRealResult, realResult);
+
+        System.out.println("For real matrices, classic took " + regRealDuration + "ms, and divide-and-conquer took " + divRealDuration + "ms.");
     }
 
     /**
