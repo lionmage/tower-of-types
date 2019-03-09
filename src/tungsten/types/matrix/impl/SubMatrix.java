@@ -51,6 +51,8 @@ import java.util.stream.Collectors;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
+import tungsten.types.numerics.RationalType;
+import tungsten.types.numerics.impl.RationalImpl;
 import tungsten.types.numerics.impl.Zero;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
@@ -505,9 +507,18 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         hash = 29 * hash + Objects.hashCode(this.removedColumns);
         return hash;
     }
+    
+    private static final RationalType scaleThreshold = new RationalImpl("1/3");
 
     @Override
     public Matrix<T> scale(T scaleFactor) {
+        final RationalType ratioR = new RationalImpl(BigInteger.valueOf(this.rows()), BigInteger.valueOf(original.rows()));
+        final RationalType ratioC = new RationalImpl(BigInteger.valueOf(this.columns()), BigInteger.valueOf(original.columns()));
+        if (ratioR.compareTo(scaleThreshold) <= 0 || ratioC.compareTo(scaleThreshold) <= 0) {
+            // if this submatrix is significantly smaller than the original,
+            // copy only the relevant values to a smaller matrix and scale that
+            return new BasicMatrix<>(this).scale(scaleFactor);
+        }
         SubMatrix<T> scaled = new SubMatrix<>(original.scale(scaleFactor), startRow, startColumn, endRow, endColumn);
         scaled.removedRows.addAll(this.removedRows);
         scaled.removedColumns.addAll(this.removedColumns);
