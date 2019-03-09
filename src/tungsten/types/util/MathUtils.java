@@ -607,7 +607,7 @@ public class MathUtils {
     
     private static final Range<RealType> epsilonRange = new Range<>(new RealImpl("0"), new RealImpl("1"), BoundType.EXCLUSIVE);
     
-    public static boolean areEqualWithin(RealType A, RealType B, RealType epsilon) {
+    public static boolean areEqualToWithin(RealType A, RealType B, RealType epsilon) {
         if (epsilon.sign() != Sign.POSITIVE || !epsilonRange.contains(epsilon)) {
             throw new IllegalArgumentException("Argument epsilon must be a small positive value.");
         }
@@ -616,25 +616,28 @@ public class MathUtils {
         return difference.compareTo(epsilon) < 0;
     }
     
-    public static boolean areEqualWithin(Vector<RealType> A, Vector<RealType> B, RealType epsilon) {
+    public static boolean areEqualToWithin(Vector<RealType> A, Vector<RealType> B, RealType epsilon) {
         if (A.length() != B.length()) return false;
         for (long index = 0L; index < A.length(); index++) {
-            if (!areEqualWithin(A.elementAt(index), B.elementAt(index), epsilon)) return false;
+            if (!MathUtils.areEqualToWithin(A.elementAt(index), B.elementAt(index), epsilon)) return false;
         }
         return true;
     }
     
-    public static boolean areEqualWithin(Matrix<RealType> A, Matrix<RealType> B, RealType epsilon) {
+    public static boolean areEqualToWithin(Matrix<RealType> A, Matrix<RealType> B, RealType epsilon) {
         if (A.rows() != B.rows() || A.columns() != B.columns()) return false;
         if (A.getClass().isAnnotationPresent(Columnar.class) && B.getClass().isAnnotationPresent(Columnar.class)) {
+            // go by columns instead of by rows (optimal for any columnar store)
             for (long column = 0L; column < A.columns(); column++) {
-                if (!areEqualWithin((Vector<RealType>) A.getColumn(column),
+                if (!MathUtils.areEqualToWithin((Vector<RealType>) A.getColumn(column),
                         (Vector<RealType>) B.getColumn(column), epsilon)) return false;
             }
             return true;
         } else {
+            // default behavior is to compare by rows
             for (long row = 0L; row < A.rows(); row++) {
-                if (!areEqualWithin((Vector<RealType>) A.getRow(row), (Vector<RealType>) B.getRow(row), epsilon)) return false;
+                if (!MathUtils.areEqualToWithin((Vector<RealType>) A.getRow(row),
+                        (Vector<RealType>) B.getRow(row), epsilon)) return false;
             }
             return true;
         }

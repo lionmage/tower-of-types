@@ -149,7 +149,7 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
             throw new ArithmeticException("Matrix is singular.");
         }
         if (columns() == 1L) {
-            return new SingletonMatrix(valueAt(0L, 0L).inverse());
+            return new SingletonMatrix<>(valueAt(0L, 0L).inverse());
         } else if (columns() == 2L) {
             final Numeric scale = det.inverse();
             T a = valueAt(0L, 0L);
@@ -225,6 +225,7 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     public ColumnarMatrix<T> removeColumn(long column) {
+        if (column < 0L || column >= columns()) throw new IndexOutOfBoundsException("Column " + column + " does not exist.");
         ColumnarMatrix<T> result = new ColumnarMatrix<>();
         for (long colidx = 0L; colidx < columns(); colidx++) {
             if (colidx == column) continue;
@@ -234,6 +235,7 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     public ColumnarMatrix<T> removeRow(long row) {
+        if (row < 0L || row >= rows()) throw new IndexOutOfBoundsException("Row " + row + " does not exist.");
         ColumnarMatrix<T> result = new ColumnarMatrix<>();
         for (long colidx = 0L; colidx < columns(); colidx++) {
             result.append(removeElementAt(getColumn(colidx), row));
@@ -268,7 +270,7 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
                     accum[(int) row] = (R) originalColumn.elementAt(row).coerceTo(clazz);
                 } catch (CoercionException ex) {
                     Logger.getLogger(BasicMatrix.class.getName()).log(Level.SEVERE,
-                            "Coercion failed while upconverting matrix to " + clazz.getTypeName(), ex);
+                            "Coercion failed while upconverting matrix element to " + clazz.getTypeName(), ex);
                     throw new ArithmeticException(String.format("While converting value %s to %s at %d, %d",
                             valueAt(row, column), clazz.getTypeName(), row, column));
                 }
@@ -311,9 +313,9 @@ public class ColumnarMatrix<T extends Numeric> implements Matrix<T> {
         if (column2 < 0L || column2 >= columns()) throw new IndexOutOfBoundsException("column2 must be within bounds 0 - " + (columns() - 1L));
         if (column1 == column2) return this; // NO-OP
         
-        ArrayList<ColumnVector<T>> columns2 = new ArrayList<>(this.columns);
-        Collections.swap(columns2, (int) column1, (int) column2);
-        return new ColumnarMatrix<>(columns2);
+        ArrayList<ColumnVector<T>> result = new ArrayList<>(this.columns);
+        Collections.swap(result, (int) column1, (int) column2);
+        return new ColumnarMatrix<>(result);
     }
     
     public Matrix<T> exchangeRows(long row1, long row2) {
