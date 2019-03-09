@@ -80,7 +80,9 @@ public class SubMatrixTest {
         Ar = new BasicMatrix<>(generateRandomSquareRealMatrix(16));
         Br = new BasicMatrix<>(generateRandomSquareRealMatrix(16));
         
-        final long[][] unscaled = {{1L, 2L, 3L}, {4L, 7L, 6L}, {8L, 9L, 5L}};
+        // unscaled 5x5 matrix
+        final long[][] unscaled = {{8L, 6L, 7L, 5L, 3L}, {0L, 1L, 2L, 3L, 9L}, {8L, 4L, 7L, 6L, 6L}, {7L, 8L, 9L, 5L, 5L}, {3L, 0L, 9L, 8L, 6L}};
+        // inner 3x3 matrix, scaled by 3
         final long[][] scaled   = {{3L, 6L, 9L}, {12L, 21L, 18L}, {24L, 27L, 15L}};
         C = generateMatrixFromTable(unscaled);
         D = generateMatrixFromTable(scaled);
@@ -143,12 +145,11 @@ public class SubMatrixTest {
     @Test
     public void testColumns() {
         System.out.println("columns");
-        SubMatrix instance = null;
-        long expResult = 0L;
+        // create inner matrix
+        SubMatrix instance = new SubMatrix(C, 1L, 1L, C.rows() - 2L, C.columns() - 2L);
+        long expResult = 3L;
         long result = instance.columns();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -157,12 +158,10 @@ public class SubMatrixTest {
     @Test
     public void testRows() {
         System.out.println("rows");
-        SubMatrix instance = null;
-        long expResult = 0L;
+        SubMatrix instance = new SubMatrix(C, 1L, 1L, C.rows() - 2L, C.columns() - 2L);
+        long expResult = 3L;
         long result = instance.rows();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -305,8 +304,6 @@ public class SubMatrixTest {
     @Test
     public void testMultiplyReal() {
         System.out.println("multiply for reals");
-        // TODO need to fix this test case -- having problems with low order digits
-        // probably need to fix some rounding somewhere...
         SubMatrix<RealType> realInstance = new SubMatrix<>(Ar);
         long regRealStart = System.currentTimeMillis();
         Matrix<RealType> expRealResult = Ar.multiply(Br);
@@ -387,7 +384,7 @@ public class SubMatrixTest {
     public void testScale() {
         System.out.println("scale");
         Numeric scaleFactor = new IntegerImpl(BigInteger.valueOf(3L));
-        SubMatrix instance = new SubMatrix(C);
+        SubMatrix instance = new SubMatrix(C, 1L, 1L, C.rows() - 2L, C.columns() - 2L);
         Matrix expResult = D;
         Matrix result = instance.scale(scaleFactor);
         assertEquals(expResult, result);

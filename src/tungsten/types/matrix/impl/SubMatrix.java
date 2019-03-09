@@ -419,9 +419,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
             );
         }
     }
-    
-//    private Matrix<T> forkJoinMultiply(Matrix<T> )
-    
+        
     public SubMatrix<T> duplicate() {
         SubMatrix<T> dup = new SubMatrix<>(original, startRow, startColumn, endRow, endColumn);
         dup.removedRows.addAll(this.removedRows);
@@ -432,16 +430,16 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     @Override
     public RowVector<T> getRow(long row) {
         List<T> result = new ArrayList<>();
-        original.getRow(computeRowIndex(row)).stream().skip(startColumn).limit(columns()).forEachOrdered(result::add);
-        removeFromList(result, removedRows);
+        original.getRow(computeRowIndex(row)).stream().skip(startColumn).limit(internalColumns()).forEachOrdered(result::add);
+        removeFromList(result, removedColumns);
         return new RowVector<>(result);
     }
 
     @Override
     public ColumnVector<T> getColumn(long column) {
         List<T> result = new ArrayList<>();
-        original.getColumn(computeColumnIndex(column)).stream().skip(startRow).limit(rows()).forEachOrdered(result::add);
-        removeFromList(result, removedColumns);
+        original.getColumn(computeColumnIndex(column)).stream().skip(startRow).limit(internalRows()).forEachOrdered(result::add);
+        removeFromList(result, removedRows);
         return new ColumnVector<>(result);
     }
 
@@ -514,5 +512,16 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
         scaled.removedRows.addAll(this.removedRows);
         scaled.removedColumns.addAll(this.removedColumns);
         return scaled;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("[\n");
+        for (long row = 0L; row < rows(); row++) {
+            buf.append("\u00A0\u00A0").append(this.getRow(row)).append('\n');
+        }
+        buf.append("\u00A0]");
+        return buf.toString();
     }
 }
