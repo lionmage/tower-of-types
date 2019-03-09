@@ -26,6 +26,7 @@ package tungsten.types.matrix.impl;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.Arrays;
 import java.util.Random;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -40,10 +41,12 @@ import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.RationalImpl;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.util.MathUtils;
 import tungsten.types.vector.impl.ColumnVector;
 import tungsten.types.vector.impl.RowVector;
 
 /**
+ * Unit test cases for {@link SubMatrix}.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
@@ -52,6 +55,8 @@ public class SubMatrixTest {
     private Matrix<IntegerType> B;
     private Matrix<IntegerType> A1, B1;
     private Matrix<RealType> Ar, Br;
+    private Matrix<IntegerType> C;
+    private Matrix<IntegerType> D;
     
     public SubMatrixTest() {
     }
@@ -74,6 +79,11 @@ public class SubMatrixTest {
         
         Ar = new BasicMatrix<>(generateRandomSquareRealMatrix(16));
         Br = new BasicMatrix<>(generateRandomSquareRealMatrix(16));
+        
+        final long[][] unscaled = {{1L, 2L, 3L}, {4L, 7L, 6L}, {8L, 9L, 5L}};
+        final long[][] scaled   = {{3L, 6L, 9L}, {12L, 21L, 18L}, {24L, 27L, 15L}};
+        C = generateMatrixFromTable(unscaled);
+        D = generateMatrixFromTable(scaled);
     }
     
     private IntegerType[][] generateRandomSquareMatrix(int size) {
@@ -106,12 +116,25 @@ public class SubMatrixTest {
         return result;
     }
     
+    private Matrix<IntegerType> generateMatrixFromTable(long[][] table) {
+        BasicMatrix<IntegerType> result = new BasicMatrix<>();
+        
+        for (long[] row : table) {
+            result.append(Arrays.stream(row)
+                    .mapToObj(val -> new IntegerImpl(BigInteger.valueOf(val)))
+                    .toArray(size -> new IntegerType[size]));
+        }
+        
+        return result;
+    }
+    
     @After
     public void tearDown() {
         A = null;
         B = null;
         A1 = null;  B1 = null;
         Ar = null;  Br = null;
+        C = null;   D  = null;
     }
 
     /**
@@ -291,7 +314,9 @@ public class SubMatrixTest {
         long divRealStart = System.currentTimeMillis();
         Matrix<RealType> realResult = realInstance.multiply(Br);
         long divRealDuration = System.currentTimeMillis() - divRealStart;
-        assertEquals(expRealResult, realResult);
+//        assertEquals(expRealResult, realResult);
+        final RealType epsilon = new RealImpl("0.00000000001");
+        assertTrue(MathUtils.areEqualToWithin(expRealResult, realResult, epsilon));
 
         System.out.println("For real matrices, classic took " + regRealDuration + "ms, and divide-and-conquer took " + divRealDuration + "ms.");
     }
@@ -356,32 +381,16 @@ public class SubMatrixTest {
     }
 
     /**
-     * Test of hashCode method, of class SubMatrix.
-     */
-    @Test
-    public void testHashCode() {
-        System.out.println("hashCode");
-        SubMatrix instance = null;
-        int expResult = 0;
-        int result = instance.hashCode();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
      * Test of scale method, of class SubMatrix.
      */
     @Test
     public void testScale() {
         System.out.println("scale");
-        Numeric scaleFactor = null;
-        SubMatrix instance = null;
-        Matrix expResult = null;
+        Numeric scaleFactor = new IntegerImpl(BigInteger.valueOf(3L));
+        SubMatrix instance = new SubMatrix(C);
+        Matrix expResult = D;
         Matrix result = instance.scale(scaleFactor);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
     
 }
