@@ -202,9 +202,13 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     
     private long computeRowIndex(long row) {
         long result = startRow + row;
-        AtomicLong intermediateRow = new AtomicLong(result);
-        while (removedRows.stream().anyMatch(x -> x <= intermediateRow.get())) {
-            result = intermediateRow.incrementAndGet();
+        final AtomicLong intermediateRow = new AtomicLong(result);
+        final List<Long> localRemovedRows = new ArrayList<>(removedRows);
+        long rowsToBeRemoved = localRemovedRows.stream().filter(x -> x <= intermediateRow.get()).count();
+        while (localRemovedRows.removeIf(x -> x <= intermediateRow.get())) {
+            result = intermediateRow.addAndGet(rowsToBeRemoved);
+            // compute the next number of rows to be decimated
+            rowsToBeRemoved = localRemovedRows.stream().filter(x -> x <= intermediateRow.get()).count();
         }
         if (result >= original.rows()) {
             throw new IndexOutOfBoundsException(String.format("Provided row index %d maps to %d in the underlying matrix, whoch only has %d rows.",
@@ -215,9 +219,13 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     
     private long computeColumnIndex(long column) {
         long result = startColumn + column;
-        AtomicLong intermediateColumn = new AtomicLong(result);
-        while (removedColumns.stream().anyMatch(x -> x <= intermediateColumn.get())) {
-            result = intermediateColumn.incrementAndGet();
+        final AtomicLong intermediateColumn = new AtomicLong(result);
+        final List<Long> localRemovedColumns = new ArrayList<>(removedColumns);
+        long columnsToBeRemoved = localRemovedColumns.stream().filter(x -> x <= intermediateColumn.get()).count();
+        while (localRemovedColumns.removeIf(x -> x <= intermediateColumn.get())) {
+            result = intermediateColumn.addAndGet(columnsToBeRemoved);
+            // compute the next number of columns to be decimated
+            columnsToBeRemoved = localRemovedColumns.stream().filter(x -> x <= intermediateColumn.get()).count();
         }
         if (result >= original.columns()) {
             throw new IndexOutOfBoundsException(String.format("Provided column index %d maps to %d in the underlying matrix, whoch only has %d columns.",

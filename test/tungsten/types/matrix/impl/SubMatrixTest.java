@@ -26,7 +26,9 @@ package tungsten.types.matrix.impl;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -57,6 +59,8 @@ public class SubMatrixTest {
     private Matrix<RealType> Ar, Br;
     private Matrix<IntegerType> C;
     private Matrix<IntegerType> D;
+    private IntegerType[] row1;
+    private IntegerType[] column2;
     
     public SubMatrixTest() {
     }
@@ -86,6 +90,12 @@ public class SubMatrixTest {
         final long[][] scaled   = {{3L, 6L, 9L}, {12L, 21L, 18L}, {24L, 27L, 15L}};
         C = generateMatrixFromTable(unscaled);
         D = generateMatrixFromTable(scaled);
+        // unscaled row 1 (second row) of inner matrix of C
+        row1 = Arrays.stream(unscaled[2], 1, unscaled[2].length - 1).mapToObj(BigInteger::valueOf)
+                .map(IntegerImpl::new).toArray(size -> new IntegerType[size]);
+        // unscaled column 2 (third column) of inner matrix of C, which maps to column 3 of underlying table
+        column2 = Arrays.stream(unscaled).skip(1L).limit(3L).map(row -> row[3]).map(BigInteger::valueOf)
+                .map(IntegerImpl::new).toArray(size -> new IntegerType[size]);
     }
     
     private IntegerType[][] generateRandomSquareMatrix(int size) {
@@ -193,45 +203,22 @@ public class SubMatrixTest {
     }
 
     /**
-     * Test of removeRow method, of class SubMatrix.
-     */
-    @Test
-    public void testRemoveRow() {
-        System.out.println("removeRow");
-        long row = 0L;
-        SubMatrix instance = null;
-        instance.removeRow(row);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of removeColumm method, of class SubMatrix.
-     */
-    @Test
-    public void testRemoveColumm() {
-        System.out.println("removeColumm");
-        long column = 0L;
-        SubMatrix instance = null;
-        instance.removeColumm(column);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
      * Test of valueAt method, of class SubMatrix.
      */
     @Test
     public void testValueAt() {
         System.out.println("valueAt");
-        long row = 0L;
-        long column = 0L;
-        SubMatrix instance = null;
-        Object expResult = null;
-        Object result = instance.valueAt(row, column);
+        long row = 2L;
+        long column = 7L;
+        SubMatrix<IntegerType> instance = new SubMatrix<>(A1, 1L, 1L, A1.rows() - 2L, A1.columns() - 2L);
+        IntegerType expResult = A1.valueAt(row + 1L, column + 1L);
+        IntegerType result = instance.valueAt(row, column);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        instance.removeColumm(3L);
+        expResult = A1.valueAt(row + 1L, column + 2L);
+        result = instance.valueAt(row, column);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -338,13 +325,20 @@ public class SubMatrixTest {
     @Test
     public void testGetRow() {
         System.out.println("getRow");
-        long row = 0L;
-        SubMatrix instance = null;
-        RowVector expResult = null;
-        RowVector result = instance.getRow(row);
+        long row = 1L;
+        SubMatrix<IntegerType> instance = new SubMatrix<>(C, 1L, 1L, C.rows() - 2L, C.columns() - 2L);
+        RowVector<IntegerType> expResult = new RowVector<>(row1);
+        RowVector<IntegerType> result = instance.getRow(row);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        // try removing a column
+        instance.removeColumm(1L);
+        // Arrays.asList() returns a List implementation that does not support remove(), hence creation of ArrayList with the result
+        List<IntegerType> row1_modified = new ArrayList(Arrays.asList(row1));
+        row1_modified.remove(1);
+        expResult = new RowVector<>(row1_modified);
+        result = instance.getRow(row);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -353,13 +347,19 @@ public class SubMatrixTest {
     @Test
     public void testGetColumn() {
         System.out.println("getColumn");
-        long column = 0L;
-        SubMatrix instance = null;
-        ColumnVector expResult = null;
+        long column = 2L;
+        SubMatrix<IntegerType> instance = new SubMatrix<>(C, 1L, 1L, C.rows() - 2L, C.columns() - 2L);
+        ColumnVector expResult = new ColumnVector<>(column2);
         ColumnVector result = instance.getColumn(column);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        // now try removing a row
+        instance.removeRow(1L);
+        List<IntegerType> column2_modified = new ArrayList(Arrays.asList(column2));
+        column2_modified.remove(1);
+        expResult = new ColumnVector<>(column2_modified);
+        result = instance.getColumn(column);
+        assertEquals(expResult, result);
     }
 
     /**
