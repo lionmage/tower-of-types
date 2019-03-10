@@ -607,6 +607,18 @@ public class MathUtils {
     
     private static final Range<RealType> epsilonRange = new Range<>(new RealImpl("0"), new RealImpl("1"), BoundType.EXCLUSIVE);
     
+    /**
+     * Tests if two real values are within &epsilon; of each other.  This is
+     * useful in cases where rounding error or truncation can render a test
+     * using {@link RealImpl#equals(java.lang.Object) the default test for equality}
+     * entirely useless.
+     * 
+     * @param A the first real value to test for equality
+     * @param B the second real value to test for equality
+     * @param epsilon the largest allowable delta between A and B for them to be
+     *  considered equal, a fractional value between 0 and 1 (exclusive)
+     * @return true if the supplied values have a difference &lt; &epsilon;
+     */
     public static boolean areEqualToWithin(RealType A, RealType B, RealType epsilon) {
         if (epsilon.sign() != Sign.POSITIVE || !epsilonRange.contains(epsilon)) {
             throw new IllegalArgumentException("Argument epsilon must be a small positive value.");
@@ -616,6 +628,20 @@ public class MathUtils {
         return difference.compareTo(epsilon) < 0;
     }
     
+    /**
+     * Tests if two real vectors are equal according to
+     * {@link #areEqualToWithin(RealType, RealType, RealType) }. The two
+     * vectors are compared element-wise, and if any pair of elements has
+     * a difference &ge; &sigma;, the comparison fails fast and returns false.
+     * 
+     * @param A the first real-valued vector to test for equality
+     * @param B the second real-valued vector to test for equality
+     * @param epsilon a value between 0 and 1, exclusive, denoting the maximum
+     *  difference allowed between any pair of elements for A and B to be
+     *  considered equal.
+     * @return true if the supplied vectors are of equal length and all of the
+     *  elements of A are within &epsilon; of their counterparts in B 
+     */
     public static boolean areEqualToWithin(Vector<RealType> A, Vector<RealType> B, RealType epsilon) {
         if (A.length() != B.length()) return false;
         for (long index = 0L; index < A.length(); index++) {
@@ -624,6 +650,20 @@ public class MathUtils {
         return true;
     }
     
+    /**
+     * Tests if two real-valued matrices are equal according to
+     * {@link #areEqualToWithin(RealType, RealType, RealType) }.
+     * This method will attempt to use the most optimal strategy for comparing
+     * two matrices (still a work in progress).  It recognizes any matrices
+     * annotated as {@link Columnar} and will attempt to adjust its access
+     * pattern accordingly.
+     * 
+     * @param A the first real-valued matrix to test for equality
+     * @param B the second real-valued matrix to test for equality
+     * @param epsilon the maximum delta allowed between corresponding elements,
+     *  a fractional value between 0 and 1 (exclusive)
+     * @return true if all elements of A are within &epsilon; of their counterparts in B
+     */
     public static boolean areEqualToWithin(Matrix<RealType> A, Matrix<RealType> B, RealType epsilon) {
         if (A.rows() != B.rows() || A.columns() != B.columns()) return false;
         if (A.getClass().isAnnotationPresent(Columnar.class) && B.getClass().isAnnotationPresent(Columnar.class)) {
