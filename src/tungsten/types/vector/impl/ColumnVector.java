@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.Vector;
+import tungsten.types.annotations.Columnar;
 import tungsten.types.exceptions.CoercionException;
 import tungsten.types.matrix.impl.BasicMatrix;
 import tungsten.types.matrix.impl.SingletonMatrix;
@@ -49,6 +50,7 @@ import tungsten.types.util.OptionalOperations;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  * @param <T> the {@link Numeric} type for this column vector
  */
+@Columnar
 public class ColumnVector<T extends Numeric> implements Vector<T>, Matrix<T> {
     private T[] elements;
     private MathContext mctx;
