@@ -44,12 +44,17 @@ import tungsten.types.Matrix;
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
 public class ColumnarProcessor extends AbstractProcessor {
+    
+    public ColumnarProcessor() {
+        super();
+    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
-        Messager messager = processingEnv.getMessager();
+        final Messager messager = processingEnv.getMessager();
         for (TypeElement typeElement : annotations) {
             for (Element element : env.getElementsAnnotatedWith(typeElement)) {
+                // if Columnar ever gets any values, they can be extracted and validated here
 //                Columnar annotation = element.getAnnotation(Columnar.class);
                 TypeMirror typeMirror = element.asType();
                 
@@ -66,10 +71,7 @@ public class ColumnarProcessor extends AbstractProcessor {
     
     private boolean isSubclassOfMatrix(TypeMirror t) {
         if (processingEnv.getTypeUtils().directSupertypes(t).stream().map(TypeMirror::toString).anyMatch(MATRIX::equals)) return true;
-        for (TypeMirror tt : processingEnv.getTypeUtils().directSupertypes(t)) {
-            if (isSubclassOfMatrix(tt)) return true;
-        }
-        return false;
+        return processingEnv.getTypeUtils().directSupertypes(t).stream().anyMatch(tt -> isSubclassOfMatrix(tt));
     }
     
     @Override
