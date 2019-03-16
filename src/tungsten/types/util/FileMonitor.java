@@ -44,6 +44,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * changes.  For example, the backing file for a {@link BigMatrix} can be
  * watched here, and the {@code BigMatrix} can be notified if the backing
  * file has been changed by another process.
+ * 
+ * During initialization, this class will look for a system variable
+ * found in {@link #BASEDIR_PROP} (public for the convenience of clients);
+ * if defined, FileMonitor will monitor files in that directory by default
+ * for deletion or modification.
+ * 
+ * If {@code tungsten.types.util.FileMonitor.basedir} is undefined, FileMonitor
+ * will then look in the user's working directory, or, failing that, it will
+ * default to the user's home directory.
  *
  * @author Robert Poole <Tarquin.AZ@gmail.com>
  */
@@ -51,6 +60,7 @@ public class FileMonitor {
     public static final String BASEDIR_PROP = FileMonitor.class.getName() + ".basedir";
     private static final FileMonitor instance = new FileMonitor();
     private final ConcurrentHashMap<Path, List<File>> dirsToFiles = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<File, Runnable> callbackMap = new ConcurrentHashMap<>();
     private ExecutorService exec;
     private Path basePath;
     private WatchService watcher;
@@ -79,20 +89,24 @@ public class FileMonitor {
     
     public void monitorFile(File file, Runnable callback) {
         if (!file.isFile()) throw new IllegalArgumentException("File " + file.getName() + " is not normal.");
-        Path fileDir = file.getParentFile().toPath();
+        
+        final Path fileDir = file.getParentFile().toPath();
         if (!fileDir.startsWith(basePath)) {
             // I'm not sure if this is worthy of a warning, but probably at least a "good to know."
             Logger.getLogger(FileMonitor.class.getName()).log(Level.INFO, "File {} is outside base path {}",
                     new Object[] { file, basePath });
         }
+        
         if (dirsToFiles.containsKey(fileDir)) {
             dirsToFiles.get(fileDir).add(file);
+            callbackMap.put(file, callback);
         } else {
             try {
                 fileDir.register(watcher, ENTRY_MODIFY, ENTRY_DELETE);
                 ArrayList<File> files = new ArrayList<>();
                 files.add(file);
                 dirsToFiles.put(fileDir, files);
+                callbackMap.put(file, callback);
             } catch (IOException ioe) {
                 Logger.getLogger(FileMonitor.class.getName()).log(Level.SEVERE, "Unable to monitor directory " + fileDir, ioe);
                 throw new IllegalStateException(ioe);
