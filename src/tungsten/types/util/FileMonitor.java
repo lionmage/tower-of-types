@@ -35,6 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.nio.file.StandardWatchEventKinds.*;
+import java.nio.file.WatchKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,8 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * watched here, and the {@code BigMatrix} can be notified if the backing
  * file has been changed by another process.
  * 
- * During initialization, this class will look for a system variable
- * found in {@link #BASEDIR_PROP} (public for the convenience of clients);
+ * During initialization, this class will look for a system variable identified
+ * by the key found in {@link #BASEDIR_PROP} (public for the convenience of clients);
  * if defined, FileMonitor will monitor files in that directory by default
  * for deletion or modification.
  * 
@@ -81,6 +82,7 @@ public class FileMonitor {
             throw new IllegalStateException(ex);
         }
         exec = Executors.newSingleThreadExecutor();
+        exec.submit(new WatchTask());
     }
     
     public static FileMonitor getInstance() {
@@ -112,5 +114,64 @@ public class FileMonitor {
                 throw new IllegalStateException(ioe);
             }
         }
+    }
+    
+    private class WatchTask implements Runnable {
+
+        @Override
+        public void run() {
+            WatchKey key;
+            boolean lastFileDeleted;  // set true if the last file in a watched directory has been deleted
+            do {
+                lastFileDeleted = false;
+                try {
+                    key = watcher.take();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(FileMonitor.class.getName()).log(Level.WARNING, "WatchTask interrupted; shutting down.", ex);
+                    return;
+                }
+                
+                for (WatchEvent<?> event: key.pollEvents()) {
+                    WatchEvent.Kind<?> kind = event.kind();
+                    if (kind == OVERFLOW) continue;
+                    
+                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                    Path filename = ev.context();
+                    Path dirPath = findRelevantDirpath(filename);
+                    if (dirPath == null) {
+                        Logger.getLogger(FileMonitor.class.getName()).log(Level.WARNING,
+                                "Could not find monitored directory for file {}", filename);
+                        continue;
+                    }
+                    File resolved = dirPath.resolve(filename).toFile();
+                    Runnable callback = callbackMap.get(resolved);
+                    if (kind == ENTRY_DELETE) {
+                        dirsToFiles.get(dirPath).remove(resolved);
+                        if (dirsToFiles.get(dirPath).isEmpty() && !dirPath.equals(basePath)) {
+                            dirsToFiles.remove(dirPath);
+                            key.cancel();  // cancel this registration
+                            lastFileDeleted = true;
+                        }
+                        callbackMap.remove(resolved);
+                    }
+                    if (callback != null) {
+                        callback.run();
+                    }
+                }
+            } while (key.isValid() || lastFileDeleted);  // canceling a specific key will invalidate it
+            Logger.getLogger(FileMonitor.class.getName()).log(Level.WARNING,
+                    "WatchKey {} is no longer valid; shutting down.", key);
+        }
+        
+        private Path findRelevantDirpath(Path leafNode) {
+            for (Path candidate : dirsToFiles.keySet()) {
+                Path resolved = candidate.resolve(leafNode);
+                if (dirsToFiles.get(candidate).contains(resolved.toFile())) {
+                    return candidate;
+                }
+            }
+            return null;
+        }
+        
     }
 }
