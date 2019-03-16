@@ -79,6 +79,15 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     private File sourceFile;
     private char delimiter;
     
+    /**
+     * Constructor to generate a brand new instance with an empty backing store.
+     * 
+     * @param destFile the file reference to the backing store for this matrix
+     * @param rows the number of rows this matrix will have
+     * @param columns the number of columns this matrix will have
+     * @param delimiter the delimiter character used when writing values to a file
+     * @param ofType the {@link Class} of the {@link Numeric} subtype for the elements of this matrix
+     */
     public BigMatrix(File destFile, long rows, long columns, char delimiter, Class<T> ofType) {
         if (destFile.exists()) throw new IllegalArgumentException("Cannot write new matrix to an already existing file.");
         checkInterfaceType(ofType);
@@ -95,6 +104,18 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         this.sourceFile = destFile;
     }
     
+    /**
+     * Constructor to generate an instance backed by an existing file.
+     * The number of columns and rows are inferred from the file at construction
+     * time.  We also register the source file for this matrix with
+     * {@link FileMonitor} to be notified of any changes to the file; deletion
+     * of the source file will cause an exception to be thrown sooner than
+     * later.
+     * 
+     * @param sourceFile a file reference to the source data for this matrix
+     * @param delimiter the delimiter character used to separate row values in the source file
+     * @param ofType the {@link Class} of the {@link Numeric} subtype for the elements of this matrix
+     */
     public BigMatrix(File sourceFile, char delimiter, Class<T> ofType) {
         checkInterfaceType(ofType);
         long startingRowOffset = 0L;  // in case we have to put in some metadata on the first line of the matrix
@@ -127,6 +148,10 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                     try (RandomAccessFile mySource = new RandomAccessFile(sourceFile, "r")) {
                         rowCache.clear();
                         offsetCache.clear();
+                        utLock.lock();
+                        utcache = null;
+                        ltLock.lock();
+                        ltcache = null;
                         Scanner scanner = new Scanner(mySource.readLine());
                         scanner.useDelimiter(myPattern);
                         columns = 0L;
@@ -139,10 +164,12 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                                 "IO error encountered while reloading matrix parameters.", ex);
                     } finally {
                         lock.unlock();
+                        utLock.unlock();
+                        ltLock.unlock();
                     }
                 });
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find file specified.", ex);
+                Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find the file specified.", ex);
                 throw new IllegalStateException(ex);
             } catch (IOException ex) {
                 Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Error reading from " + sourceFile.getName(), ex);
