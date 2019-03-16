@@ -24,9 +24,20 @@
 package tungsten.types.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static java.nio.file.StandardWatchEventKinds.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A singleton class serving as a one-stop-shop for monitoring files for
@@ -39,8 +50,10 @@ import java.util.concurrent.Executors;
 public class FileMonitor {
     public static final String BASEDIR_PROP = FileMonitor.class.getName() + ".basedir";
     private static final FileMonitor instance = new FileMonitor();
+    private final ConcurrentHashMap<Path, List<File>> dirsToFiles = new ConcurrentHashMap<>();
     private ExecutorService exec;
     private Path basePath;
+    private WatchService watcher;
     
     protected FileMonitor() {
         String defaultDir = System.getProperty("user.dir"); // User working directory
@@ -48,6 +61,15 @@ public class FileMonitor {
             defaultDir = System.getProperty("user.home");  // User home directory
         }
         File baseDir = new File(System.getProperty(BASEDIR_PROP, defaultDir));
+        basePath = baseDir.toPath();
+        try {
+            watcher = FileSystems.getDefault().newWatchService();
+            basePath.register(watcher, ENTRY_MODIFY, ENTRY_DELETE);
+            dirsToFiles.put(basePath, new ArrayList<>());
+        } catch (IOException ex) {
+            Logger.getLogger(FileMonitor.class.getName()).log(Level.SEVERE, "Unable to initialize FileMonitor singleton.", ex);
+            throw new IllegalStateException(ex);
+        }
         exec = Executors.newSingleThreadExecutor();
     }
     
@@ -56,6 +78,25 @@ public class FileMonitor {
     }
     
     public void monitorFile(File file, Runnable callback) {
-        Path filepath = file.toPath();
+        if (!file.isFile()) throw new IllegalArgumentException("File " + file.getName() + " is not normal.");
+        Path fileDir = file.getParentFile().toPath();
+        if (!fileDir.startsWith(basePath)) {
+            // I'm not sure if this is worthy of a warning, but probably at least a "good to know."
+            Logger.getLogger(FileMonitor.class.getName()).log(Level.INFO, "File {} is outside base path {}",
+                    new Object[] { file, basePath });
+        }
+        if (dirsToFiles.containsKey(fileDir)) {
+            dirsToFiles.get(fileDir).add(file);
+        } else {
+            try {
+                fileDir.register(watcher, ENTRY_MODIFY, ENTRY_DELETE);
+                ArrayList<File> files = new ArrayList<>();
+                files.add(file);
+                dirsToFiles.put(fileDir, files);
+            } catch (IOException ioe) {
+                Logger.getLogger(FileMonitor.class.getName()).log(Level.SEVERE, "Unable to monitor directory " + fileDir, ioe);
+                throw new IllegalStateException(ioe);
+            }
+        }
     }
 }
