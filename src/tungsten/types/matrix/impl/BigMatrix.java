@@ -51,6 +51,7 @@ import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.RealImpl;
 import tungsten.types.numerics.impl.Zero;
+import tungsten.types.util.FileMonitor;
 import tungsten.types.util.collections.BigList;
 import tungsten.types.util.collections.LRUCache;
 import tungsten.types.vector.impl.ColumnVector;
@@ -120,7 +121,16 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                     offsetCache.put(++rows, source.getFilePointer());
                 }
                 // set up a file listener for any changes
-                
+                FileMonitor.getInstance().monitorFile(sourceFile, () -> {
+                    WriteLock lock = readWriteLock.writeLock();
+                    try {
+                        rowCache.clear();
+                        offsetCache.clear();
+                        // TODO trigger lazy reload of columns and rows values
+                    } finally {
+                        lock.unlock();
+                    }
+                });
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find file specified.", ex);
                 throw new IllegalStateException(ex);

@@ -146,8 +146,9 @@ public class FileMonitor {
                     File resolved = dirPath.resolve(filename).toFile();
                     Runnable callback = callbackMap.get(resolved);
                     if (kind == ENTRY_DELETE) {
-                        dirsToFiles.get(dirPath).remove(resolved);
-                        if (dirsToFiles.get(dirPath).isEmpty() && !dirPath.equals(basePath)) {
+                        final List<File> filesList = dirsToFiles.get(dirPath);
+                        filesList.remove(resolved);
+                        if (filesList.isEmpty() && !dirPath.equals(basePath)) {
                             dirsToFiles.remove(dirPath);
                             key.cancel();  // cancel this registration
                             lastFileDeleted = true;
@@ -158,7 +159,7 @@ public class FileMonitor {
                         callback.run();
                     }
                 }
-            } while (key.isValid() || lastFileDeleted);  // canceling a specific key will invalidate it
+            } while (key.isValid() || lastFileDeleted);  // canceling a specific key will invalidate it, so ensure we don't bail prematurely
             Logger.getLogger(FileMonitor.class.getName()).log(Level.WARNING,
                     "WatchKey {} is no longer valid; shutting down.", key);
         }
