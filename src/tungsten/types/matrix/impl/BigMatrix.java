@@ -124,14 +124,14 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                 // set up a file listener for any changes
                 FileMonitor.getInstance().monitorFile(sourceFile, () -> {
                     WriteLock lock = readWriteLock.writeLock();
-                    try {
+                    try (RandomAccessFile mySource = new RandomAccessFile(sourceFile, "r")) {
                         rowCache.clear();
                         offsetCache.clear();
-                        RandomAccessFile mySource = new RandomAccessFile(sourceFile, "r");
                         Scanner scanner = new Scanner(mySource.readLine());
                         scanner.useDelimiter(myPattern);
                         columns = 0L;
                         scanner.forEachRemaining(element -> columns++);
+                        scanner.close();
                         rows = Files.lines(sourceFile.toPath()).filter(x -> x != null)
                                 .filter(x -> !x.isEmpty()).count();
                     } catch (IOException ex) {
