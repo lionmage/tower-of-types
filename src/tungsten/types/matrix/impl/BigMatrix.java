@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.MathContext;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -126,7 +127,16 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                     try {
                         rowCache.clear();
                         offsetCache.clear();
-                        // TODO trigger lazy reload of columns and rows values
+                        RandomAccessFile mySource = new RandomAccessFile(sourceFile, "r");
+                        Scanner scanner = new Scanner(mySource.readLine());
+                        scanner.useDelimiter(myPattern);
+                        columns = 0L;
+                        scanner.forEachRemaining(element -> columns++);
+                        rows = Files.lines(sourceFile.toPath()).filter(x -> x != null)
+                                .filter(x -> !x.isEmpty()).count();
+                    } catch (IOException ex) {
+                        Logger.getLogger(BigMatrix.class.getName()).log(Level.INFO,
+                                "IO error encountered while reloading matrix parameters.", ex);
                     } finally {
                         lock.unlock();
                     }
