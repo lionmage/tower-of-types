@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -117,6 +119,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                     }
                     offsetCache.put(++rows, source.getFilePointer());
                 }
+                // set up a file listener for any changes
+                
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(BigMatrix.class.getName()).log(Level.SEVERE, "Cannot find file specified.", ex);
                 throw new IllegalStateException(ex);
@@ -185,6 +189,37 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             }
         } finally {
             readLock.unlock();
+        }
+    }
+    
+    private Boolean utcache;
+    private Boolean ltcache;
+    private Lock utLock = new ReentrantLock();
+    private Lock ltLock = new ReentrantLock();
+    
+    @Override
+    public boolean isUpperTriangular() {
+        utLock.lock();
+        try {
+            if (utcache != null) return utcache.booleanValue();
+            // cache this for posterity
+            utcache = Matrix.super.isUpperTriangular();
+            return utcache.booleanValue();
+        } finally {
+            utLock.unlock();
+        }
+    }
+    
+    @Override
+    public boolean isLowerTriangular() {
+        ltLock.lock();
+        try {
+            if (ltcache != null) return ltcache.booleanValue();
+            // cache this for posterity
+            ltcache = Matrix.super.isLowerTriangular();
+            return ltcache.booleanValue();
+        } finally {
+            ltLock.unlock();
         }
     }
     
