@@ -145,6 +145,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                 // set up a file listener for any changes
                 FileMonitor.getInstance().monitorFile(sourceFile, () -> {
                     WriteLock lock = readWriteLock.writeLock();
+                    lock.lock();
                     try (RandomAccessFile mySource = new RandomAccessFile(sourceFile, "r")) {
                         rowCache.clear();
                         offsetCache.clear();
@@ -164,8 +165,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                                 "IO error encountered while reloading matrix parameters.", ex);
                     } finally {
                         lock.unlock();
-                        utLock.unlock();
-                        ltLock.unlock();
+                        if (utLock.isHeldByCurrentThread()) utLock.unlock();
+                        if (ltLock.isHeldByCurrentThread()) ltLock.unlock();
                     }
                 });
             } catch (FileNotFoundException ex) {
@@ -241,8 +242,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     
     private Boolean utcache;
     private Boolean ltcache;
-    private Lock utLock = new ReentrantLock();
-    private Lock ltLock = new ReentrantLock();
+    private ReentrantLock utLock = new ReentrantLock();
+    private ReentrantLock ltLock = new ReentrantLock();
     
     @Override
     public boolean isUpperTriangular() {
@@ -340,13 +341,12 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             BasicMatrix<T> temp = new BasicMatrix<>(this);
             return temp.determinant();
         }
-        // TODO compute the determinant for sizes > 10
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new SubMatrix<T>(this).determinant();
     }
 
     @Override
     public Matrix<? extends Numeric> inverse() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new SubMatrix<T>(this).inverse();
     }
 
     @Override
@@ -411,6 +411,12 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         throw new IllegalStateException("Unable to persist scaled matrix.");
     }
     
+    /**
+     * Write the contents of this matrix to a brand new backing file.
+     * 
+     * @param output the file to which this matrix will be written
+     * @throws IOException if the file cannot be created or written
+     */
     public void writeMatrix(File output) throws IOException {
         if (!output.exists()) {
             output.createNewFile();

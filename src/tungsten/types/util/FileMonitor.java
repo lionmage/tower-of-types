@@ -149,6 +149,7 @@ public class FileMonitor {
                         final List<File> filesList = dirsToFiles.get(dirPath);
                         filesList.remove(resolved);
                         if (filesList.isEmpty() && !dirPath.equals(basePath)) {
+                            Logger.getLogger(FileMonitor.class.getName()).log(Level.INFO, "Unwatching directory {}", dirPath);
                             dirsToFiles.remove(dirPath);
                             key.cancel();  // cancel this registration
                             lastFileDeleted = true;
