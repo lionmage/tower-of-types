@@ -1,7 +1,7 @@
 # tower-of-types
 A numeric tower and related types implemented in Java.
 
-This is a small part of a larger project I'm working on.  This library implements type interfaces and implementations using
+This is a small part of a larger project I'm working on.  This library implements type interfaces as well as implementations using
 Java's BigInteger and BigDecimal classes (although future type implementations may rely on other internal representations).
 The idea is to create a type system that can work in very high precision for applications in modeling, numerical analysis,
 and the implementation of high-level languages.  It's very much a work in progress at this time.
