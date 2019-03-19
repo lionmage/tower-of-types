@@ -60,7 +60,8 @@ public class Symbol {
     private final String representation;
     private Scope scope;
     private Class<? extends Numeric> valueClass;
-    private Numeric concreteValue;  // TODO can this be made to handle objects like matrix, vector, function, etc.?
+    private Numeric concreteValue;
+    private AggregateType<? extends Numeric> aggregateValue;
     
     private static final ConcurrentMap<String, Symbol> GLOBAL = new ConcurrentHashMap<>();
     public static final String PKG_SCAN_PROP = "tungsten.scan.external.types";
@@ -157,6 +158,16 @@ public class Symbol {
         this.concreteValue = value;
     }
     
+    public Symbol(String name, String representation, AggregateType<? extends Numeric> value) {
+        this(name, representation);
+        this.aggregateValue = value;
+    }
+    
+    public Symbol(String name, String representation, AggregateType<? extends Numeric> value, Scope scope) {
+        this(name, representation, scope);
+        this.aggregateValue = value;
+    }
+    
     private void cacheThis(String key) {
         Symbol old = GLOBAL.put(key, this);
         if (old != null) {
@@ -239,6 +250,26 @@ public class Symbol {
     
     public Optional<? extends Numeric> getConcreteValue() {
         return Optional.ofNullable(concreteValue);
+    }
+    
+    public void setAggregateValue(AggregateType<? extends Numeric> aggregateValue) {
+        this.aggregateValue = aggregateValue;
+    }
+    
+    public Optional<AggregateType<? extends Numeric>> getAggregateValue() {
+        return Optional.ofNullable(aggregateValue);
+    }
+    
+    public <T extends Numeric> void setAggregateValue(Set<T> set) {
+        this.aggregateValue = new AggregateType<T>(set, (Class<T>) set.iterator().next().getClass());
+    }
+    
+    public <T extends Numeric> void setAggregateValue(Vector<T> vector) {
+        this.aggregateValue = new AggregateType<T>(vector, (Class<T>) vector.elementAt(0L).getClass());
+    }
+    
+    public <T extends Numeric> void setAggregateValue(Matrix<T> matrix) {
+        this.aggregateValue = new AggregateType<T>(matrix, (Class<T>) matrix.valueAt(0L, 0L).getClass());
     }
     
     public Optional<? extends Numeric> getValueInstance(MathContext mctx) {
