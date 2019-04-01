@@ -29,6 +29,9 @@ import java.util.logging.Logger;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.RealType;
+import tungsten.types.util.MathUtils;
 
 
 /**
@@ -109,6 +112,20 @@ public class SingletonMatrix<T extends Numeric> implements Matrix<T> {
     @Override
     public SingletonMatrix<T> scale(T scaleFactor) {
         return new SingletonMatrix<>((T) element.multiply(scaleFactor));
+    }
+    
+    @Override
+    public SingletonMatrix<? extends Numeric> pow(Numeric n) {
+        Numeric result;
+        if (element instanceof RealType) {
+            result = MathUtils.generalizedExponent((RealType) element, n, element.getMathContext());
+        } else {
+            if (!(n instanceof IntegerType)) {
+                throw new IllegalArgumentException("Currently, non-integer exponents are not supported for non-real types.");
+            }
+            result = MathUtils.computeIntegerExponent(element, (IntegerType) n);
+        }
+        return new SingletonMatrix<>(result);
     }
     
     @Override

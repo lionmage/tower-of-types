@@ -164,6 +164,7 @@ public class DiagonalMatrix<T extends Numeric> implements Matrix<T>  {
         return new DiagonalMatrix(result);
     }
     
+    @Override
     public Matrix<? extends Numeric> pow(Numeric n) {
         Numeric[] result;
         if (elements[0] instanceof RealType) {

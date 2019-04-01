@@ -68,6 +68,16 @@ public class RowVector<T extends Numeric> implements Vector<T>, Matrix<T> {
         }
     }
     
+    public RowVector(Vector<T> source) {
+        this.elements = (T[]) Array.newInstance(source.elementAt(0).getClass(), (int) source.length());
+        for (long index = 0L; index < source.length(); index++) {
+            elements[(int) index] = source.elementAt(index);
+        }
+        if (source.length() > 0L) {
+            this.mctx = elements[0].getMathContext();
+        }        
+    }
+    
     public void setMathContext(MathContext mctx) {
         this.mctx = mctx;
     }

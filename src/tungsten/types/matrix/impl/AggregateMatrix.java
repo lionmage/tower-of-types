@@ -26,11 +26,15 @@ package tungsten.types.matrix.impl;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tungsten.types.Matrix;
 import tungsten.types.Numeric;
+import tungsten.types.exceptions.CoercionException;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.RealImpl;
@@ -146,15 +150,46 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
 
     @Override
     public T determinant() {
+        if (this.columns() != this.rows()) throw new ArithmeticException("Cannot compute determinant of a non-square matrix.");
         cacheLock.lock();
         try {
             if (detCache == null) {
-                detCache = new SubMatrix<>(this).determinant();
+                if (checkSubmatrices()) {
+                    Numeric accum = subMatrices[0][0].determinant();
+                    for (int index = 1; index < subMatrices.length; index++) {
+                        accum = accum.multiply(subMatrices[index][index].determinant());
+                    }
+                    detCache = (T) accum.coerceTo(clazz);
+                } else {
+                    detCache = new SubMatrix<>(this).determinant();
+                }
             }
             return detCache;
+        } catch (CoercionException ex) {
+            Logger.getLogger(AggregateMatrix.class.getName()).log(Level.SEVERE,
+                    "Could not coerce determinant to " + clazz.getTypeName(), ex);
+            throw new IllegalStateException(ex);
         } finally {
             cacheLock.unlock();
         }
+    }
+    
+    private boolean checkSubmatrices() {
+        for (int tileRow = 0; tileRow < subMatrices.length; tileRow++) {
+            for (int tileColumn = 0; tileColumn < subMatrices[tileRow].length; tileColumn++) {
+                final Matrix<T> submatrix = subMatrices[tileRow][tileColumn];
+                if (tileRow == tileColumn) {
+                    // ensure submatrix on diagonal is square
+                    if (submatrix.columns() != submatrix.rows()) return false;
+                } else {
+                    // ensure submatrix off-diagonal is all zero
+                    MathContext ctx = submatrix.valueAt(0L, 0L).getMathContext();
+                    ZeroMatrix Z = new ZeroMatrix(submatrix.rows(), submatrix.columns(), ctx);
+                    if (!Z.equals(submatrix)) return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

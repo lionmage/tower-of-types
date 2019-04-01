@@ -35,7 +35,9 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.exceptions.CoercionException;
+import tungsten.types.matrix.impl.IdentityMatrix;
 import tungsten.types.numerics.IntegerType;
+import tungsten.types.numerics.Sign;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.Zero;
 import tungsten.types.vector.impl.ColumnVector;
@@ -201,6 +203,39 @@ public interface Matrix<T extends Numeric> {
     Matrix<T> add(Matrix<T> addend);
     Matrix<T> multiply(Matrix<T> multiplier);
     Matrix<T> scale(T scaleFactor);
+    
+    default Matrix<? extends Numeric> pow(Numeric n) {
+        if (!(n instanceof IntegerType)) {
+            throw new IllegalArgumentException("Non-integer exponents are not allowed for this type of matrix.");
+        }
+        if (((IntegerType) n).sign() == Sign.NEGATIVE) {
+            throw new IllegalArgumentException("Exponent must be non-negative.");
+        }
+        if (rows() != columns()) throw new ArithmeticException("Cannot compute power of non-square matrix.");
+        BigInteger exponent = ((IntegerType) n).asBigInteger();
+        MathContext mctx = valueAt(0L, 0L).getMathContext();
+        if (exponent.equals(BigInteger.ZERO)) return new IdentityMatrix(rows(), mctx);
+        if (exponent.equals(BigInteger.ONE)) return this;
+        
+        // Otherwise, iteratively compute this matrix raised to the n power
+        // using exponentiation by squares, which is more efficient.
+        final BigInteger TWO = BigInteger.valueOf(2L);
+        Matrix<Numeric> x = (Matrix<Numeric>) this;
+        Matrix<Numeric> y = new IdentityMatrix(rows(), mctx);
+        while (exponent.compareTo(BigInteger.ONE) > 0) {
+            if (exponent.mod(TWO).equals(BigInteger.ZERO)) {
+                // even case
+                x = x.multiply(x);
+                exponent = exponent.divide(TWO);
+            } else {
+                // odd case
+                y = x.multiply(y);
+                x = x.multiply(x);
+                exponent = exponent.subtract(BigInteger.ONE).divide(TWO);
+            }
+        }
+        return x.multiply(y);
+    }
 
     default Matrix<T> subtract(Matrix<T> subtrahend) {
         final Class<T> clazz = (Class<T>) valueAt(0L, 0L).getClass();
