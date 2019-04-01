@@ -182,7 +182,7 @@ public class AggregateMatrix<T extends Numeric> implements Matrix<T> {
                     // ensure submatrix on diagonal is square
                     if (submatrix.columns() != submatrix.rows()) return false;
                 } else {
-                    // ensure submatrix off-diagonal is all zero
+                    // ensure submatrix off diagonal is all zero
                     MathContext ctx = submatrix.valueAt(0L, 0L).getMathContext();
                     ZeroMatrix Z = new ZeroMatrix(submatrix.rows(), submatrix.columns(), ctx);
                     if (!Z.equals(submatrix)) return false;
