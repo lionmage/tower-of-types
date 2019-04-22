@@ -45,7 +45,7 @@ import tungsten.types.vector.impl.ColumnVector;
 
 /**
  * A {@link Matrix} implementation which stores each column in a
- * separate file store.  The columns are aggregated under a single
+ * separate file.  The columns are aggregated under a single
  * directory, which may also contain additional metadata.
  * 
  * WIP: Do not instantiate yet.

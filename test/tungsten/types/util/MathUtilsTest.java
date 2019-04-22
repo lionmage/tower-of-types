@@ -26,16 +26,19 @@ package tungsten.types.util;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.Comparator;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import tungsten.types.Numeric;
 import tungsten.types.Set;
 import tungsten.types.numerics.ComplexType;
 import tungsten.types.numerics.IntegerType;
 import tungsten.types.numerics.RealType;
+import tungsten.types.numerics.impl.ComplexRectImpl;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.RealImpl;
 
@@ -172,5 +175,31 @@ public class MathUtilsTest {
         System.out.println("First root is exact? " + firstRoot.isExact());
         assertEquals(new RealImpl(BigDecimal.ONE, false), firstRoot.real());
         assertEquals(new RealImpl(BigDecimal.ZERO), firstRoot.imaginary());
+    }
+    
+    @Test
+    public void testComparison() {
+        System.out.println("Testing generic Numeric Comparator");
+        Comparator<Numeric> c = MathUtils.obtainGenericComparator();
+        
+        IntegerType a = new IntegerImpl("4");
+        IntegerType b = new IntegerImpl("6");
+        RealType mid = new RealImpl("5.1");
+        
+        assertTrue(c.compare(a, b) < 0);
+        assertTrue(c.compare(a, mid) < 0);
+        assertTrue(c.compare(b, mid) > 0);
+    }
+    
+    @Test(expected = RuntimeException.class)
+    public void testNonComparable() {
+        System.out.println("Testing generic Numeric Comparator, failure case");
+        Comparator<Numeric> c = MathUtils.obtainGenericComparator();
+        IntegerType a = new IntegerImpl("4");
+        ComplexType cplx = new ComplexRectImpl("-5+8i");
+        
+        // Complex numbers are not comparable with any other numeric type
+        // this should fail
+        c.compare(a, cplx);
     }
 }

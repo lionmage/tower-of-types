@@ -27,6 +27,7 @@ import ch.obermuhlner.math.big.BigDecimalMath;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -681,5 +682,42 @@ public class MathUtils {
             }
             return true;
         }
+    }
+    
+    public static Comparator<Numeric> obtainGenericComparator() {
+        return new Comparator<Numeric>() {
+            @Override
+            public int compare(Numeric A, Numeric B) {
+                if (A instanceof Comparable && B instanceof Comparable) {
+                    Class<? extends Numeric> classA = A.getClass();
+                    Class<? extends Numeric> classB = B.getClass();
+                    NumericHierarchy h1 = NumericHierarchy.forNumericType(classA);
+                    NumericHierarchy h2 = NumericHierarchy.forNumericType(classB);
+                    try {
+                        if (h1.compareTo(h2) >= 0) {
+                            Comparable<Numeric> Bconv = (Comparable<Numeric>) B.coerceTo(classA);
+                            return -Bconv.compareTo(A);
+                        } else {
+                            Comparable<Numeric> Aconv = (Comparable<Numeric>) A.coerceTo(classB);
+                            return Aconv.compareTo(B);
+                        }
+                    } catch (CoercionException ce) {
+                        Logger.getAnonymousLogger().log(Level.SEVERE, "No common type found for {} and {}.",
+                                new Object[] {h1, h2});
+                        throw new IllegalArgumentException("Failure to coerce arguments to a common type.", ce);
+                    }
+                } else {
+                    throw new IllegalArgumentException("Numeric subtype must be comparable.");
+                }
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (obj instanceof Comparator) {
+                    return obj.getClass() == this.getClass();
+                }
+                return false;
+            }
+        };
     }
 }
