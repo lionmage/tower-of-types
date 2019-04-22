@@ -693,12 +693,22 @@ public class MathUtils {
                     Class<? extends Numeric> classB = B.getClass();
                     NumericHierarchy h1 = NumericHierarchy.forNumericType(classA);
                     NumericHierarchy h2 = NumericHierarchy.forNumericType(classB);
+                    // if A or B is a direct subclass of Numeric, delegate to
+                    // its compareTo() method
+                    if (h1 == null) {
+                        Comparable<Numeric> Acomp = (Comparable<Numeric>) A;
+                        return Acomp.compareTo(B);
+                    } else if (h2 == null) {
+                        Comparable<Numeric> Bcomp = (Comparable<Numeric>) B;
+                        return -Bcomp.compareTo(A);
+                    }
+                    // otherwise, we need to do type coercion
                     try {
                         if (h1.compareTo(h2) >= 0) {
-                            Comparable<Numeric> Bconv = (Comparable<Numeric>) B.coerceTo(classA);
+                            Comparable<Numeric> Bconv = (Comparable<Numeric>) B.coerceTo(h1.getNumericType());
                             return -Bconv.compareTo(A);
                         } else {
-                            Comparable<Numeric> Aconv = (Comparable<Numeric>) A.coerceTo(classB);
+                            Comparable<Numeric> Aconv = (Comparable<Numeric>) A.coerceTo(h2.getNumericType());
                             return Aconv.compareTo(B);
                         }
                     } catch (CoercionException ce) {

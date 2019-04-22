@@ -41,6 +41,7 @@ import tungsten.types.numerics.RealType;
 import tungsten.types.numerics.impl.ComplexRectImpl;
 import tungsten.types.numerics.impl.IntegerImpl;
 import tungsten.types.numerics.impl.RealImpl;
+import tungsten.types.numerics.impl.Zero;
 
 /**
  *
@@ -185,10 +186,13 @@ public class MathUtilsTest {
         IntegerType a = new IntegerImpl("4");
         IntegerType b = new IntegerImpl("6");
         RealType mid = new RealImpl("5.1");
+        Numeric zero = Zero.getInstance(MathContext.DECIMAL64);
         
         assertTrue(c.compare(a, b) < 0);
         assertTrue(c.compare(a, mid) < 0);
         assertTrue(c.compare(b, mid) > 0);
+        assertTrue(c.compare(zero, a) < 0);
+        assertTrue(c.compare(mid, zero) > 0);
     }
     
     @Test(expected = RuntimeException.class)
