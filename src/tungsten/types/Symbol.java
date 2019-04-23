@@ -31,8 +31,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.MathContext;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,11 +43,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import tungsten.types.annotations.Constant;
 import tungsten.types.annotations.ConstantFactory;
-import tungsten.types.numerics.impl.Euler;
-import tungsten.types.numerics.impl.ImaginaryUnit;
-import tungsten.types.numerics.impl.One;
-import tungsten.types.numerics.impl.Pi;
-import tungsten.types.numerics.impl.Zero;
 
 /**
  *
@@ -177,7 +170,7 @@ public class Symbol {
     }
     
     /**
-     * Get the bound names for all {@link Symbol}s.
+     * Get the globally bound names for all {@link Symbol}s.
      * @return an unmodifiable {@link Set} view of the names of currently bound symbols
      */
     public static java.util.Set<String> getAllSymbolNames() {
@@ -236,6 +229,9 @@ public class Symbol {
         if (getValueClass().isPresent()) {
             throw new UnsupportedOperationException("Symbol " + name + " is a constant.");
         }
+        if (getAggregateValue().isPresent()) {
+            throw new UnsupportedOperationException("Symbol " + name + " is not a numeric value.");
+        }
         if (concreteValue != null) {
             final Class<? extends Numeric> oldClass = concreteValue.getClass();
             final Class<? extends Numeric> newClass = value.getClass();
@@ -253,6 +249,9 @@ public class Symbol {
     }
     
     public void setAggregateValue(AggregateType<? extends Numeric> aggregateValue) {
+        if (getValueClass().isPresent() || getConcreteValue().isPresent()) {
+            throw new UnsupportedOperationException("Symbol " + name + " is not an aggregate type.");
+        }
         this.aggregateValue = aggregateValue;
     }
     
@@ -261,14 +260,23 @@ public class Symbol {
     }
     
     public <T extends Numeric> void setAggregateValue(Set<T> set) {
+        if (getValueClass().isPresent() || getConcreteValue().isPresent()) {
+            throw new UnsupportedOperationException("Symbol " + name + " is not an aggregate type.");
+        }
         this.aggregateValue = new AggregateType<T>(set, (Class<T>) set.iterator().next().getClass());
     }
     
     public <T extends Numeric> void setAggregateValue(Vector<T> vector) {
+        if (getValueClass().isPresent() || getConcreteValue().isPresent()) {
+            throw new UnsupportedOperationException("Symbol " + name + " is not an aggregate type.");
+        }
         this.aggregateValue = new AggregateType<T>(vector, (Class<T>) vector.elementAt(0L).getClass());
     }
     
     public <T extends Numeric> void setAggregateValue(Matrix<T> matrix) {
+        if (getValueClass().isPresent() || getConcreteValue().isPresent()) {
+            throw new UnsupportedOperationException("Symbol " + name + " is not an aggregate type.");
+        }
         this.aggregateValue = new AggregateType<T>(matrix, (Class<T>) matrix.valueAt(0L, 0L).getClass());
     }
     
@@ -320,6 +328,14 @@ public class Symbol {
             throw new IllegalStateException("Scope cannot be reassigned.");
         }
         scope = newScope;
+    }
+    
+    /**
+     * Return whether or not a value can be assigned to this {@link Symbol}.
+     * @return true if a value can be assigned, false otherwise
+     */
+    public boolean isAssignable() {
+        return !getValueClass().isPresent();  // Note: This will expand in the future.
     }
 
     @Override
