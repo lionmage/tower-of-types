@@ -543,7 +543,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     public class BigRowVector<T extends Numeric> extends RowVector<T> {
-        private BigList<T> elements;
+        private final BigList<T> elements;
         
         protected BigRowVector(BigList<T> source) {
             elements = source;
@@ -587,7 +587,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             if (addend.length() != this.length()) throw new ArithmeticException("Cannot add vectors of different lengths.");
             if (addend instanceof ColumnVector) throw new ArithmeticException("Cannot add a row vector to a column vector.");
             
-            BigRowVector<T> result = new BigRowVector();
+            BigRowVector<T> result = new BigRowVector<>();
             for (long index = 0L; index < length(); index++) {
                 result.append((T) elements.get(index).add(addend.elementAt(index)));
             }
@@ -596,14 +596,14 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
         @Override
         public RowVector<T> negate() {
-            BigRowVector<T> result = new BigRowVector();
+            BigRowVector<T> result = new BigRowVector<>();
             elements.forEach(element -> result.append((T) element.negate()));
             return result;
         }
 
         @Override
         public RowVector<T> scale(T factor) {
-            BigRowVector<T> result = new BigRowVector();
+            BigRowVector<T> result = new BigRowVector<>();
             elements.forEach(element -> result.append((T) element.multiply(factor)));
             return result;
         }
@@ -693,7 +693,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     public class BigColumnVector<T extends Numeric> extends ColumnVector<T> {
-        private BigList<T> elements;
+        private final BigList<T> elements;
         
         protected BigColumnVector(BigList<T> source) {
             elements = source;
@@ -728,7 +728,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             if (addend.length() != this.length()) throw new ArithmeticException("Cannot add vectors of different lengths.");
             if (addend instanceof RowVector) throw new ArithmeticException("Cannot add a column vector to a row vector.");
             
-            BigColumnVector<T> result = new BigColumnVector();
+            BigColumnVector<T> result = new BigColumnVector<>();
             for (long index = 0L; index < length(); index++) {
                 result.append((T) elements.get(index).add(addend.elementAt(index)));
             }
@@ -737,14 +737,14 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
 
         @Override
         public ColumnVector<T> negate() {
-            BigColumnVector<T> result = new BigColumnVector();
+            BigColumnVector<T> result = new BigColumnVector<>();
             elements.forEach(element -> result.append((T) element.negate()));
             return result;
         }
 
         @Override
         public ColumnVector<T> scale(T factor) {
-            BigColumnVector<T> result = new BigColumnVector();
+            BigColumnVector<T> result = new BigColumnVector<>();
             elements.forEach(element -> result.append((T) element.multiply(factor)));
             return result;
         }
