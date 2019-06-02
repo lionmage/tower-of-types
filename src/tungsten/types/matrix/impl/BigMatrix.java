@@ -637,8 +637,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         }
 
         @Override
-        public ColumnVector<T> transpose() {
-            return new BigColumnVector(elements);
+        public BigColumnVector<T> transpose() {
+            return new BigColumnVector<>(elements);
         }
         
         @Override
@@ -757,7 +757,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
                 T zero = (T) Zero.getInstance(mctx).coerceTo(clazz);
                 return (T) elements.stream().reduce(zero, (x, y) -> (T) x.add(y.multiply(y))).sqrt().coerceTo(clazz);
             } catch (CoercionException ex) {
-                Logger.getLogger(BigMatrix.BigRowVector.class.getName())
+                Logger.getLogger(BigMatrix.BigColumnVector.class.getName())
                         .log(Level.SEVERE, "Unable to compute magnitude of column vector.", ex);
                 throw new ArithmeticException("Cannot compute magnitude of column vector.");
             }
@@ -778,8 +778,8 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
         }
 
         @Override
-        public RowVector<T> transpose() {
-            return new BigRowVector(elements);
+        public BigRowVector<T> transpose() {
+            return new BigRowVector<>(elements);
         }
         
         @Override
