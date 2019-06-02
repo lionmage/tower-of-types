@@ -461,7 +461,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     }
 
     @Override
-    public RowVector<T> getRow(long row) {
+    public BigRowVector<T> getRow(long row) {
         if (row < 0L || row >= rows) throw new IndexOutOfBoundsException("Row index " + row + " is outside range 0 - " + rows);
         ReadLock readLock = readWriteLock.readLock();
         try {
@@ -480,7 +480,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
     }
 
     @Override
-    public ColumnVector<T> getColumn(long column) {
+    public BigColumnVector<T> getColumn(long column) {
         if (column < 0L || column >= columns) throw new IndexOutOfBoundsException("Column index " + column + " is outside range 0 - " + columns);
         BigColumnVector<T> result = new BigColumnVector();
         ReadLock readLock = readWriteLock.readLock();
@@ -688,7 +688,7 @@ public class BigMatrix<T extends Numeric> implements Matrix<T> {
             values.add(HORIZONTAL_ELLIPSIS);
             elements.tail(3L).stream().map(x -> x.toString()).forEachOrdered(values::add);
             // 202F = Narrow No-Break Space
-            return values.stream().collect(Collectors.joining(", ", "[\u202F", "\u202F]ᵀ"));
+            return values.stream().collect(Collectors.joining(", ", "[\u202F", "\u202F]"));
         }
     }
     

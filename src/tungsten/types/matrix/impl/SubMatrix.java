@@ -370,7 +370,7 @@ public class SubMatrix<T extends Numeric> implements Matrix<T> {
     }
     
     private class MatMultRecursiveTask extends RecursiveTask<Matrix<T>> {
-        private Matrix<T> A, B;
+        private final Matrix<T> A, B;
         long size;
         
         private MatMultRecursiveTask(Matrix<T> A, Matrix<T> B) {
