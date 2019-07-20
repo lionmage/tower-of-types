@@ -324,11 +324,11 @@ public class ComplexRectImpl implements ComplexType {
     @Override
     public boolean equals(Object o) {
         if (o instanceof Zero) {
-            return exact && this.real.asBigDecimal().equals(BigDecimal.ZERO) &&
-                    this.imag.asBigDecimal().equals(BigDecimal.ZERO);
+            return exact && testEquals(this.real.asBigDecimal(), BigDecimal.ZERO) &&
+                    testEquals(this.imag.asBigDecimal(), BigDecimal.ZERO);
         } else if (o instanceof One) {
-            return exact && this.real.asBigDecimal().equals(BigDecimal.ONE) &&
-                    this.imag.asBigDecimal().equals(BigDecimal.ZERO);
+            return exact && testEquals(this.real.asBigDecimal(), BigDecimal.ONE) &&
+                    testEquals(this.imag.asBigDecimal(), BigDecimal.ZERO);
         }
         if (o instanceof ComplexType) {
             ComplexType that = (ComplexType) o;
@@ -338,6 +338,10 @@ public class ComplexRectImpl implements ComplexType {
             return requal && iequal && exactness;
         }
         return false;
+    }
+
+    private boolean testEquals(BigDecimal A, BigDecimal B) {
+        return A.compareTo(B) == 0;
     }
 
     @Override

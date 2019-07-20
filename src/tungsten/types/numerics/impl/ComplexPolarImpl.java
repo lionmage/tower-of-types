@@ -344,11 +344,11 @@ public class ComplexPolarImpl implements ComplexType {
     @Override
     public boolean equals(Object o) {
         if (o instanceof Zero) {
-            return this.isExact() && this.modulus.asBigDecimal().equals(BigDecimal.ZERO);
+            return this.isExact() && testEquals(this.modulus.asBigDecimal(), BigDecimal.ZERO);
         } else if (o instanceof One) {
             return this.isExact() &&
-                    this.modulus.asBigDecimal().equals(BigDecimal.ONE) &&
-                    this.argument.asBigDecimal().equals(BigDecimal.ZERO);
+                    testEquals(this.modulus.asBigDecimal(), BigDecimal.ONE) &&
+                    testEquals(this.argument.asBigDecimal(), BigDecimal.ZERO);
         }
         if (o instanceof ComplexType) {
             ComplexType that = (ComplexType) o;
@@ -356,6 +356,10 @@ public class ComplexPolarImpl implements ComplexType {
             return this.magnitude().equals(that.magnitude()) && this.argument.equals(that.argument());
         }
         return false;
+    }
+    
+    private boolean testEquals(BigDecimal A, BigDecimal B) {
+        return A.compareTo(B) == 0;
     }
 
     @Override

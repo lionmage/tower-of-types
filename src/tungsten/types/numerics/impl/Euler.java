@@ -232,8 +232,8 @@ public class Euler implements RealType {
      * @return &#x212f;<sup>x</sup>
      */
     public RealType exp(RealType x) {
-        if (x.asBigDecimal().equals(BigDecimal.ZERO)) return new RealImpl(BigDecimal.ONE);
-        else if (x.asBigDecimal().equals(BigDecimal.ONE)) return this;
+        if (x.asBigDecimal().compareTo(BigDecimal.ZERO) == 0) return new RealImpl(BigDecimal.ONE);
+        else if (x.asBigDecimal().compareTo(BigDecimal.ONE) == 0) return this;
         
         // otherwise compute the series
         BigDecimal sum = BigDecimal.ZERO;
