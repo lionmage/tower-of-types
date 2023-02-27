@@ -1,6 +1,9 @@
 # tower-of-types
 A numeric tower and related types implemented in Java.
 
+NOTE: **This project is deprecated.** It will be deleted once everything worth migrating is migrated to the new project.
+Please see [tungsten-types](https://github.com/lionmage/tungsten-types) for the latest iteration of this work.
+
 This is a small part of a larger project I'm working on.  This library implements type interfaces as well as their
 implementations using Java's BigInteger and BigDecimal classes (although future type implementations may rely on other
 internal representations).  The idea is to create a type system that can work in very high precision for applications
